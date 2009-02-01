@@ -1,0 +1,1185 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Changing Key Bindings,  Next: Key Binding Commands,  Prev: Functions for Key Lookup,  Up: Keymaps
+
+Changing Key Bindings
+=====================
+
+   The way to rebind a key is to change its entry in a keymap.  If you
+change a binding in the global keymap, the change is effective in all
+buffers (though it has no direct effect in buffers that shadow the
+global binding with a local one).  If you change the current buffer's
+local map, that usually affects all buffers using the same major mode.
+The `global-set-key' and `local-set-key' functions are convenient
+interfaces for these operations (*note Key Binding Commands::).  You
+can also use `define-key', a more general function; then you must
+specify explicitly the map to change.
+
+   In writing the key sequence to rebind, it is good to use the special
+escape sequences for control and meta characters (*note String Type::).
+The syntax `\C-' means that the following character is a control
+character and `\M-' means that the following character is a meta
+character.  Thus, the string `"\M-x"' is read as containing a single
+`M-x', `"\C-f"' is read as containing a single `C-f', and `"\M-\C-x"'
+and `"\C-\M-x"' are both read as containing a single `C-M-x'.  You can
+also use this escape syntax in vectors, as well as others that aren't
+allowed in strings; one example is `[?\C-\H-x home]'.  *Note Character
+Type::.
+
+   The key definition and lookup functions accept an alternate syntax
+for event types in a key sequence that is a vector: you can use a list
+containing modifier names plus one base event (a character or function
+key name).  For example, `(control ?a)' is equivalent to `?\C-a' and
+`(hyper control left)' is equivalent to `C-H-left'.  One advantage of
+such lists is that the precise numeric codes for the modifier bits
+don't appear in compiled files.
+
+   For the functions below, an error is signaled if KEYMAP is not a
+keymap or if KEY is not a string or vector representing a key sequence.
+You can use event types (symbols) as shorthand for events that are
+lists.
+
+ - Function: define-key keymap key binding
+     This function sets the binding for KEY in KEYMAP.  (If KEY is more
+     than one event long, the change is actually made in another keymap
+     reached from KEYMAP.)  The argument BINDING can be any Lisp
+     object, but only certain types are meaningful.  (For a list of
+     meaningful types, see *Note Key Lookup::.)  The value returned by
+     `define-key' is BINDING.
+
+     Every prefix of KEY must be a prefix key (i.e., bound to a keymap)
+     or undefined; otherwise an error is signaled.  If some prefix of
+     KEY is undefined, then `define-key' defines it as a prefix key so
+     that the rest of KEY can be defined as specified.
+
+     If there was previously no binding for KEY in KEYMAP, the new
+     binding is added at the beginning of KEYMAP.  The order of
+     bindings in a keymap makes no difference in most cases, but it does
+     matter for menu keymaps (*note Menu Keymaps::).
+
+   Here is an example that creates a sparse keymap and makes a number of
+bindings in it:
+
+     (setq map (make-sparse-keymap))
+         => (keymap)
+     (define-key map "\C-f" 'forward-char)
+         => forward-char
+     map
+         => (keymap (6 . forward-char))
+     
+     ;; Build sparse submap for `C-x' and bind `f' in that.
+     (define-key map "\C-xf" 'forward-word)
+         => forward-word
+     map
+     => (keymap
+         (24 keymap                ; C-x
+             (102 . forward-word)) ;      f
+         (6 . forward-char))       ; C-f
+     
+     ;; Bind `C-p' to the `ctl-x-map'.
+     (define-key map "\C-p" ctl-x-map)
+     ;; `ctl-x-map'
+     => [nil ... find-file ... backward-kill-sentence]
+     
+     ;; Bind `C-f' to `foo' in the `ctl-x-map'.
+     (define-key map "\C-p\C-f" 'foo)
+     => 'foo
+     map
+     => (keymap     ; Note `foo' in `ctl-x-map'.
+         (16 keymap [nil ... foo ... backward-kill-sentence])
+         (24 keymap
+             (102 . forward-word))
+         (6 . forward-char))
+
+Note that storing a new binding for `C-p C-f' actually works by
+changing an entry in `ctl-x-map', and this has the effect of changing
+the bindings of both `C-p C-f' and `C-x C-f' in the default global map.
+
+ - Function: substitute-key-definition olddef newdef keymap &optional
+          oldmap
+     This function replaces OLDDEF with NEWDEF for any keys in KEYMAP
+     that were bound to OLDDEF.  In other words, OLDDEF is replaced
+     with NEWDEF wherever it appears.  The function returns `nil'.
+
+     For example, this redefines `C-x C-f', if you do it in an Emacs
+     with standard bindings:
+
+          (substitute-key-definition
+           'find-file 'find-file-read-only (current-global-map))
+
+     If OLDMAP is non-`nil', that changes the behavior of
+     `substitute-key-definition': the bindings in OLDMAP determine
+     which keys to rebind.  The rebindings still happen in KEYMAP, not
+     in OLDMAP.  Thus, you can change one map under the control of the
+     bindings in another.  For example,
+
+          (substitute-key-definition
+            'delete-backward-char 'my-funny-delete
+            my-map global-map)
+
+     puts the special deletion command in `my-map' for whichever keys
+     are globally bound to the standard deletion command.
+
+     Here is an example showing a keymap before and after substitution:
+
+          (setq map '(keymap
+                      (?1 . olddef-1)
+                      (?2 . olddef-2)
+                      (?3 . olddef-1)))
+          => (keymap (49 . olddef-1) (50 . olddef-2) (51 . olddef-1))
+          
+          (substitute-key-definition 'olddef-1 'newdef map)
+          => nil
+          map
+          => (keymap (49 . newdef) (50 . olddef-2) (51 . newdef))
+
+ - Function: suppress-keymap keymap &optional nodigits
+     This function changes the contents of the full keymap KEYMAP by
+     making all the printing characters undefined.  More precisely, it
+     binds them to the command `undefined'.  This makes ordinary
+     insertion of text impossible.  `suppress-keymap' returns `nil'.
+
+     If NODIGITS is `nil', then `suppress-keymap' defines digits to run
+     `digit-argument', and `-' to run `negative-argument'.  Otherwise
+     it makes them undefined like the rest of the printing characters.
+
+     The `suppress-keymap' function does not make it impossible to
+     modify a buffer, as it does not suppress commands such as `yank'
+     and `quoted-insert'.  To prevent any modification of a buffer, make
+     it read-only (*note Read Only Buffers::).
+
+     Since this function modifies KEYMAP, you would normally use it on
+     a newly created keymap.  Operating on an existing keymap that is
+     used for some other purpose is likely to cause trouble; for
+     example, suppressing `global-map' would make it impossible to use
+     most of Emacs.
+
+     Most often, `suppress-keymap' is used to initialize local keymaps
+     of modes such as Rmail and Dired where insertion of text is not
+     desirable and the buffer is read-only.  Here is an example taken
+     from the file `emacs/lisp/dired.el', showing how the local keymap
+     for Dired mode is set up:
+
+          (setq dired-mode-map (make-keymap))
+          (suppress-keymap dired-mode-map)
+          (define-key dired-mode-map "r" 'dired-rename-file)
+          (define-key dired-mode-map "\C-d" 'dired-flag-file-deleted)
+          (define-key dired-mode-map "d" 'dired-flag-file-deleted)
+          (define-key dired-mode-map "v" 'dired-view-file)
+          (define-key dired-mode-map "e" 'dired-find-file)
+          (define-key dired-mode-map "f" 'dired-find-file)
+          ...
+
+
+File: elisp,  Node: Key Binding Commands,  Next: Scanning Keymaps,  Prev: Changing Key Bindings,  Up: Keymaps
+
+Commands for Binding Keys
+=========================
+
+   This section describes some convenient interactive interfaces for
+changing key bindings.  They work by calling `define-key'.
+
+   People often use `global-set-key' in their init files (*note Init
+File::) for simple customization.  For example,
+
+     (global-set-key "\C-x\C-\\" 'next-line)
+
+or
+
+     (global-set-key [?\C-x ?\C-\\] 'next-line)
+
+or
+
+     (global-set-key [(control ?x) (control ?\\)] 'next-line)
+
+redefines `C-x C-\' to move down a line.
+
+     (global-set-key [M-mouse-1] 'mouse-set-point)
+
+redefines the first (leftmost) mouse button, typed with the Meta key, to
+set point where you click.
+
+   Be careful when using non-ASCII text characters in Lisp
+specifications of keys to bind.  If these are read as multibyte text, as
+they usually will be in a Lisp file (*note Loading Non-ASCII::), you
+must type the keys as multibyte too.  For instance, if you use this:
+
+     (global-set-key "o"" 'my-function) ; bind o-umlaut
+
+or
+
+     (global-set-key ?o" 'my-function) ; bind o-umlaut
+
+and your language environment is multibyte Latin-1, these commands
+actually bind the multibyte character with code 2294, not the unibyte
+Latin-1 character with code 246 (`M-v').  In order to use this binding,
+you need to enter the multibyte Latin-1 character as keyboard input.
+One way to do this is by using an appropriate input method (*note Input
+Methods: (emacs)Input Methods.).
+
+   If you want to use a unibyte character in the key binding, you can
+construct the key sequence string using `multibyte-char-to-unibyte' or
+`string-make-unibyte' (*note Converting Representations::).
+
+ - Command: global-set-key key definition
+     This function sets the binding of KEY in the current global map to
+     DEFINITION.
+
+          (global-set-key KEY DEFINITION)
+          ==
+          (define-key (current-global-map) KEY DEFINITION)
+
+ - Command: global-unset-key key
+     This function removes the binding of KEY from the current global
+     map.
+
+     One use of this function is in preparation for defining a longer
+     key that uses KEY as a prefix--which would not be allowed if KEY
+     has a non-prefix binding.  For example:
+
+          (global-unset-key "\C-l")
+              => nil
+          (global-set-key "\C-l\C-l" 'redraw-display)
+              => nil
+
+     This function is implemented simply using `define-key':
+
+          (global-unset-key KEY)
+          ==
+          (define-key (current-global-map) KEY nil)
+
+ - Command: local-set-key key definition
+     This function sets the binding of KEY in the current local keymap
+     to DEFINITION.
+
+          (local-set-key KEY DEFINITION)
+          ==
+          (define-key (current-local-map) KEY DEFINITION)
+
+ - Command: local-unset-key key
+     This function removes the binding of KEY from the current local
+     map.
+
+          (local-unset-key KEY)
+          ==
+          (define-key (current-local-map) KEY nil)
+
+
+File: elisp,  Node: Scanning Keymaps,  Next: Menu Keymaps,  Prev: Key Binding Commands,  Up: Keymaps
+
+Scanning Keymaps
+================
+
+   This section describes functions used to scan all the current keymaps
+for the sake of printing help information.
+
+ - Function: accessible-keymaps keymap &optional prefix
+     This function returns a list of all the keymaps that can be
+     reached (via zero or more prefix keys) from KEYMAP.  The value is
+     an association list with elements of the form `(KEY .  MAP)',
+     where KEY is a prefix key whose definition in KEYMAP is MAP.
+
+     The elements of the alist are ordered so that the KEY increases in
+     length.  The first element is always `("" . KEYMAP)', because the
+     specified keymap is accessible from itself with a prefix of no
+     events.
+
+     If PREFIX is given, it should be a prefix key sequence; then
+     `accessible-keymaps' includes only the submaps whose prefixes start
+     with PREFIX.  These elements look just as they do in the value of
+     `(accessible-keymaps)'; the only difference is that some elements
+     are omitted.
+
+     In the example below, the returned alist indicates that the key
+     <ESC>, which is displayed as `^[', is a prefix key whose
+     definition is the sparse keymap `(keymap (83 . center-paragraph)
+     (115 . foo))'.
+
+          (accessible-keymaps (current-local-map))
+          =>(("" keymap
+                (27 keymap   ; Note this keymap for <ESC> is repeated below.
+                    (83 . center-paragraph)
+                    (115 . center-line))
+                (9 . tab-to-tab-stop))
+          
+             ("^[" keymap
+              (83 . center-paragraph)
+              (115 . foo)))
+
+     In the following example, `C-h' is a prefix key that uses a sparse
+     keymap starting with `(keymap (118 . describe-variable)...)'.
+     Another prefix, `C-x 4', uses a keymap which is also the value of
+     the variable `ctl-x-4-map'.  The event `mode-line' is one of
+     several dummy events used as prefixes for mouse actions in special
+     parts of a window.
+
+          (accessible-keymaps (current-global-map))
+          => (("" keymap [set-mark-command beginning-of-line ...
+                             delete-backward-char])
+              ("^H" keymap (118 . describe-variable) ...
+               (8 . help-for-help))
+              ("^X" keymap [x-flush-mouse-queue ...
+               backward-kill-sentence])
+              ("^[" keymap [mark-sexp backward-sexp ...
+               backward-kill-word])
+              ("^X4" keymap (15 . display-buffer) ...)
+              ([mode-line] keymap
+               (S-mouse-2 . mouse-split-window-horizontally) ...))
+
+     These are not all the keymaps you would see in actuality.
+
+ - Function: where-is-internal command &optional keymap firstonly
+          noindirect
+     This function is a subroutine used by the `where-is' command
+     (*note Help: (emacs)Help.).  It returns a list of key sequences
+     (of any length) that are bound to COMMAND in a set of keymaps.
+
+     The argument COMMAND can be any object; it is compared with all
+     keymap entries using `eq'.
+
+     If KEYMAP is `nil', then the maps used are the current active
+     keymaps, disregarding `overriding-local-map' (that is, pretending
+     its value is `nil').  If KEYMAP is non-`nil', then the maps
+     searched are KEYMAP and the global keymap.  If KEYMAP is a list of
+     keymaps, only those keymaps are searched.
+
+     Usually it's best to use `overriding-local-map' as the expression
+     for KEYMAP.  Then `where-is-internal' searches precisely the
+     keymaps that are active.  To search only the global map, pass
+     `(keymap)' (an empty keymap) as KEYMAP.
+
+     If FIRSTONLY is `non-ascii', then the value is a single string
+     representing the first key sequence found, rather than a list of
+     all possible key sequences.  If FIRSTONLY is `t', then the value
+     is the first key sequence, except that key sequences consisting
+     entirely of ASCII characters (or meta variants of ASCII
+     characters) are preferred to all other key sequences.
+
+     If NOINDIRECT is non-`nil', `where-is-internal' doesn't follow
+     indirect keymap bindings.  This makes it possible to search for an
+     indirect definition itself.
+
+          (where-is-internal 'describe-function)
+              => ("\^hf" "\^hd")
+
+ - Command: describe-bindings &optional prefix
+     This function creates a listing of all current key bindings, and
+     displays it in a buffer named `*Help*'.  The text is grouped by
+     modes--minor modes first, then the major mode, then global
+     bindings.
+
+     If PREFIX is non-`nil', it should be a prefix key; then the
+     listing includes only keys that start with PREFIX.
+
+     The listing describes meta characters as <ESC> followed by the
+     corresponding non-meta character.
+
+     When several characters with consecutive ASCII codes have the same
+     definition, they are shown together, as `FIRSTCHAR..LASTCHAR'.  In
+     this instance, you need to know the ASCII codes to understand
+     which characters this means.  For example, in the default global
+     map, the characters `<SPC> .. ~' are described by a single line.
+     <SPC> is ASCII 32, `~' is ASCII 126, and the characters between
+     them include all the normal printing characters, (e.g., letters,
+     digits, punctuation, etc.); all these characters are bound to
+     `self-insert-command'.
+
+
+File: elisp,  Node: Menu Keymaps,  Prev: Scanning Keymaps,  Up: Keymaps
+
+Menu Keymaps
+============
+
+   A keymap can define a menu as well as bindings for keyboard keys and
+mouse button.  Menus are usually actuated with the mouse, but they can
+work with the keyboard also.
+
+* Menu:
+
+* Defining Menus::		How to make a keymap that defines a menu.
+* Mouse Menus::			How users actuate the menu with the mouse.
+* Keyboard Menus::		How they actuate it with the keyboard.
+* Menu Example::		Making a simple menu.
+* Menu Bar::			How to customize the menu bar.
+* Tool Bar::                    A tool bar is a row of images.
+* Modifying Menus::             How to add new items to a menu.
+
+
+File: elisp,  Node: Defining Menus,  Next: Mouse Menus,  Up: Menu Keymaps
+
+Defining Menus
+--------------
+
+   A keymap is suitable for menu use if it has an "overall prompt
+string", which is a string that appears as an element of the keymap.
+(*Note Format of Keymaps::.)  The string should describe the purpose of
+the menu's commands.  Emacs displays the overall prompt string as the
+menu title in some cases, depending on the toolkit (if any) used for
+displaying menus.(1)  Keyboard menus also display the overall prompt
+string.
+
+   The easiest way to construct a keymap with a prompt string is to
+specify the string as an argument when you call `make-keymap',
+`make-sparse-keymap' or `define-prefix-command' (*note Creating
+Keymaps::).
+
+   The order of items in the menu is the same as the order of bindings
+in the keymap.  Since `define-key' puts new bindings at the front, you
+should define the menu items starting at the bottom of the menu and
+moving to the top, if you care about the order.  When you add an item to
+an existing menu, you can specify its position in the menu using
+`define-key-after' (*note Modifying Menus::).
+
+* Menu:
+
+* Simple Menu Items::       A simple kind of menu key binding,
+                              limited in capabilities.
+* Extended Menu Items::     More powerful menu item definitions
+                              let you specify keywords to enable
+                              various features.
+* Menu Separators::         Drawing a horizontal line through a menu.
+* Alias Menu Items::        Using command aliases in menu items.
+
+   ---------- Footnotes ----------
+
+   (1) It is required for menus which do not use a toolkit, e.g. under
+MS-DOS.
+
+
+File: elisp,  Node: Simple Menu Items,  Next: Extended Menu Items,  Up: Defining Menus
+
+Simple Menu Items
+.................
+
+   The simpler and older way to define a menu keymap binding looks like
+this:
+
+     (ITEM-STRING . REAL-BINDING)
+
+The CAR, ITEM-STRING, is the string to be displayed in the menu.  It
+should be short--preferably one to three words.  It should describe the
+action of the command it corresponds to.
+
+   You can also supply a second string, called the help string, as
+follows:
+
+     (ITEM-STRING HELP . REAL-BINDING)
+
+   HELP specifies a "help-echo" string to display while the mouse is on
+that item in the same way as `help-echo' text properties (*note Help
+display::).
+
+   As far as `define-key' is concerned, ITEM-STRING and HELP-STRING are
+part of the event's binding.  However, `lookup-key' returns just
+REAL-BINDING, and only REAL-BINDING is used for executing the key.
+
+   If REAL-BINDING is `nil', then ITEM-STRING appears in the menu but
+cannot be selected.
+
+   If REAL-BINDING is a symbol and has a non-`nil' `menu-enable'
+property, that property is an expression that controls whether the menu
+item is enabled.  Every time the keymap is used to display a menu,
+Emacs evaluates the expression, and it enables the menu item only if
+the expression's value is non-`nil'.  When a menu item is disabled, it
+is displayed in a "fuzzy" fashion, and cannot be selected.
+
+   The menu bar does not recalculate which items are enabled every time
+you look at a menu.  This is because the X toolkit requires the whole
+tree of menus in advance.  To force recalculation of the menu bar, call
+`force-mode-line-update' (*note Mode Line Format::).
+
+   You've probably noticed that menu items show the equivalent keyboard
+key sequence (if any) to invoke the same command.  To save time on
+recalculation, menu display caches this information in a sublist in the
+binding, like this:
+
+     (ITEM-STRING [HELP-STRING] (KEY-BINDING-DATA) . REAL-BINDING)
+
+Don't put these sublists in the menu item yourself; menu display
+calculates them automatically.  Don't mention keyboard equivalents in
+the item strings themselves, since that is redundant.
+
+
+File: elisp,  Node: Extended Menu Items,  Next: Menu Separators,  Prev: Simple Menu Items,  Up: Defining Menus
+
+Extended Menu Items
+...................
+
+   An extended-format menu item is a more flexible and also cleaner
+alternative to the simple format.  It consists of a list that starts
+with the symbol `menu-item'.  To define a non-selectable string, the
+item looks like this:
+
+     (menu-item ITEM-NAME)
+
+A string starting with two or more dashes specifies a separator line;
+see *Note Menu Separators::.
+
+   To define a real menu item which can be selected, the extended format
+item looks like this:
+
+     (menu-item ITEM-NAME REAL-BINDING
+         . ITEM-PROPERTY-LIST)
+
+Here, ITEM-NAME is an expression which evaluates to the menu item
+string.  Thus, the string need not be a constant.  The third element,
+REAL-BINDING, is the command to execute.  The tail of the list,
+ITEM-PROPERTY-LIST, has the form of a property list which contains
+other information.  Here is a table of the properties that are
+supported:
+
+`:enable FORM'
+     The result of evaluating FORM determines whether the item is
+     enabled (non-`nil' means yes).  If the item is not enabled, you
+     can't really click on it.
+
+`:visible FORM'
+     The result of evaluating FORM determines whether the item should
+     actually appear in the menu (non-`nil' means yes).  If the item
+     does not appear, then the menu is displayed as if this item were
+     not defined at all.
+
+`:help HELP'
+     The value of this property, HELP, specifies a "help-echo" string
+     to display while the mouse is on that item.  This is displayed in
+     the same way as `help-echo' text properties (*note Help display::).
+     Note that this must be a constant string, unlike the `help-echo'
+     property for text and overlays.
+
+`:button (TYPE . SELECTED)'
+     This property provides a way to define radio buttons and toggle
+     buttons.  The CAR, TYPE, says which: it should be `:toggle' or
+     `:radio'.  The CDR, SELECTED, should be a form; the result of
+     evaluating it says whether this button is currently selected.
+
+     A "toggle" is a menu item which is labeled as either "on" or "off"
+     according to the value of SELECTED.  The command itself should
+     toggle SELECTED, setting it to `t' if it is `nil', and to `nil' if
+     it is `t'.  Here is how the menu item to toggle the
+     `debug-on-error' flag is defined:
+
+          (menu-item "Debug on Error" toggle-debug-on-error
+                     :button (:toggle
+                              . (and (boundp 'debug-on-error)
+                                     debug-on-error)))
+
+     This works because `toggle-debug-on-error' is defined as a command
+     which toggles the variable `debug-on-error'.
+
+     "Radio buttons" are a group of menu items, in which at any time one
+     and only one is "selected."  There should be a variable whose value
+     says which one is selected at any time.  The SELECTED form for
+     each radio button in the group should check whether the variable
+     has the right value for selecting that button.  Clicking on the
+     button should set the variable so that the button you clicked on
+     becomes selected.
+
+`:key-sequence KEY-SEQUENCE'
+     This property specifies which key sequence is likely to be bound
+     to the same command invoked by this menu item.  If you specify the
+     right key sequence, that makes preparing the menu for display run
+     much faster.
+
+     If you specify the wrong key sequence, it has no effect; before
+     Emacs displays KEY-SEQUENCE in the menu, it verifies that
+     KEY-SEQUENCE is really equivalent to this menu item.
+
+`:key-sequence nil'
+     This property indicates that there is normally no key binding
+     which is equivalent to this menu item.  Using this property saves
+     time in preparing the menu for display, because Emacs does not
+     need to search the keymaps for a keyboard equivalent for this menu
+     item.
+
+     However, if the user has rebound this item's definition to a key
+     sequence, Emacs ignores the `:keys' property and finds the keyboard
+     equivalent anyway.
+
+`:keys STRING'
+     This property specifies that STRING is the string to display as
+     the keyboard equivalent for this menu item.  You can use the
+     `\\[...]' documentation construct in STRING.
+
+`:filter FILTER-FN'
+     This property provides a way to compute the menu item dynamically.
+     The property value FILTER-FN should be a function of one argument;
+     when it is called, its argument will be REAL-BINDING.  The
+     function should return the binding to use instead.
+
+
+File: elisp,  Node: Menu Separators,  Next: Alias Menu Items,  Prev: Extended Menu Items,  Up: Defining Menus
+
+Menu Separators
+...............
+
+   A menu separator is a kind of menu item that doesn't display any
+text-instead, it divides the menu into subparts with a horizontal line.
+A separator looks like this in the menu keymap:
+
+     (menu-item SEPARATOR-TYPE)
+
+where SEPARATOR-TYPE is a string starting with two or more dashes.
+
+   In the simplest case, SEPARATOR-TYPE consists of only dashes.  That
+specifies the default kind of separator.  (For compatibility, `""' and
+`-' also count as separators.)
+
+   Starting in Emacs 21, certain other values of SEPARATOR-TYPE specify
+a different style of separator.  Here is a table of them:
+
+`"--no-line"'
+`"--space"'
+     An extra vertical space, with no actual line.
+
+`"--single-line"'
+     A single line in the menu's foreground color.
+
+`"--double-line"'
+     A double line in the menu's foreground color.
+
+`"--single-dashed-line"'
+     A single dashed line in the menu's foreground color.
+
+`"--double-dashed-line"'
+     A double dashed line in the menu's foreground color.
+
+`"--shadow-etched-in"'
+     A single line with a 3D sunken appearance.  This is the default,
+     used separators consisting of dashes only.
+
+`"--shadow-etched-out"'
+     A single line with a 3D raised appearance.
+
+`"--shadow-etched-in-dash"'
+     A single dashed line with a 3D sunken appearance.
+
+`"--shadow-etched-out-dash"'
+     A single dashed line with a 3D raised appearance.
+
+`"--shadow-double-etched-in"'
+     Two lines with a 3D sunken appearance.
+
+`"--shadow-double-etched-out"'
+     Two lines with a 3D raised appearance.
+
+`"--shadow-double-etched-in-dash"'
+     Two dashed lines with a 3D sunken appearance.
+
+`"--shadow-double-etched-out-dash"'
+     Two dashed lines with a 3D raised appearance.
+
+   You can also give these names in another style, adding a colon after
+the double-dash and replacing each single dash with capitalization of
+the following word.  Thus, `"--:singleLine"', is equivalent to
+`"--single-line"'.
+
+   Some systems and display toolkits don't really handle all of these
+separator types.  If you use a type that isn't supported, the menu
+displays a similar kind of separator that is supported.
+
+
+File: elisp,  Node: Alias Menu Items,  Prev: Menu Separators,  Up: Defining Menus
+
+Alias Menu Items
+................
+
+   Sometimes it is useful to make menu items that use the "same"
+command but with different enable conditions.  The best way to do this
+in Emacs now is with extended menu items; before that feature existed,
+it could be done by defining alias commands and using them in menu
+items.  Here's an example that makes two aliases for `toggle-read-only'
+and gives them different enable conditions:
+
+     (defalias 'make-read-only 'toggle-read-only)
+     (put 'make-read-only 'menu-enable '(not buffer-read-only))
+     (defalias 'make-writable 'toggle-read-only)
+     (put 'make-writable 'menu-enable 'buffer-read-only)
+
+   When using aliases in menus, often it is useful to display the
+equivalent key bindings for the "real" command name, not the aliases
+(which typically don't have any key bindings except for the menu
+itself).  To request this, give the alias symbol a non-`nil'
+`menu-alias' property.  Thus,
+
+     (put 'make-read-only 'menu-alias t)
+     (put 'make-writable 'menu-alias t)
+
+causes menu items for `make-read-only' and `make-writable' to show the
+keyboard bindings for `toggle-read-only'.
+
+
+File: elisp,  Node: Mouse Menus,  Next: Keyboard Menus,  Prev: Defining Menus,  Up: Menu Keymaps
+
+Menus and the Mouse
+-------------------
+
+   The usual way to make a menu keymap produce a menu is to make it the
+definition of a prefix key.  (A Lisp program can explicitly pop up a
+menu and receive the user's choice--see *Note Pop-Up Menus::.)
+
+   If the prefix key ends with a mouse event, Emacs handles the menu
+keymap by popping up a visible menu, so that the user can select a
+choice with the mouse.  When the user clicks on a menu item, the event
+generated is whatever character or symbol has the binding that brought
+about that menu item.  (A menu item may generate a series of events if
+the menu has multiple levels or comes from the menu bar.)
+
+   It's often best to use a button-down event to trigger the menu.  Then
+the user can select a menu item by releasing the button.
+
+   A single keymap can appear as multiple menu panes, if you explicitly
+arrange for this.  The way to do this is to make a keymap for each pane,
+then create a binding for each of those maps in the main keymap of the
+menu.  Give each of these bindings an item string that starts with `@'.
+The rest of the item string becomes the name of the pane.  See the
+file `lisp/mouse.el' for an example of this.  Any ordinary bindings
+with `@'-less item strings are grouped into one pane, which appears
+along with the other panes explicitly created for the submaps.
+
+   X toolkit menus don't have panes; instead, they can have submenus.
+Every nested keymap becomes a submenu, whether the item string starts
+with `@' or not.  In a toolkit version of Emacs, the only thing special
+about `@' at the beginning of an item string is that the `@' doesn't
+appear in the menu item.
+
+   You can also produce multiple panes or submenus from separate
+keymaps.  The full definition of a prefix key always comes from merging
+the definitions supplied by the various active keymaps (minor mode,
+local, and global).  When more than one of these keymaps is a menu,
+each of them makes a separate pane or panes (when Emacs does not use an
+X-toolkit) or a separate submenu (when using an X-toolkit).  *Note
+Active Keymaps::.
+
+
+File: elisp,  Node: Keyboard Menus,  Next: Menu Example,  Prev: Mouse Menus,  Up: Menu Keymaps
+
+Menus and the Keyboard
+----------------------
+
+   When a prefix key ending with a keyboard event (a character or
+function key) has a definition that is a menu keymap, the user can use
+the keyboard to choose a menu item.
+
+   Emacs displays the menu's overall prompt string followed by the
+alternatives (the item strings of the bindings) in the echo area.  If
+the bindings don't all fit at once, the user can type <SPC> to see the
+next line of alternatives.  Successive uses of <SPC> eventually get to
+the end of the menu and then cycle around to the beginning.  (The
+variable `menu-prompt-more-char' specifies which character is used for
+this; <SPC> is the default.)
+
+   When the user has found the desired alternative from the menu, he or
+she should type the corresponding character--the one whose binding is
+that alternative.
+
+   This way of using menus in an Emacs-like editor was inspired by the
+Hierarkey system.
+
+ - Variable: menu-prompt-more-char
+     This variable specifies the character to use to ask to see the
+     next line of a menu.  Its initial value is 32, the code for <SPC>.
+
+
+File: elisp,  Node: Menu Example,  Next: Menu Bar,  Prev: Keyboard Menus,  Up: Menu Keymaps
+
+Menu Example
+------------
+
+   Here is a complete example of defining a menu keymap.  It is the
+definition of the `Print' submenu in the `Tools' menu in the menu bar,
+and it uses the simple menu item format (*note Simple Menu Items::).
+First we create the keymap, and give it a name:
+
+     (defvar menu-bar-print-menu (make-sparse-keymap "Print"))
+
+Next we define the menu items:
+
+     (define-key menu-bar-print-menu [ps-print-region]
+       '("Postscript Print Region" . ps-print-region-with-faces))
+     (define-key menu-bar-print-menu [ps-print-buffer]
+       '("Postscript Print Buffer" . ps-print-buffer-with-faces))
+     (define-key menu-bar-print-menu [separator-ps-print]
+       '("--"))
+     (define-key menu-bar-print-menu [print-region]
+       '("Print Region" . print-region))
+     (define-key menu-bar-print-menu [print-buffer]
+       '("Print Buffer" . print-buffer))
+
+Note the symbols which the bindings are "made for"; these appear inside
+square brackets, in the key sequence being defined.  In some cases,
+this symbol is the same as the command name; sometimes it is different.
+These symbols are treated as "function keys", but they are not real
+function keys on the keyboard.  They do not affect the functioning of
+the menu itself, but they are "echoed" in the echo area when the user
+selects from the menu, and they appear in the output of `where-is' and
+`apropos'.
+
+   The binding whose definition is `("--")' is a separator line.  Like
+a real menu item, the separator has a key symbol, in this case
+`separator-ps-print'.  If one menu has two separators, they must have
+two different key symbols.
+
+   Here is code to define enable conditions for two of the commands in
+the menu:
+
+     (put 'print-region 'menu-enable 'mark-active)
+     (put 'ps-print-region-with-faces 'menu-enable 'mark-active)
+
+   Here is how we make this menu appear as an item in the parent menu:
+
+     (define-key menu-bar-tools-menu [print]
+       (cons "Print" menu-bar-print-menu))
+
+Note that this incorporates the submenu keymap, which is the value of
+the variable `menu-bar-print-menu', rather than the symbol
+`menu-bar-print-menu' itself.  Using that symbol in the parent menu
+item would be meaningless because `menu-bar-print-menu' is not a
+command.
+
+   If you wanted to attach the same print menu to a mouse click, you
+can do it this way:
+
+     (define-key global-map [C-S-down-mouse-1]
+        menu-bar-print-menu)
+
+   We could equally well use an extended menu item (*note Extended Menu
+Items::) for `print-region', like this:
+
+     (define-key menu-bar-print-menu [print-region]
+       '(menu-item "Print Region" print-region
+                   :enable mark-active))
+
+With the extended menu item, the enable condition is specified inside
+the menu item itself.  If we wanted to make this item disappear from
+the menu entirely when the mark is inactive, we could do it this way:
+
+     (define-key menu-bar-print-menu [print-region]
+       '(menu-item "Print Region" print-region
+                   :visible mark-active))
+
+
+File: elisp,  Node: Menu Bar,  Next: Tool Bar,  Prev: Menu Example,  Up: Menu Keymaps
+
+The Menu Bar
+------------
+
+   Most window systems allow each frame to have a "menu bar"--a
+permanently displayed menu stretching horizontally across the top of the
+frame.  The items of the menu bar are the subcommands of the fake
+"function key" `menu-bar', as defined by all the active keymaps.
+
+   To add an item to the menu bar, invent a fake "function key" of your
+own (let's call it KEY), and make a binding for the key sequence
+`[menu-bar KEY]'.  Most often, the binding is a menu keymap, so that
+pressing a button on the menu bar item leads to another menu.
+
+   When more than one active keymap defines the same fake function key
+for the menu bar, the item appears just once.  If the user clicks on
+that menu bar item, it brings up a single, combined menu containing all
+the subcommands of that item--the global subcommands, the local
+subcommands, and the minor mode subcommands.
+
+   The variable `overriding-local-map' is normally ignored when
+determining the menu bar contents.  That is, the menu bar is computed
+from the keymaps that would be active if `overriding-local-map' were
+`nil'.  *Note Active Keymaps::.
+
+   In order for a frame to display a menu bar, its `menu-bar-lines'
+parameter must be greater than zero.  Emacs uses just one line for the
+menu bar itself; if you specify more than one line, the other lines
+serve to separate the menu bar from the windows in the frame.  We
+recommend 1 or 2 as the value of `menu-bar-lines'.  *Note Window Frame
+Parameters::.
+
+   Here's an example of setting up a menu bar item:
+
+     (modify-frame-parameters (selected-frame)
+                              '((menu-bar-lines . 2)))
+     
+     ;; Make a menu keymap (with a prompt string)
+     ;; and make it the menu bar item's definition.
+     (define-key global-map [menu-bar words]
+       (cons "Words" (make-sparse-keymap "Words")))
+     
+     ;; Define specific subcommands in this menu.
+     (define-key global-map
+       [menu-bar words forward]
+       '("Forward word" . forward-word))
+     (define-key global-map
+       [menu-bar words backward]
+       '("Backward word" . backward-word))
+
+   A local keymap can cancel a menu bar item made by the global keymap
+by rebinding the same fake function key with `undefined' as the
+binding.  For example, this is how Dired suppresses the `Edit' menu bar
+item:
+
+     (define-key dired-mode-map [menu-bar edit] 'undefined)
+
+`edit' is the fake function key used by the global map for the `Edit'
+menu bar item.  The main reason to suppress a global menu bar item is
+to regain space for mode-specific items.
+
+ - Variable: menu-bar-final-items
+     Normally the menu bar shows global items followed by items defined
+     by the local maps.
+
+     This variable holds a list of fake function keys for items to
+     display at the end of the menu bar rather than in normal sequence.
+     The default value is `(help-menu)'; thus, the `Help' menu item
+     normally appears at the end of the menu bar, following local menu
+     items.
+
+ - Variable: menu-bar-update-hook
+     This normal hook is run whenever the user clicks on the menu bar,
+     before displaying a submenu.  You can use it to update submenus
+     whose contents should vary.
+
+
+File: elisp,  Node: Tool Bar,  Next: Modifying Menus,  Prev: Menu Bar,  Up: Menu Keymaps
+
+Tool bars
+---------
+
+   A "tool bar" is a row of icons at the top of a frame, that execute
+commands when you click on them--in effect, a kind of graphical menu
+bar.  Emacs supports tool bars starting with version 21.
+
+   The frame parameter `tool-bar-lines' (X resource `toolBar') controls
+how many lines' worth of height to reserve for the tool bar.  A zero
+value suppresses the tool bar.  If the value is nonzero, and
+`auto-resize-tool-bars' is non-`nil', the tool bar expands and
+contracts automatically as needed to hold the specified contents.
+
+   The tool bar contents are controlled by a menu keymap attached to a
+fake "function key" called `tool-bar' (much like the way the menu bar
+is controlled).  So you define a tool bar item using `define-key', like
+this:
+
+     (define-key global-map [tool-bar KEY] ITEM)
+
+where KEY is a fake "function key" to distinguish this item from other
+items, and ITEM is a menu item key binding (*note Extended Menu
+Items::), which says how to display this item and how it behaves.
+
+   The usual menu keymap item properties, `:visible', `:enable',
+`:button', and `:filter', are useful in tool bar bindings and have
+their normal meanings.  The REAL-BINDING in the item must be a command,
+not a keymap; in other words, it does not work to define a tool bar
+icon as a prefix key.
+
+   The `:help' property specifies a "help-echo" string to display while
+the mouse is on that item.  This is displayed in the same way as
+`help-echo' text properties (*note Help display::).
+
+   In addition, you should use the `:image' property; this is how you
+specify the image to display in the tool bar:
+
+`:image IMAGE'
+     IMAGES is either a single image specification or a vector of four
+     image specifications.  If you use a vector of four, one of them is
+     used, depending on circumstances:
+
+    item 0
+          Used when the item is enabled and selected.
+
+    item 1
+          Used when the item is enabled and deselected.
+
+    item 2
+          Used when the item is disabled and selected.
+
+    item 3
+          Used when the item is disabled and deselected.
+
+   If IMAGE is a single image specification, Emacs draws the tool bar
+button in disabled state by applying an edge-detection algorithm to the
+image.
+
+   The default tool bar is defined so that items specific to editing do
+not appear for major modes whose command symbol has a `mode-class'
+property of `special' (*note Major Mode Conventions::).  Major modes
+may add items to the global bar by binding `[tool-bar FOO]' in their
+local map.  It makes sense for some major modes to replace the default
+tool bar items completely, since not many can be accommodated
+conveniently, and the default bindings make this easy by using an
+indirection through `tool-bar-map'.
+
+ - Variable: tool-bar-map
+     By default, the global map binds `[tool-bar]' as follows:
+          (global-set-key [tool-bar]
+          		'(menu-item "tool bar" ignore
+          			    :filter (lambda (ignore) tool-bar-map)))
+
+     Thus the tool bar map is derived dynamically from the value of
+     variable `tool-bar-map' and you should normally adjust the default
+     (global) tool bar by changing that map.  Major modes may replace
+     the global bar completely by making `tool-bar-map' buffer-local
+     and set to a keymap containing only the desired items.  Info mode
+     provides an example.
+
+   There are two convenience functions for defining tool bar items, as
+follows.
+
+ - Function: tool-bar-add-item icon def key &rest props
+     This function adds an item to the tool bar by modifying
+     `tool-bar-map'.  The image to use is defined by ICON, which is the
+     base name of an XPM, XBM or PBM image file to located by
+     `find-image'.  Given a value `"exit"', say, `exit.xpm', `exit.pbm'
+     and `exit.xbm' would be searched for in that order on a color
+     display.  On a monochrome display, the search order is `.pbm',
+     `.xbm' and `.xpm'.  The binding to use is the command DEF, and KEY
+     is the fake function key symbol in the prefix keymap.  The
+     remaining arguments PROPS are additional property list elements to
+     add to the menu item specification.
+
+     To define items in some local map, bind ``tool-bar-map' with `let'
+     around calls of this function:
+          (defvar foo-tool-bar-map
+            (let ((tool-bar-map (make-sparse-keymap)))
+              (tool-bar-add-item ...)
+              ...
+              tool-bar-map))
+
+ - Function: tool-bar-add-item-from-menu command icon &optional map
+          &rest props
+     This command is a convenience for defining tool bar items which are
+     consistent with existing menu bar bindings.  The binding of
+     COMMAND is looked up in the menu bar in MAP (default `global-map')
+     and modified to add an image specification for ICON, which is
+     looked for in the same way as by `tool-bar-add-item'.  The
+     resulting binding is then placed in `tool-bar-map'.  MAP must
+     contain an appropriate keymap bound to `[menu-bar]'.  The
+     remaining arguments PROPS are additional property list elements to
+     add to the menu item specification.
+
+ - Variable: auto-resize-tool-bar
+     If this variable is non-`nil', the tool bar automatically resizes
+     to show all defined tool bar items--but not larger than a quarter
+     of the frame's height.
+
+ - Variable: auto-raise-tool-bar-items
+     If this variable is non-`nil', tool bar items display in raised
+     form when the mouse moves over them.
+
+ - Variable: tool-bar-item-margin
+     This variable specifies an extra margin to add around tool bar
+     items.  The value is an integer, a number of pixels.  The default
+     is 1.
+
+ - Variable: tool-bar-item-relief
+     This variable specifies the shadow width for tool bar items.  The
+     value is an integer, a number of pixels.  The default is 3.
+
+   You can define a special meaning for clicking on a tool bar item with
+the shift, control, meta, etc., modifiers.  You do this by setting up
+additional items that relate to the original item through the fake
+function keys.  Specifically, the additional items should use the
+modified versions of the same fake function key used to name the
+original item.
+
+   Thus, if the original item was defined this way,
+
+     (define-key global-map [tool-bar shell]
+       '(menu-item "Shell" shell
+                   :image (image :type xpm :file "shell.xpm")))
+
+then here is how you can define clicking on the same tool bar image with
+the shift modifier:
+
+     (define-key global-map [tool-bar S-shell] 'some-command)
+
+   *Note Function Keys::, for more information about how to add
+modifiers to function keys.
+
+
+File: elisp,  Node: Modifying Menus,  Prev: Tool Bar,  Up: Menu Keymaps
+
+Modifying Menus
+---------------
+
+   When you insert a new item in an existing menu, you probably want to
+put it in a particular place among the menu's existing items.  If you
+use `define-key' to add the item, it normally goes at the front of the
+menu.  To put it elsewhere in the menu, use `define-key-after':
+
+ - Function: define-key-after map key binding &optional after
+     Define a binding in MAP for KEY, with value BINDING, just like
+     `define-key', but position the binding in MAP after the binding
+     for the event AFTER.  The argument KEY should be of length one--a
+     vector or string with just one element.  But AFTER should be a
+     single event type--a symbol or a character, not a sequence.  The
+     new binding goes after the binding for AFTER.  If AFTER is `t' or
+     is omitted, then the new binding goes last, at the end of the
+     keymap.  However, new bindings are added before any inherited
+     keymap.
+
+     Here is an example:
+
+          (define-key-after my-menu [drink]
+            '("Drink" . drink-command) 'eat)
+
+     makes a binding for the fake function key <DRINK> and puts it
+     right after the binding for <EAT>.
+
+     Here is how to insert an item called `Work' in the `Signals' menu
+     of Shell mode, after the item `break':
+
+          (define-key-after
+            (lookup-key shell-mode-map [menu-bar signals])
+            [work] '("Work" . work-command) 'break)
+
+
+File: elisp,  Node: Modes,  Next: Documentation,  Prev: Keymaps,  Up: Top
+
+Major and Minor Modes
+*********************
+
+   A "mode" is a set of definitions that customize Emacs and can be
+turned on and off while you edit.  There are two varieties of modes:
+"major modes", which are mutually exclusive and used for editing
+particular kinds of text, and "minor modes", which provide features
+that users can enable individually.
+
+   This chapter describes how to write both major and minor modes, how
+to indicate them in the mode line, and how they run hooks supplied by
+the user.  For related topics such as keymaps and syntax tables, see
+*Note Keymaps::, and *Note Syntax Tables::.
+
+* Menu:
+
+* Major Modes::        Defining major modes.
+* Minor Modes::        Defining minor modes.
+* Mode Line Format::   Customizing the text that appears in the mode line.
+* Imenu::              How a mode can provide a menu
+                         of definitions in the buffer.
+* Font Lock Mode::     How modes can highlight text according to syntax.
+* Hooks::              How to use hooks; how to write code that provides hooks.
+

@@ -1,0 +1,162 @@
+<html>
+<head>
+  <title>
+  camelCase: Edit (java) camelCaseIds w/Emacs word-keystrokes
+    </title> 
+  <meta name="keywords"
+        content="camelCase camel-case word editing navigating deleting
+ 	         GNU Emacs Capital Capitalize Capitalization 
+                 transpose-words lowercase UPPERCASE" />
+  <meta name="description"
+        content="Edit camelCaseWords in GNU Emacs:
+	         A minor mode which extends forward-word, delete-word, etc.
+                 to also work on words within a camelCase name." />
+</head>
+<body bgcolor="white">
+<center>
+<blockquote>
+  <table>
+    <tr><td><h1>camelCase-mode</h1>
+     Edit (java) camelCaseIdentifiers using Emacs word-command keystrokes</td>
+    <td><image src="camelCaseWordEditingForGNUEmacs.gif"></td></tr>
+  </table>
+</blockquote>
+</center>
+
+<h3>Description</h3>
+
+<p><b>camelCase-mode</b> is a Gnu Emacs minor mode which extends the
+forward-word, backward-word, delete-word, etc. keystroke-commands so
+they also work on words within a <i>camelCase</i> identifier.  As a
+minor mode, camelCase-mode can be used within any other editing mode
+--- Java-mode, text-mode, etc.  No functionality is lost, since the
+forward s-expression, backward s-expression, delete s-expression,
+etc. commands are still available to navigate over entire camelCase
+names. </P>
+
+<p>Word boundaries within a camelCase name are marked only by letter case.
+For example lowerCapitalUPPERCase has four words.  A word may be
+lowercase, Capitalized, UPPERCASE, or a sequence of digits.  Besides
+non-letter to letter and letter to non-letter word boundaries,
+word boundaries in the middle of a sequence of letters are located at
+lowercaseCapital, CapitalCapital, lowercaseUPPERCASE,
+CapitalUPPERCASE, and UPPERCASECapital boundaries.</p>
+
+<p> Rebound keys:
+<code>
+<table align="center">
+<tr><td>M-f</td><td><i>M-right</i></td><td>C-right</td><td>camelCase-forward-word</td></tr>
+<tr><td>M-b</td><td><i>M-left</i></td><td>C-left</td><td>camelCase-backward-word</td></tr>
+<tr><td>M-d</td><td><i>M-delete</i></td><td><i>C-delete</i></td><td>camelCase-forward-kill-word</td></tr>
+<tr><td>M-DEL</td><td>M-backspace</td><td><i>C-backspace</i></td><td>camelCase-backward-kill-word</td></tr>
+<tr><td>M-t</td><td></td><td></td><td>camelCase-transpose-words</td></tr>
+<tr><td>M-c</td><td></td><td></td><td>camelCase-capitalize-word</td></tr>
+<tr><td>M-u</td><td></td><td></td><td>camelCase-upcase-word</td></tr>
+<tr><td>M-l</td><td></td><td></td><td>camelCase-downcase-word</td></tr>
+</table>
+</code>
+ (<i>Italic</i> means only in Gnu Emacs, not in XEMacs; the original
+  binding is not to the word command in XEmacs, so it is not overridden.)</p>
+
+<p><code>camelCase-mode</code> prefix arg:
+0 turns off, 1 turns on, nil toggles mode.</p>
+
+<h3>Subtleties</h3>
+
+<p>Handles uppercase acronyms within camelCase words.  For example
+"URLConnection" is like "URL_Connection", not "URLC_onnection".</p>
+
+<h3>Limitations</h3>
+
+<ul>
+<li>Does not affect other Emacs functions which operate on words,
+    such as dabbrev-mode
+<li>M-t transpose-words does not change case of words.  For example:
+  <ul>
+  <li>transposing "fooBar" produces "Barfoo", not "barFoo".
+  <li>transposing "fooBAR" produces "BARfoo", not "BARFoo".
+  <li>transposing "fooBar baz" at space produces "foobaz Bar" not "fooBaz bar"
+  </ul>
+  When this is an issue, capitalize words before transposing them,
+  e.g., M-b M-c M-t for the first two examples, or M-c M-b M-t for
+  the last one.
+</ul>
+
+<h3>Requirements</h3>
+
+<p>camelCase-mode has been developed and tested on Gnu Emacs 20.7.  It
+is also known to work on XEmacs 21.4.  It may well work on other
+versions of Emacs.  (There may be variation in how minor modes are
+installed.  There may also be variation in syntax for keybindings.) </p>
+
+<h3>Installation</h3>
+
+<p>
+To unpack, use your favorite unzipping tool, or use tar directly
+(note: .tgz = .tar.gz):<br />
+<pre>
+  tar -xzf camelCase.tgz
+</pre>
+To load:
+<pre>
+  M-x Load-file camelCase/camelCase-mode.elc
+</pre>
+To toggle on or off from any buffer:
+<pre>
+  M-x camelCase-mode
+</pre></p>
+
+<p>To make it always available, load it from your initialization file.</p>
+<p>A suggested Gnu Emacs <code>.emacs</code> (or XEmacs
+<code>.xemacs/init.el</code>) file initialization:
+<pre>
+   (autoload 'camelCase-mode "camelCase/camelCase-mode")
+   (add-hook 'java-mode-hook '(lambda () (camelCase-mode 1)))
+</pre>
+More global hooks are also possible:  
+<code>find-file-hooks</code>, <code>post-command-hook</code>
+</p>
+
+<h3>Copying</h3>
+
+<p>Copyright (C) 2001  C.R.Manning</p>
+
+<p>This program is free software; you can redistribute it and/or
+   modify it under the terms of the <a
+   href="COPYING">GNU&nbsp;General&nbsp;Public&nbsp;License</a> as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+</p>
+<p>This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+</p>
+<p>You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+</p>
+<h3>Updates</h3>
+
+<p>If any maintainenace updates are created, they will become available at the
+<a href="http://www.hotdispatch.com/officefronts/CaromaLab">
+CaromaLab</a> page.</p>
+
+<h3>Like it?  Tips are welcome in the tipjar.</h3>
+
+<p>camelCase-mode is free, open-source software.  If you enjoy this
+software, please consider contributing to the author's tipjar to show
+your appreciation for creating and distributing it, and to encourage
+future development.  Tips are accepted
+at the
+<a href="http://www.hotdispatch.com/officefronts/CaromaLabTipJar">
+CaromaLab&nbsp;TipJar</a> on HotDispatch.</p>
+
+<p>camelCase-mode extends Gnu Emacs, so if you have more time may also
+consider showing your appreciation to the creators and maintainers of
+Gnu Emacs by making a donation to the <a
+ href="http://www.gnu.org/help/donate.html">
+Free&nbsp;Software&nbsp;Foundation</a>.</p>
+
+</body>
+</html>

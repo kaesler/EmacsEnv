@@ -1,0 +1,1157 @@
+This is cvsbook.info, produced by makeinfo version 4.0 from main.texi.
+
+START-INFO-DIR-ENTRY
+* CVS Book: (cvsbook).          A CVS tutorial and reference.
+END-INFO-DIR-ENTRY
+
+Copyright (C) 1999, 2000 Karl Fogel <kfogel@red-bean.com>
+
+This document is free software; you can redistribute and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+This document is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+This manual describes how to use and administer CVS (Concurrent Versions
+System).  It is part of a larger work entitled `Open Source Development
+With CVS'; please see the introduction for details.
+
+This is version 1.21 of this manual.
+
+
+File: cvsbook.info,  Node: Removing Directories,  Next: Renaming Files And Directories,  Prev: Removing Files,  Up: Other Useful CVS Commands
+
+Removing Directories
+--------------------
+
+As I said before, CVS doesn't really keep directories under version
+control.  Instead, as a kind of cheap substitute, it offers certain odd
+behaviors that in most cases do the "right thing".  One of these odd
+behaviors is that empty directories can be treated specially.  If you
+want to remove a directory from a project, you first remove all the
+files in it
+
+     floss$ cd dir
+     floss$ rm file1 file2 file3
+     floss$ cvs remove file1 file2 file3
+       (output omitted)
+     floss$ cvs ci -m "removed all files" file1 file2 file3
+       (output omitted)
+
+and then run update in the directory above it with the -P flag:
+
+     floss$ cd ..
+     floss$ cvs update -P
+       (output omitted)
+
+The -P option tells update to "prune" any empty directories - that is,
+to remove them from the working copy.  Once that's done, the directory
+can be said to have been removed; all of its files are gone, and the
+directory itself is gone (from the working copy, at least, although
+there is actually still an empty directory in the repository).
+
+An interesting counterpart to this behavior is that when you run a plain
+update, CVS does not automatically bring new directories from the
+repository into your working copy.  There are a couple of different
+justifications for this, none really worth going into here.  The short
+answer is that from time to time you should run update with the -d flag,
+telling it to bring down any new directories from the repository.
+
+
+File: cvsbook.info,  Node: Renaming Files And Directories,  Next: Avoiding Option Fatigue,  Prev: Removing Directories,  Up: Other Useful CVS Commands
+
+Renaming Files And Directories
+------------------------------
+
+Renaming a file is equivalent to creating it under the new name and
+removing it under the old.  In Unix, the commands are:
+
+     floss$ cp oldname newname
+     floss$ rm oldname
+
+Here's the equivalent in CVS:
+
+     floss$ mv oldname newname
+     floss$ cvs remove oldname
+       (output omitted)
+     floss$ cvs add newname
+       (output omitted)
+     floss$ cvs ci -m "renamed oldname to newname" oldname newname
+       (output omitted)
+     floss$
+
+For files, that's all there is to it.  Renaming directories is not done
+very differently: create the new directory, cvs add it, move all the
+files from the old directory to the new one, cvs remove them from the
+old directory, cvs add them in the new one, cvs commit so everything
+takes effect, and then do cvs update -P to make the now-empty directory
+disappear from the working copy.  That is to say:
+
+     floss$ mkdir newdir
+     floss$ cvs add newdir
+     floss$ mv olddir/* newdir
+     mv: newdir/CVS: cannot overwrite directory
+     floss$ cd olddir
+     floss$ cvs rm foo.c bar.txt
+     floss$ cd ../newdir
+     floss$ cvs add foo.c bar.txt
+     floss$ cd ..
+     floss$ cvs commit -m "moved foo.c and bar.txt from olddir to newdir"
+     floss$ cvs update -P
+
+Note: the warning message after the third command.  It's telling you
+that it can't copy olddir's CVS/ subdirectory into newdir because newdir
+already has a directory of that name.  This is fine, because you want
+olddir to keep its CVS/ subdirectory anyway.
+
+Obviously, moving directories around can get a bit cumbersome.  The best
+policy is to try to come up with a good layout when you initially import
+your project so you won't have to move directories around very often.
+Later, you'll learn about a more drastic method of moving directories
+that involves making the change directly in the repository.  However,
+that method is best saved for emergencies; whenever possible, it's best
+to handle everything with CVS operations inside working copies.
+
+
+File: cvsbook.info,  Node: Avoiding Option Fatigue,  Next: Getting Snapshots (Dates And Tagging),  Prev: Renaming Files And Directories,  Up: Other Useful CVS Commands
+
+Avoiding Option Fatigue
+-----------------------
+
+Most people tire pretty quickly of typing the same option flags with
+every command.  If you know that you always want to pass the -Q global
+option or you always want to use -c with diff, why should you have to
+type it out each time?
+
+There is help, fortunately.  CVS looks for a .cvsrc file in your home
+directory.  In that file, you can specify default options to apply to
+every invocation of CVS.  Here's an example .cvsrc:
+
+     diff -c
+     update -P
+     cvs -q
+
+If the leftmost word on a line matches a CVS command (in its
+unabbreviated form), the corresponding options are used for that command
+every time.  For global options, you just use cvs.  So, for example,
+every time that user runs cvs diff, the -c flag is automatically
+included.
+
+
+File: cvsbook.info,  Node: Getting Snapshots (Dates And Tagging),  Next: Acceptable Date Formats,  Prev: Avoiding Option Fatigue,  Up: Other Useful CVS Commands
+
+Getting Snapshots (Dates And Tagging)
+-------------------------------------
+
+Let's return to the example of the program that's in a broken state when
+a bug report comes in.  The developer suddenly needs access to the
+entire project as it was at the time of the last release, even though
+many files may have been changed since then, and each file's revision
+number differs from the others.  It would be far too time-consuming to
+look over the log messages, figure out what each file's individual
+revision number was at the time of release, and then run update
+(specifying a revision number with -r) on each one of them.  In medium-
+to large-sized projects (tens to hundreds of files), such a process
+would be too unwieldy to attempt.
+
+CVS, therefore, provides a way to retrieve previous revisions of the
+files in a project en masse.  In fact, it provides two ways: by date,
+which selects the revisions based on the time that they were committed,
+and by tag, which retrieves a previously marked "snapshot" of the
+project.
+
+Which method you use depends on the situation.  The date-based
+retrievals are done by passing update the -D flag, which is similar to
+-r but takes dates instead of revision numbers:
+
+     floss$ cvs -q update -D "1999-04-19"
+     U hello.c
+     U a-subdir/subsubdir/fish.c
+     U b-subdir/random.c
+     floss$
+
+With the -D option, update retrieves the highest revision of each file
+as of the given date, and it will revert the files in the working copy
+to prior revisions if necessary.
+
+When you give the date, you can, and often should, include the time.
+For example, the previous command ended up retrieving revision 1.1 of
+everything (only three files showed changes, because all of the others
+are still at revision 1.1 anyway).  Here's the status of hello.c to
+prove it:
+
+     floss$ cvs -Q status hello.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:          1.1.1.1 Sat Apr 24 22:45:03 1999
+        Repository revision:       1.1.1.1 /usr/local/cvs/myproj/hello.c,v
+        Sticky Date:               99.04.19.05.00.00
+     floss$
+
+But a glance back at the log messages from earlier in this chapter shows
+that revision 1.2 of hello.c was definitely committed on April 19,
+1999.  So why did we now get revision 1.1 instead of 1.2?
+
+The problem is that the date "1999-04-19" was interpreted as meaning
+"the midnight that begins 1999-04-19" - that is, the very first instant
+on that date.  This is probably not what you want.  The 1.2 commit took
+place later in the day.  By qualifying the date more precisely, we can
+retrieve revision 1.2:
+
+     floss$ cvs -q update -D "1999-04-19 23:59:59"
+     U hello.c
+     U a-subdir/subsubdir/fish.c
+     U b-subdir/random.c
+     floss$ cvs status hello.c
+     ===================================================================
+     File: hello.c                 Status: Locally Modified
+        Working revision:  1.2     Sat Apr 24 22:45:22 1999
+        Repository revision:       1.2     /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                (none)
+        Sticky Date:               99.04.20.04.59.59
+        Sticky Options:    (none)
+     floss$
+
+We're almost there.  If you look closely at the date/time on the Sticky
+Date line, it seems to indicate 4:59:59 A.M., not 11:59 as the command
+requested (later we'll get to what the "sticky" means).  As you may have
+guessed, the discrepancy is due to the difference between local time and
+Universal Coordinated Time (also known as "Greenwich mean time").  The
+repository always stores dates in Universal Time, but CVS on the client
+side usually assumes the local system time zone.  In the case of -D,
+this is rather unfortunate because you're probably most interested in
+comparing against the repository time and don't care about the local
+system's idea of time.  You can get around this by specifying the GMT
+zone in the command:
+
+     floss$ cvs -q update -D "1999-04-19 23:59:59 GMT"
+     U hello.c
+     floss$ cvs -q status hello.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:  1.2     Sun Apr 25 22:38:53 1999
+        Repository revision:       1.2     /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                (none)
+        Sticky Date:               99.04.19.23.59.59
+        Sticky Options:    (none)
+     floss$
+
+There - that brought the working copy back to the final commits from
+April 19 (unless there were any commits during the last second of the
+day, which there weren't).
+
+What happens now if you run update?
+
+     floss$ cvs update
+     cvs update: Updating .
+     cvs update: Updating a-subdir
+     cvs update: Updating a-subdir/subsubdir
+     cvs update: Updating b-subdir
+     floss$
+
+Nothing happens at all.  But you know that there are more recent
+versions of at least three files.  Why aren't these included in your
+working copy?
+
+That's where the "sticky" comes in.  Updating ("downdating"?) with the
+-D flag causes the working copy to be restricted permanently to that
+date or before.  In CVS terminology, the working copy has a "sticky
+date" set.  Once a working copy has acquired a sticky property, it stays
+sticky until told otherwise.  Therefore, subsequent updates will not
+automatically retrieve the most recent revision.  Instead, they'll stay
+restricted to the sticky date.  Stickiness can be revealed by running
+cvs status or by directly examining the CVS/Entries file:
+
+     floss$ cvs -q update -D "1999-04-19 23:59:59 GMT"
+     U hello.c
+     floss$ cat CVS/Entries
+     D/a-subdir////
+     D/b-subdir////
+     D/c-subdir////
+     /README.txt/1.1.1.1/Sun Apr 18 18:18:22 1999//D99.04.19.23.59.59
+     /hello.c/1.2/Sun Apr 25 23:07:29 1999//D99.04.19.23.59.59
+     floss$
+
+If you were to modify hello.c and then try to commit
+
+     floss$ cvs update
+     M hello.c
+     floss$ cvs ci -m "trying to change the past"
+     cvs commit: cannot commit with sticky date for file 'hello.c'
+     cvs [commit aborted]: correct above errors first!
+     floss$
+
+CVS would not permit the commit to happen because that would be like
+allowing you to go back and change the past.  CVS is all about record
+keeping and, therefore, will not allow you to do that.
+
+This does not mean CVS is unaware of all the revisions that have been
+committed since that date, however.  You can still compare the
+sticky-dated working copy against other revisions, including future
+ones:
+
+     floss$ cvs -q diff -c -r 1.5 hello.c
+     Index: hello.c
+     ===================================================================
+     RCS file: /usr/local/cvs/myproj/hello.c,v
+     retrieving revision 1.5
+     diff -c -r1.5 hello.c
+     *** hello.c   1999/04/24 22:09:27     1.5
+     --- hello.c   1999/04/25 00:08:44
+     ***************
+     *** 3,9 ****
+       void
+       main ()
+       {
+         printf ("Hello, world!\n");
+     -   printf ("between hello and goodbye\n");
+         printf ("Goodbye, world!\n");
+       }
+     --- 3,9 --
+       void
+       main ()
+       {
+     +   /* this line was added to a downdated working copy */
+         printf ("Hello, world!\n");
+         printf ("Goodbye, world!\n");
+       }
+
+This diff reveals that, as of April 19, 1999, the between hello and
+goodbye line had not yet been added.  It also shows the modification
+that we made to the working copy (adding the comment shown in the
+preceding code snippet).
+
+You can remove a sticky date (or any sticky property) by updating with
+the -A flag (-A stands for "reset", don't ask me why), which brings the
+working copy back to the most recent revisions:
+
+     floss$ cvs -q update -A
+     U hello.c
+     floss$ cvs status hello.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:  1.5     Sun Apr 25 22:50:27 1999
+        Repository revision:       1.5     /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                (none)
+        Sticky Date:               (none)
+        Sticky Options:    (none)
+     floss$
+
+
+File: cvsbook.info,  Node: Acceptable Date Formats,  Next: Marking A Moment In Time (Tags),  Prev: Getting Snapshots (Dates And Tagging),  Up: Other Useful CVS Commands
+
+Acceptable Date Formats
+-----------------------
+
+CVS accepts a wide range of syntaxes to specify dates.  You'll never go
+wrong if you use ISO 8601 format (that is, the International Standards
+Organization standard #8601, see also
+www.saqqara.demon.co.uk/datefmt.htm), which is the format used in the
+preceding examples.  You can also use Internet email dates as described
+in RFC 822 and RFC 1123 (see www.rfc-editor.org/rfc/).  Finally, you can
+use certain unambiguous English constructs to specify dates relative to
+the current date.
+
+You will probably never need all of the formats available, but here are
+some more examples to give you an idea of what CVS accepts:
+
+     floss$ cvs update -D "19 Apr 1999"
+     floss$ cvs update -D "19 Apr 1999 20:05"
+     floss$ cvs update -D "19/04/1999"
+     floss$ cvs update -D "3 days ago"
+     floss$ cvs update -D "5 years ago"
+     floss$ cvs update -D "19 Apr 1999 23:59:59 GMT"
+     floss$ cvs update -D "19 Apr"
+
+The double quotes around the dates are there to ensure that the Unix
+shell treats the date as one argument even if it contains spaces.  The
+quotes will do no harm if the date doesn't contain spaces, so it's
+probably best to always use them.
+
+
+File: cvsbook.info,  Node: Marking A Moment In Time (Tags),  Prev: Acceptable Date Formats,  Up: Other Useful CVS Commands
+
+Marking A Moment In Time (Tags)
+-------------------------------
+
+Retrieving by date is useful when the mere passage of time is your main
+concern.  But more often what you really want to do is retrieve the
+project as it was at the time of a specific event - perhaps a public
+release, a known stable point in the software's development, or the
+addition or removal of some major feature.
+
+Trying to remember the date when that event took place or deducing the
+date from log messages would be a tedious process.  Presumably, the
+event, because it was important, was marked as such in the formal
+revision history.  The method CVS offers for making such marks is known
+as "tagging".
+
+Tags differ from commits in that they don't record any particular
+textual change to files, but rather a change in the developers' attitude
+about the files.  A tag gives a label to the collection of revisions
+represented by one developer's working copy (usually, that working copy
+is completely up to date so the tag name is attached to the "latest and
+greatest" revisions in the repository).
+
+Setting a tag is as simple as this:
+
+     floss$ cvs -q tag Release-1999_05_01
+     T README.txt
+     T hello.c
+     T a-subdir/whatever.c
+     T a-subdir/subsubdir/fish.c
+     T b-subdir/random.c
+     floss$
+
+That command associates the symbolic name "Release-1999_05_01" with the
+snapshot represented by this working copy.  Defined formally, snapshot
+means a set of files and associated revision numbers from the project.
+Those revision numbers do not have to be the same from file to file and,
+in fact, usually aren't.  For example, assuming that tag was done on the
+same myproj directory that we've been using throughout this chapter and
+that the working copy was completely up to date, the symbolic name
+"Release-1999_05_01" will be attached to hello.c at revision 1.5, to
+fish.c at revision 1.2, to random.c at revision 1.2, and to everything
+else at revision 1.1.
+
+It may help to visualize a tag as a path or string linking various
+revisions of files in the project.  In Figure 2.1, an imaginary string
+passes through the tagged revision number of each file in a project.
+
+
+          File A      File B      File C      File D      File E
+          ------      ------      ------      ------      ------
+          1.1         1.1         1.1         1.1         1.1
+      ----1.2-.       1.2         1.2         1.2         1.2
+          1.3 |       1.3         1.3         1.3         1.3
+               \      1.4       .-1.4-.       1.4         1.4
+                \     1.5      /  1.5  \      1.5         1.5
+                 \    1.6     /   1.6   |     1.6         1.6
+                  \   1.7    /          |     1.7         1.7
+                   \  1.8   /           |     1.8       .-1.8------->
+                    \ 1.9  /            |     1.9      /  1.9
+                     `1.10'             |     1.10    /   1.10
+                      1.11              |     1.11    |
+                                        |     1.12    |
+                                        |     1.13    |
+                                         \    1.14    |
+                                          \   1.15   /
+                                           \  1.16  /
+                                            `-1.17-'
+     
+     [Figure 2.1: How a tag might stand in relation to files's revisions.]
+
+But if you pull the string taut and sight directly along it, you'll see
+a particular moment in the project's history - namely, the moment that
+the tag was set (Figure 2.2).
+
+
+          File A      File B      File C      File D      File E
+          ------      ------      ------      ------      ------
+                                              1.1
+                                              1.2
+                                              1.3
+                                              1.4
+                                              1.5
+                                              1.6
+                                              1.7
+                      1.1                     1.8
+                      1.2                     1.9
+                      1.3                     1.10        1.1
+                      1.4                     1.11        1.2
+                      1.5                     1.12        1.3
+                      1.6                     1.13        1.4
+                      1.7         1.1         1.14        1.5
+                      1.8         1.2         1.15        1.6
+          1.1         1.9         1.3         1.16        1.7
+      ----1.2---------1.10--------1.4---------1.17--------1.8------->
+          1.3         1.11        1.5         1.17        1.9
+                                  1.6         1.17        1.10
+     
+     [Figure 2.2: The same tag as a "straight sight" through the revision history.]
+
+As you continue to edit files and commit changes, the tag will not move
+along with the increasing revision numbers.  It stays fixed, "stickily",
+at the revision number of each file at the time the tag was made.
+
+Given their importance as descriptors, it's a bit unfortunate that log
+messages can't be included with tags or that the tags themselves can't
+be full paragraphs of prose.  In the preceding example, the tag is
+fairly obviously stating that the project was in a releasable state as
+of a certain date.  However, sometimes you may want to make snapshots of
+a more complex state, which can result in ungainly tag names such as:
+
+     floss$ cvs tag testing-release-3_pre-19990525-public-release
+
+As a general rule, you should try to keep tags as terse as possible
+while still including all necessary information about the event that
+you're trying to record.  When in doubt, err on the side of being overly
+descriptive - you'll be glad later when you're able to tell from some
+verbose tag name exactly what circumstance was recorded.
+
+You've probably noticed that no periods or spaces were used in the tag
+names.  CVS is rather strict about what constitutes a valid tag name.
+The rules are that it must start with a letter and contain letters,
+digits, hyphens ("-"), and underscores ("_").  No spaces, periods,
+colons, commas, or any other symbols may be used.
+
+To retrieve a snapshot by tag name, the tag name is used just like a
+revision number.  There are two ways to retrieve snapshots: You can
+check out a new working copy with a certain tag, or you can switch an
+existing working copy over to a tag.  Both result in a working copy
+whose files are at the revisions specified by the tag.
+
+Most of the time, what you're trying to do is take a look at the project
+as it was at the time of the snapshot.  You may not necessarily want to
+do this in your main working copy, where you presumably have uncommitted
+changes and other useful states built up, so let's assume you just want
+to check out a separate working copy with the tag.  Here's how (but make
+sure to invoke this somewhere other than in your existing working copy
+or its parent directory!):
+
+     floss$ cvs checkout -r Release-1999_05_01 myproj
+     cvs checkout: Updating myproj
+     U myproj/README.txt
+     U myproj/hello.c
+     cvs checkout: Updating myproj/a-subdir
+     U myproj/a-subdir/whatever.c
+     cvs checkout: Updating myproj/a-subdir/subsubdir
+     U myproj/a-subdir/subsubdir/fish.c
+     cvs checkout: Updating myproj/b-subdir
+     U myproj/b-subdir/random.c
+     cvs checkout: Updating myproj/c-subdir
+
+We've seen the -r option before in the update command, where it preceded
+a revision number.  In many ways a tag is just like a revision number
+because, for any file, a given tag corresponds to exactly one revision
+number (it's illegal, and generally impossible, to have two tags of the
+same name in the same project).  In fact, anywhere you can use a
+revision number as part of a CVS command, you can use a tag name instead
+(as long as the tag has been set previously).  If you want to diff a
+file's current state against its state at the time of the last release,
+you can do this:
+
+     floss$ cvs diff -c -r Release-1999_05_01 hello.c
+
+And if you want to revert it temporarily to that revision, you can do
+this:
+
+     floss$ cvs update -r Release-1999_05_01 hello.c
+
+The interchangeability of tags and revision numbers explains some of the
+strict rules about valid tag names.  Imagine if periods were legal in
+tag names; you could have a tag named "1.3" attached to an actual
+revision number of "1.47".  If you then issued the command
+
+     floss$ cvs update -r 1.3 hello.c
+
+how would CVS know whether you were referring to the tag named "1.3", or
+the much earlier revision 1.3 of hello.c? Thus, restrictions are placed
+on tag names so that they can always be easily distinguished from
+revision numbers.  A revision number has a period; a tag name doesn't.
+(There are reasons for the other restrictions, too, mostly having to do
+with making tag names easy for CVS to parse.)
+
+As you've probably guessed by this point, the second method of
+retrieving a snapshot - that is, switching an existing working
+directory over to the tagged revisions-is also done by updating:
+
+     floss$ cvs update -r Release-1999_05_01
+     cvs update: Updating .
+     cvs update: Updating a-subdir
+     cvs update: Updating a-subdir/subsubdir
+     cvs update: Updating b-subdir
+     cvs update: Updating c-subdir
+     floss$
+
+The preceding command is just like the one we used to revert hello.c to
+`Release-1999_05_01', except that the filename is omitted because we
+want to revert the entire project over.  (You can, if you want, revert
+just one subtree of the project to the tag by invoking the preceding
+command in that subtree instead of from the top level, although you
+hardly ever would want to do that.)
+
+Note that no files appear to have changed when we updated.  The working
+copy was completely up to date when we tagged, and no changes had been
+committed since the tagging.
+
+However, this does not mean that nothing changed at all.  The working
+copy now knows that it's at a tagged revision.  When you make a change
+and try to commit it (let's assume we modified hello.c):
+
+     floss$ cvs -q update
+     M hello.c
+     floss$ cvs -q ci -m "trying to commit from a working copy on a tag"
+     cvs commit: sticky tag 'Release-1999_05_01' for file 'hello.c' is not a branch
+     cvs [commit aborted]: correct above errors first!
+     floss$
+
+CVS does not permit the commit to happen. (Don't worry about the exact
+meaning of that error message yet - we'll cover branches next in this
+chapter.)  It doesn't matter whether the working copy got to be on a tag
+via a checkout or an update.  Once it is on a tag, CVS views the working
+copy as a static snapshot of a moment in history, and CVS won't let you
+change history, at least not easily.  If you run cvs status or look at
+the CVS/Entries files, you'll see that there is a sticky tag set on each
+file.  Here's the top level Entries file, for example:
+
+     floss$ cat CVS/Entries
+     D/a-subdir////
+     D/b-subdir////
+     D/c-subdir////
+     /README.txt/1.1.1.1/Sun Apr 18 18:18:22 1999//TRelease-1999_05_01
+     /hello.c/1.5/Tue Apr 20 07:24:10 1999//TRelease-1999_05_01
+     floss$
+
+Tags, like other sticky properties, are removed with the -A flag to
+update:
+
+     floss$ cvs -q update -A
+     M hello.c
+     floss$
+
+The modification to hello.c did not go away, however; CVS is still aware
+that the file changed with respect to the repository:
+
+     floss$ cvs -q diff -c hello.c
+     Index: hello.c
+     ===================================================================
+     RCS file: /usr/local/cvs/myproj/hello.c,v
+     retrieving revision 1.5
+     diff -c -r1.5 hello.c
+     *** hello.c   1999/04/20 06:12:56     1.5
+     --- hello.c   1999/05/04 20:09:17
+     ***************
+     *** 6,9 ****
+     --- 6,10 --
+         printf ("Hello, world!\n");
+         printf ("between hello and goodbye\n");
+         printf ("Goodbye, world!\n");
+     +   /* a comment on the last line */
+       }
+     floss$
+
+Now that you've reset with update, CVS will accept a commit:
+
+     floss$ cvs ci -m "added comment to end of main function"
+     cvs commit: Examining .
+     cvs commit: Examining a-subdir
+     cvs commit: Examining a-subdir/subsubdir
+     cvs commit: Examining b-subdir
+     cvs commit: Examining c-subdir
+     Checking in hello.c;
+     /usr/local/cvs/myproj/hello.c,v  <-  hello.c
+     new revision: 1.6; previous revision: 1.5
+     done
+     floss$
+
+The tag `Release-1999_05_01' is still attached to revision 1.5, of
+course.  Compare the file's status before and after a reversion to the
+tag:
+
+     floss$ cvs -q status hello.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:  1.6     Tue May  4 20:09:17 1999
+        Repository revision:       1.6     /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                (none)
+        Sticky Date:               (none)
+        Sticky Options:            (none)
+     floss$ cvs -q update -r Release-1999_05_01
+     U hello.c
+     floss$ cvs -q status hello.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:  1.5     Tue May  4 20:21:12 1999
+        Repository revision:       1.5     /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                Release-1999_05_01 (revision: 1.5)
+        Sticky Date:               (none)
+        Sticky Options:            (none)
+     floss$
+
+Now, having just told you that CVS doesn't let you change history, I'll
+show you how to change history.
+
+
+File: cvsbook.info,  Node: Branches,  Prev: Other Useful CVS Commands,  Up: An Overview of CVS
+
+Branches
+========
+
+We've been viewing CVS as a kind of intelligent, coordinating library.
+However, it can also be thought of as a time machine (thanks to Jim
+Blandy for the analogy).  So far, we've only seen how you can examine
+the past with CVS, without affecting anything.  Like all good time
+machines, CVS also allows you to go back in time to change the past.
+What do you get then? Science fiction fans know the answer to that
+question: an alternate universe, running parallel to ours, but diverging
+from ours at exactly the point where the past was changed.  A CVS branch
+splits a project's development into separate, parallel histories.
+Changes made on one branch do not affect the other.
+
+* Menu:
+
+* Branching Basics::
+* Merging Changes From Branch To Trunk::
+* Multiple Merges::
+* Creating A Tag Or Branch Without A Working Copy::
+
+
+File: cvsbook.info,  Node: Branching Basics,  Next: Merging Changes From Branch To Trunk,  Up: Branches
+
+Branching Basics
+----------------
+
+Why are branches useful?
+
+Let's return for a moment to the scenario of the developer who, in the
+midst of working on a new version of the program, receives a bug report
+about an older released version.  Assuming the developer fixes the
+problem, she still needs a way to deliver the fix to the customer.  It
+won't help to just find an old copy of the program somewhere, patch it
+up without CVS's knowledge, and ship it off.  There would be no record
+of what was done; CVS would be unaware of the fix; and later if
+something was discovered to be wrong with the patch, no one would have a
+starting point for reproducing the problem.
+
+It's even more ill-advised to fix the bug in the current, unstable
+version of the sources and ship that to the customer.  Sure, the
+reported bug may be solved, but the rest of the code is in a
+half-implemented, untested state.  It may run, but it's certainly not
+ready for prime time.
+
+Because the last released version is thought to be stable, aside from
+this one bug, the ideal solution is to go back and correct the bug in
+the old release - that is, to create an alternate universe in which the
+last public release includes this bug fix.
+
+That's where branches come in.  The developer splits off a branch,
+rooted in the main line of development (the trunk) not at its most
+recent revisions, but back at the point of the last release.  Then she
+checks out a working copy of this branch, makes whatever changes are
+necessary to fix the bug, and commits them on that branch, so there's a
+record of the bug fix.  Now she can package up an interim release based
+on the branch and ship it to the customer.
+
+Her change won't have affected the code on the trunk, nor would she want
+it to without first finding out whether the trunk needs the same bug fix
+or not.  If it does, she can merge the branch changes into the trunk.
+In a merge, CVS calculates the changes made on the branch between the
+point where it diverged from the trunk and the branch's tip (its most
+recent state), then applies those differences to the project at the tip
+of the trunk.  The difference between the branch's root and its tip
+works out, of course, to be precisely the bug fix.
+
+Another good way to think of a merge is as a special case of updating.
+The difference is that in a merge, the changes to be incorporated are
+derived by comparing the branch's root and tip, instead of by comparing
+the working copy against the repository.
+
+The act of updating is itself similar to receiving patches directly from
+their authors and applying them by hand.  In fact, to do an update, CVS
+calculates the difference (that's "difference" as in the diff program)
+between the working copy and the repository and then applies that diff
+to the working copy just as the patch program would.  This mirrors the
+way in which a developer takes changes from the outside world, by
+manually applying patch files sent in by contributors.
+
+Thus, merging the bug fix branch into the trunk is just like accepting
+some outside contributor's patch to fix the bug.  The contributor would
+have made the patch against the last released version, just as the
+branch's changes are against that version.  If that area of code in the
+current sources hasn't changed much since the last release, the merge
+will succeed with no problems.  If the code is now substantially
+different, however, the merge will fail with conflict (that is, the
+patch will be rejected), and some manual fiddling will be necessary.
+Usually this is accomplished by reading the conflicting area, making the
+necessary changes by hand, and committing.  Figure 2.3 shows a picture
+of what happens in a branch and merge.
+
+
+                  (branch on which bug was fixed)
+                .---------------->---------------.
+               /                                 |
+              /                                  |
+             /                                   |
+            /                                    |
+           /                                     V (<------ point of merge)
+      ====*===================================================================>
+                     (main line of development)
+     
+     
+     [Figure 2.3: A branch and then a merge.  Time flows left to right.]
+
+We'll now walk through the steps necessary to make this picture happen.
+Remember that it's not really time that's flowing from left to right in
+the diagram, but rather the revision history.  The branch will not have
+been made at the time of the release, but is created later, rooted back
+at the release's revisions.
+
+In our case, let's assume the files in the project have gone through
+many revisions since they were tagged as `Release-1999_05_01', and
+perhaps files have been added as well.  When the bug report regarding
+the old release comes in, the first thing we'll want to do is create a
+branch rooted at the old release, which we conveniently tagged
+`Release-1999_05_01'.
+
+One way to do this is to first check out a working copy based on that
+tag, then create the branch by re-tagging with the -b (branch) option:
+
+     floss$ cd ..
+     floss$ ls
+     myproj/
+     floss$ cvs -q checkout -d myproj_old_release -r Release-1999_05_01 myproj
+     U myproj_old_release/README.txt
+     U myproj_old_release/hello.c
+     U myproj_old_release/a-subdir/whatever.c
+     U myproj_old_release/a-subdir/subsubdir/fish.c
+     U myproj_old_release/b-subdir/random.c
+     floss$ ls
+     myproj/      myproj_old_release/
+     floss$ cd myproj_old_release
+     floss$ ls
+     CVS/      README.txt  a-subdir/   b-subdir/   hello.c
+     floss$ cvs -q tag -b Release-1999_05_01-bugfixes
+     T README.txt
+     T hello.c
+     T a-subdir/whatever.c
+     T a-subdir/subsubdir/fish.c
+     T b-subdir/random.c
+     floss$
+
+Take a good look at that last command.  It may seem somewhat arbitrary
+that tag is used to create branches, but there's actually a reason for
+it: The tag name will serve as a label by which the branch can be
+retrieved later.  Branch tags do not look any different from non-branch
+tags, and are subject to the same naming restrictions.  Some people like
+to always include the word branch in the tag name itself (for example,
+`Release-1999_05_01-bugfix-branch'), so they can distinguish branch
+tags from other kinds of tags.  You may want to do this if you find
+yourself often retrieving the wrong tag.
+
+(And while we're at it, note the -d myproj_old_release option to
+checkout in the first CVS command.  This tells checkout to put the
+working copy in a directory called myproj_old_release, so we won't
+confuse it with the current version in myproj.  Be careful not to
+confuse this use of -d with the global option of the same name, or with
+the -d option to update.)
+
+Of course, merely running the tag command does not switch this working
+copy over to the branch.  Tagging never affects the working copy; it
+just records some extra information in the repository to allow you to
+retrieve that working copy's revisions later on (as a static piece of
+history or as a branch, as the case may be).
+
+Retrieval can be done one of two ways (you're probably getting used to
+this motif by now!).  You can check out a new working copy on the branch
+
+     floss$ pwd
+     /home/whatever
+     floss$ cvs co -d myproj_branch -r Release-1999_05_01-bugfixes myproj
+
+or switch an existing working copy over to it:
+
+     floss$ pwd
+     /home/whatever/myproj
+     floss$ cvs update -r Release-1999_05_01-bugfixes
+
+The end result is the same (well, the name of the new working copy's
+top-level directory may be different, but that's not important for CVS's
+purposes).  If your current working copy has uncommitted changes, you'll
+probably want to use checkout instead of update to access the branch.
+Otherwise, CVS attempts to merge your changes into the working copy as
+it switches it over to the branch.  In that case, you might get
+conflicts, and even if you didn't, you'd still have an impure branch.
+It won't truly reflect the state of the program as of the designated
+tag, because some files in the working copy will contain modifications
+made by you.
+
+Anyway, let's assume that by one method or another you get a working
+copy on the desired branch:
+
+     floss$ cvs -q status hello.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:  1.5     Tue Apr 20 06:12:56 1999
+        Repository revision:       1.5     /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                Release-1999_05_01-bugfixes
+     (branch: 1.5.2)
+        Sticky Date:               (none)
+        Sticky Options:            (none)
+     floss$ cvs -q status b-subdir/random.c
+     ===================================================================
+     File: random.c                Status: Up-to-date
+        Working revision:  1.2     Mon Apr 19 06:35:27 1999
+        Repository revision:       1.2 /usr/local/cvs/myproj/b-subdir/random.c,v
+        Sticky Tag:                Release-1999_05_01-bugfixes (branch: 1.2.2)
+        Sticky Date:               (none)
+        Sticky Options:            (none)
+     floss$
+
+(The contents of those `Sticky Tag' lines will be explained shortly.)
+If you modify hello.c and random.c, and commit
+
+     floss$ cvs -q update
+     M hello.c
+     M b-subdir/random.c
+     floss$ cvs ci -m "fixed old punctuation bugs"
+     cvs commit: Examining .
+     cvs commit: Examining a-subdir
+     cvs commit: Examining a-subdir/subsubdir
+     cvs commit: Examining b-subdir
+     Checking in hello.c;
+     /usr/local/cvs/myproj/hello.c,v  <-  hello.c
+     new revision: 1.5.2.1; previous revision: 1.5
+     done
+     Checking in b-subdir/random.c;
+     /usr/local/cvs/myproj/b-subdir/random.c,v  <-  random.c
+     new revision: 1.2.2.1; previous revision: 1.2
+     done
+     floss$
+
+you'll notice that there's something funny going on with the revision
+numbers:
+
+     floss$ cvs -q status hello.c b-subdir/random.c
+     ===================================================================
+     File: hello.c                 Status: Up-to-date
+        Working revision:  1.5.2.1 Wed May  5 00:13:58 1999
+        Repository revision:       1.5.2.1 /usr/local/cvs/myproj/hello.c,v
+        Sticky Tag:                Release-1999_05_01-bugfixes (branch: 1.5.2)
+        Sticky Date:               (none)
+        Sticky Options:            (none)
+     ===================================================================
+     File: random.c                Status: Up-to-date
+        Working revision:  1.2.2.1 Wed May  5 00:14:25 1999
+        Repository revision:       1.2.2.1 /usr/local/cvs/myproj/b-subdir/random.c,v
+        Sticky Tag:                Release-1999_05_01-bugfixes (branch: 1.2.2)
+        Sticky Date:               (none)
+        Sticky Options:            (none)
+     floss$
+
+They now have four digits instead of two!
+
+A closer look reveals that each file's revision number is just the
+branch number (as shown on the `Sticky Tag' line) plus an extra digit
+on the end.
+
+What you're seeing is a little bit of CVS's inner workings.  Although
+you almost always use a branch to mark a project-wide divergence, CVS
+actually records the branch on a per-file basis.  This project had five
+files in it at the point of the branch, so five individual branches were
+made, all with the same tag name: `Release-1999_05_01-bugfixes'.
+
+Most people consider this per-file scheme a rather inelegant
+implementation on CVS's part.  It's a bit of the old RCS legacy showing
+through-RCS didn't know how to group files into projects, and even
+though CVS does, it still uses code inherited from RCS to handle
+branches.
+
+Ordinarily, you don't need to be too concerned with how CVS is keeping
+track of things internally, but in this case, it helps to understand the
+relationship between branch numbers and revision numbers.  Let's look at
+the hello.c file; everything I'm about to say about hello.c applies to
+the other files in the branch (with revision/branch numbers adjusted
+accordingly).
+
+The hello.c file was on revision 1.5 at the point where the branch was
+rooted.  When we created the branch, a new number was tacked onto the
+end to make a branch number (CVS chooses the first unused even, nonzero
+integer).  Thus, the branch number in this case became `1.5.2'.  The
+branch number by itself is not a revision number, but it is the root
+(that is, the prefix) of all the revision numbers for hello.c along this
+branch.
+
+However, when we ran that first CVS status in a branched working copy,
+hello.c's revision number showed up as only `1.5', not `1.5.2.0' or
+something similar.  This is because the initial revision on a branch is
+always the same as the trunk revision of the file, where the branch
+sprouts off.  Therefore, CVS shows the trunk revision number in status
+output, for as long as the file is the same on both branch and trunk.
+
+Once we had committed a new revision, hello.c was no longer the same on
+both trunk and branch - the branch incarnation of the file had changed,
+while the trunk remained the same.  Accordingly, hello.c was assigned
+its first branch revision number.  We saw this in the status output
+after the commit, where its revision number is clearly `1.5.2.1'.
+
+The same story applies to the random.c file. Its revision number at the
+time of branching was `1.2', so its first branch is `1.2.2', and the
+first new commit of random.c on that branch received the revision
+number `1.2.2.1'.
+
+There is no numeric relationship between `1.5.2.1' and `1.2.2.1' - no
+reason to think that they are part of the same branch event, except
+that both files are tagged with `Release-1999_05_01-bugfixes', and the
+tag is attached to branch numbers `1.5.2' and `1.2.2' in the respective
+files.  Therefore, the tag name is your only handle on the branch as a
+project-wide entity.  Although it is perfectly possible to move a file
+to a branch by using the revision number directly
+
+     floss$ cvs update -r 1.5.2.1 hello.c
+     U hello.c
+     floss$
+
+it is almost always ill-advised.  You would be mixing the branch
+revision of one file with non-branch revisions of the others.  Who knows
+what losses may result?  It is better to use the branch tag to refer to
+the branch and do all files at once by not specifying any particular
+file.  That way you don't have to know or care what the actual branch
+revision number is for any particular file.
+
+It is also possible to have branches that sprout off other branches, to
+any level of absurdity.  For example, if a file has a revision number of
+`1.5.4.37.2.3', its revision history can be diagrammed like this:
+
+                       1.1
+                        |
+                       1.2
+                        |
+                       1.3
+                        |
+                       1.4
+                        |
+                       1.5
+                      /   \
+                     /     \
+                    /       \
+                (1.5.2)   (1.5.4)         <--- (these are branch numbers)
+                  /           \
+              1.5.2.1        1.5.4.1
+                 |              |
+              1.5.2.2        1.5.4.2
+                 |              |
+               (etc)          (...)       <--- (collapsed 34 revisions for brevity)
+                                |
+                             1.5.4.37
+                               /
+                              /
+                        (1.5.4.37.2)      <--- (this is also a branch number)
+                            /
+                           /
+                    1.5.4.37.2.1
+                          |
+                    1.5.4.37.2.2
+                          |
+                    1.5.4.37.2.3
+     
+     [Figure 2.4: An unusually high degree of branching.  Time flows downward.]
+
+Admittedly, only the rarest circumstances make such a branching depth
+necessary, but isn't it nice to know that CVS will go as far as you're
+willing to take it?  Nested branches are created the same way as any
+other branch: Check out a working copy on branch `N', run cvs tag -b
+branchname in it, and you'll create branch `N.M' in the repository
+(where `N' represents the appropriate branch revision number in each
+file, such as `1.5.2.1', and `M' represents the next available branch
+at the end of that number, such as `2').
+
+
+File: cvsbook.info,  Node: Merging Changes From Branch To Trunk,  Next: Multiple Merges,  Prev: Branching Basics,  Up: Branches
+
+Merging Changes From Branch To Trunk
+------------------------------------
+
+Now that the bug fix has been committed on the branch, let's switch the
+working copy over to the highest trunk revisions and see if the bug fix
+needs to be done there, too.  We'll move the working copy off the branch
+by using update -A (branch tags are like other sticky properties in this
+respect) and then diffing against the branch we just left:
+
+     floss$ cvs -q update -d -A
+     U hello.c
+     U b-subdir/random.c
+     floss$ cvs -q diff -c -r Release-1999_05_01-bugfixes
+     Index: hello.c
+     ===================================================================
+     RCS file: /usr/local/cvs/myproj/hello.c,v
+     retrieving revision 1.5.2.1
+     retrieving revision 1.6
+     diff -c -r1.5.2.1 -r1.6
+     *** hello.c   1999/05/05 00:15:07     1.5.2.1
+     --- hello.c   1999/05/04 20:19:16     1.6
+     ***************
+     *** 4,9 ****
+       main ()
+       {
+         printf ("Hello, world!\n");
+     !   printf ("between hello and good-bye\n");
+         printf ("Goodbye, world!\n");
+       }
+     --- 4,10 --
+       main ()
+       {
+         printf ("Hello, world!\n");
+     !   printf ("between hello and goodbye\n");
+         printf ("Goodbye, world!\n");
+     +   /* a comment on the last line */
+       }
+     Index: b-subdir/random.c
+     ===================================================================
+     RCS file: /usr/local/cvs/myproj/b-subdir/random.c,v
+     retrieving revision 1.2.2.1
+     retrieving revision 1.2
+     diff -c -r1.2.2.1 -r1.2
+     *** b-subdir/random.c 1999/05/05 00:15:07     1.2.2.1
+     --- b-subdir/random.c 1999/04/19 06:35:27     1.2
+     ***************
+     *** 4,8 ****
+       void main ()
+       {
+     !   printf ("A random number.\n");
+       }
+     --- 4,8 --
+       void main ()
+       {
+     !   printf ("a random number\n");
+       }
+     floss$
+
+The diff shows that good-bye is spelled with a hyphen in the branch
+revision of hello.c, and that the trunk revision of that file has a
+comment near the end that the branch revision doesn't have.  Meanwhile,
+in random.c, the branch revision has a capital "A" and a period, whereas
+the trunk doesn't.
+
+To actually merge the branch changes into the current working copy, run
+update with the -j flag (the same j for "join" that we used to revert a
+file to an old revision before):
+
+     floss$ cvs -q update -d -j Release-1999_05_01-bugfixes
+     RCS file: /usr/local/cvs/myproj/hello.c,v
+     retrieving revision 1.5
+     retrieving revision 1.5.2.1
+     Merging differences between 1.5 and 1.5.2.1 into hello.c
+     RCS file: /usr/local/cvs/myproj/b-subdir/random.c,v
+     retrieving revision 1.2
+     retrieving revision 1.2.2.1
+     Merging differences between 1.2 and 1.2.2.1 into random.c
+     floss$ cvs -q update
+     M hello.c
+     M b-subdir/random.c
+     floss$ cvs -q ci -m "merged from branch Release-1999_05_01-bugfixes"
+     Checking in hello.c;
+     /usr/local/cvs/myproj/hello.c,v  <-  hello.c
+     new revision: 1.7; previous revision: 1.6
+     done
+     Checking in b-subdir/random.c;
+     /usr/local/cvs/myproj/b-subdir/random.c,v  <-  random.c
+     new revision: 1.3; previous revision: 1.2
+     done
+     floss$
+
+This takes the changes from the branch's root to its tip and merges them
+into the current working copy (which subsequently shows those
+modifications just as though the files had been hand-edited into that
+state).  The changes are then committed onto the trunk, since nothing in
+the repository changed when a working copy underwent a merge.
+
+Although no conflicts were encountered in this example, it's quite
+possible (even probable) that there would be some in a normal merge.  If
+that happens, they need to be resolved like any other conflict, and then
+committed.
+

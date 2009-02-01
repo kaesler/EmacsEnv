@@ -1,0 +1,1400 @@
+This is cvsbook.info, produced by makeinfo version 4.0 from main.texi.
+
+START-INFO-DIR-ENTRY
+* CVS Book: (cvsbook).          A CVS tutorial and reference.
+END-INFO-DIR-ENTRY
+
+Copyright (C) 1999, 2000 Karl Fogel <kfogel@red-bean.com>
+
+This document is free software; you can redistribute and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+This document is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+This manual describes how to use and administer CVS (Concurrent Versions
+System).  It is part of a larger work entitled `Open Source Development
+With CVS'; please see the introduction for details.
+
+This is version 1.21 of this manual.
+
+
+File: cvsbook.info,  Node: config,  Next: cvsignore,  Prev: commitinfo,  Up: Repository Administrative Files
+
+config
+------
+
+Controls various global (non-project-specific) repository parameters.
+The syntax of each line is
+
+     ParameterName=yes|no
+
+except for the LockDir parameter, which takes an absolute pathname as
+argument.
+
+The following parameters are supported:
+
+   * RCSBIN (default: `=no') - (Obsolete) This option is silently
+     accepted for backwards compatibility, but no longer has any effect.
+
+   * SystemAuth (default: `=no') - If `yes', CVS pserver authentication
+     tries the system user database - usually `/etc/passwd' - if a
+     username is not found in `CVSROOT/passwd'.  If `no', the user must
+     exist in `CVSROOT/passwd' to gain access via the `:pserver:'
+     method.
+
+   * PreservePermissions (default: `=no') - If `yes', CVS tries to
+     preserve permissions and other special file system information
+     (such as device numbers and symbolic link targets) for files.  You
+     probably don't want to do this, as it does not necessarily behave
+     as expected. (See the node `Special Files' in the Cederqvist
+     manual for details.)
+
+   * TopLevelAdmin (default: `=no') - If `yes', checkouts create a
+     `CVS/' subdirectory next to each working copy tree (in the parent
+     directory of the working copy).  This can be useful if you will be
+     checking out many working copies from the same repository; on the
+     other hand, setting it here affects everyone who uses this
+     repository.
+
+   * LockDir (unset by default) - The argument after the equal sign is a
+     path to a directory in which CVS can create lockfiles.  If not set,
+     lockfiles are created in the repository, in locations
+     corresponding to each project's RCS files.  This means that users
+     of those projects must have file-system-level write access to
+     those repository directories.
+
+
+
+File: cvsbook.info,  Node: cvsignore,  Next: cvswrappers,  Prev: config,  Up: Repository Administrative Files
+
+cvsignore
+---------
+
+Ignores certain files when doing updates, imports, or releases.  By
+default, CVS already ignores some kinds of files. (For a full list, see
+the -I option to import, earlier in this chapter.)  You can add to this
+list by putting additional file names or wildcard patterns in the
+cvsignore file.  Each line gives a file name or pattern, for example:
+
+     README.msdos
+     *.html
+     blah?.out
+
+This causes CVS to ignore any file named `README.msdos', any file
+ending in `.html', and any file beginning with `blah' and ending with
+`.out'.  (Technically, you can name multiple files or patterns on each
+line, separated by whitespace, but it is more readable to keep them to
+one per line.  The whitespace separation rule does, unfortunately, mean
+that there's no way to specify a space in a file name, except to use
+wildcards.)
+
+A `!' anywhere in the list cancels all previous entries.  (See *Note
+$CVSIGNORE:: in the section *Note Environment Variables:: in this
+chapter for a fuller discussion of ignore processing.)
+
+
+File: cvsbook.info,  Node: cvswrappers,  Next: editinfo,  Prev: cvsignore,  Up: Repository Administrative Files
+
+cvswrappers
+-----------
+
+Specifies certain filtering behaviors based on file name.  Each line has
+a file-globbing pattern (that is, a file name or file wildcards),
+followed by an option indicating the filter type and an argument for the
+option.
+
+Options:
+
+   * -m - Specifies an update method.  Possible arguments are MERGE,
+     which means to merge changes into working files automatically, and
+     COPY, which means don't try to automerge but present the user with
+     both versions of the file and let them work it out.  MERGE is the
+     default, except for binary files (those whose keyword substitution
+     mode is -kb).  (See the *Note Keyword Substitution (RCS
+     Keywords):: section in this chapter.)  Files marked as binary
+     automatically use the COPY method, so there is no need to make a
+     -m COPY wrapper for them.
+
+   * -k - Specifies a keyword substitution mode.  All of the usual
+     modes are possible.  (See the *Note Keyword Substitution (RCS
+     Keywords):: section in this chapter for a complete list.)
+
+
+Here is an example cvswrappers file:
+
+     *.blob    -m COPY
+     *.blink   -k o
+
+This cvswrappers file says to not attempt merges on files ending in
+`.blob' and suppress keyword substitution for files ending in `.blink'.
+(See also the file `.cvswrappers' in the *Note Working Copy Files::
+section in this chapter.)
+
+
+File: cvsbook.info,  Node: editinfo,  Next: history file,  Prev: cvswrappers,  Up: Repository Administrative Files
+
+editinfo
+--------
+
+This file is obsolete.  Very.
+
+
+File: cvsbook.info,  Node: history file,  Next: loginfo,  Prev: editinfo,  Up: Repository Administrative Files
+
+history file
+------------
+
+Stores an ever-accumulating history of activity in the repository, for
+use by the cvs history command.  To disable this feature, simply remove
+the history file.  If you don't remove the file, you should probably
+make it world-writeable to avoid permission problems later.
+
+The contents of this file do not modify CVS's behavior in any way
+(except for the output of cvs history, of course).
+
+
+File: cvsbook.info,  Node: loginfo,  Next: modules,  Prev: history file,  Up: Repository Administrative Files
+
+loginfo
+-------
+
+Specifies programs to run on the log message for each commit, based on
+what's being committed.  Each line consists of a regular expression
+followed by a command template:
+
+     REGULAR_EXPRESSION PROGRAM [ARGUMENTS]
+
+The PROGRAM is passed the log message on its standard input.
+
+Several special codes are available for use in the arguments: `%s'
+expands to the names of the files being committed, `%V' expands to the
+old revisions from before the commit, and `%v' expands to the new
+revisions after the commit.  When there are multiple files involved,
+each element of the expansion is separated from the others by
+whitespace.  For example, in a commit involving two files, `%s' might
+expand into `hello.c README.txt', and `%v' into `1.17 1.12'.
+
+You may combine codes inside curly braces, in which case, each unit of
+expansion is internally separated by commas and externally separated
+from the other units by whitespace.  Continuing the previous example,
+`%{sv}' expands into `hello.c,1.17 README.txt,1.12'.
+
+If any `%' expansion is done at all, the expansion is prefixed by the
+path to the project subdirectory (relative to the top of the
+repository).  So that last expansion would actually be:
+
+     myproj  hello.c,1.17  README.txt,1.12
+
+If PROGRAM exits with nonzero status, the commit fails; otherwise, it
+succeeds.  (See also the *Note Shared Syntax:: section in this chapter.)
+
+
+File: cvsbook.info,  Node: modules,  Next: notify,  Prev: loginfo,  Up: Repository Administrative Files
+
+modules
+-------
+
+This maps names to repository directories.  The general syntax of each
+line is:
+
+     MODULE [OPTIONS] [&OTHERMODULE...] [DIR] [FILES]
+
+DIR need not be a top-level project directory - it could be a
+subdirectory.  If any FILES are specified, the module consists of only
+those files from the directory.
+
+An ampersand followed by a module name means to include the expansion of
+that module's line in place.
+
+Options:
+
+   * -a - This is an "alias" module, meaning it expands literally to
+     everything after the OPTIONS.  In this case, the usual DIR/FILES
+     behavior is turned off, and everything after the OPTIONS is
+     treated as other modules or repository directories.
+
+     If you use the -a option, you may exclude certain directories from
+     other modules by putting them after an exclamation point (!).  For
+     example
+
+          top_proj -a !myproj/a-subdir !myproj/b-subdir myproj
+
+     means that checking out `top_proj' will get all of `myproj' except
+     `a-subdir' and `b-subdir'.
+
+   * -d NAME - Names the working directory NAME instead of the module
+     name.
+
+   * -e PROGRAM - Runs PROGRAM whenever files in this module are
+     exported.
+
+   * -i PROGRAM - Runs PROGRAM whenever files in this module are
+     committed.  The program is given a single argument - the full
+     pathname in the repository of the file in question. (See *Note
+     commitinfo::, *Note loginfo::, and *Note verifymsg:: for more
+     sophisticated ways to run commit-triggered programs.)
+
+   * -o PROGRAM - Runs PROGRAM whenever files in this module are checked
+     out.  The program is given a single argument, the name of the
+     module.
+
+   * -s STATUS - Declares a status for the module.  When the modules
+     file is printed (with cvs checkout -s), the modules are sorted by
+     module status and then by name.  This option has no other effects
+     in CVS, so go wild.  You can use it to sort anything - status,
+     person responsible for the module, or the module's file language,
+     for example.
+
+   * -t PROGRAM - Runs PROGRAM whenever files in this module are tagged
+     with cvs rtag.  The program is passed two arguments: the name of
+     the module and the tag name.  The program is not used for tag,
+     only for rtag.  I have no idea why this distinction is made.  You
+     may find the taginfo file more useful if you want to run programs
+     at tag time.
+
+   * -u PROGRAM - Runs PROGRAM whenever a working copy of the module is
+     updated from its top-level directory.  The program is given a
+     single argument, the full path to the module's repository.
+
+
+
+File: cvsbook.info,  Node: notify,  Next: passwd,  Prev: modules,  Up: Repository Administrative Files
+
+notify
+------
+
+Controls how the notifications for watched files are performed. (You may
+want to read up on the watch and edit commands, or see the section
+*Note Watches (CVS As Telephone):: in *Note Advanced CVS::.)  Each line
+is of the usual form:
+
+REGULAR_EXPRESSION PROGRAM [ARGUMENTS]
+
+A `%s' in ARGUMENTS is expanded to the name of the user to be notified,
+and the rest of the information regarding the notification is passed to
+PROGRAM on standard input (usually this information is a brief message
+suitable for emailing to the user).  (See the section *Note Shared
+Syntax:: earlier in this chapter.)
+
+As shipped with CVS, the notify file has one line
+
+     ALL mail %s -s "CVS notification"
+
+which is often all you need.
+
+
+File: cvsbook.info,  Node: passwd,  Next: rcsinfo,  Prev: notify,  Up: Repository Administrative Files
+
+passwd
+------
+
+Provides authentication information for the pserver access method.  Each
+line is of the form:
+
+USER:ENCRYPTED_PASSWORD[:SYSTEM_USER]
+
+If no SYSTEM_USER is given, USER is taken as the system username.
+
+
+File: cvsbook.info,  Node: rcsinfo,  Next: taginfo,  Prev: passwd,  Up: Repository Administrative Files
+
+rcsinfo
+-------
+
+Specifies a form that should be filled out for log messages that are
+written with an interactive editor.  Each line of rcsinfo looks like:
+
+REGULAR_EXPRESSION FILE_CONTAINING_TEMPLATE
+
+This template is brought to remote working copies at checkout time, so
+if the template file or rcsinfo file changes after checkout, the remote
+copies won't know about it and will continue to use the old template.
+(See also the section *Note Shared Syntax:: in this chapter.)
+
+
+File: cvsbook.info,  Node: taginfo,  Next: users,  Prev: rcsinfo,  Up: Repository Administrative Files
+
+taginfo
+-------
+
+Runs a program at tag time (usually done to check that the tag name
+matches some pattern).  Each line is of the form:
+
+REGULAR_EXPRESSION PROGRAM
+
+The program is handed a set group of arguments.  In order, they are the
+tag name, the operation (see below), the repository, and then as many
+file name/revision-number pairs as there are files involved in the tag.
+The file/revision pairs are separated by whitespace, like the rest of
+the arguments.
+
+The operation is one of `add', `mov', or `del' (`mov' means the -F
+option to tag was used).
+
+If PROGRAM exits with nonzero status, the tag operation will not
+succeed.  (See also the section *Note Shared Syntax:: in this chapter.)
+
+
+File: cvsbook.info,  Node: users,  Next: val-tags,  Prev: taginfo,  Up: Repository Administrative Files
+
+users
+-----
+
+Maps usernames to email addresses.  Each line looks like:
+
+USERNAME:EMAIL_ADDRESS
+
+This sends watch notifications to EMAIL_ADDRESS instead of to USERNAME
+at the repository machine.  (All this really does is control the
+expansion of %s in the notify file.)  If EMAIL_ADDRESS includes
+whitespace, make sure to surround it with quotes.
+
+If user aliasing is being used in the passwd file, the username that
+will be matched is the CVS username (the one on the left), not the
+system username (the one on the right, if any).
+
+
+File: cvsbook.info,  Node: val-tags,  Next: verifymsg,  Prev: users,  Up: Repository Administrative Files
+
+val-tags
+--------
+
+Caches valid tag names for speedier lookups.  You should never need to
+edit this file, but you may need to change its permissions, or even
+ownership, if people are having trouble retrieving or creating tags.
+
+
+File: cvsbook.info,  Node: verifymsg,  Prev: val-tags,  Up: Repository Administrative Files
+
+verifymsg
+---------
+
+Used in conjunction with rcsinfo to verify the format of log messages.
+Each line is of the form:
+
+REGULAR_EXPRESSION PROGRAM [ARGUMENTS]
+
+The full path to the current log message template (see *Note rcsinfo::
+earlier in this chapter) is appended after the last argument written in
+the verifymsg file.  If PROGRAM exits with nonzero status, the commit
+fails.
+
+
+File: cvsbook.info,  Node: Run Control Files,  Next: Working Copy Files,  Prev: Repository Administrative Files,  Up: CVS Reference
+
+Run Control Files
+=================
+
+There are a few files on the client (working copy) side that affect
+CVS's behavior.  In some cases, they are analogs of repository
+administrative files; in other cases, they control behaviors that are
+only appropriate for the client side.
+
+`.cvsrc'
+--------
+
+Specifies options that you want to be used automatically with every CVS
+command.  The format of each line is
+
+COMMAND OPTIONS
+
+where each COMMAND is an unabbreviated CVS command, such as checkout or
+update (but not co or up).  The OPTIONS are those that you want to
+always be in effect when you run that command.  Here is a common
+`.cvsrc' line:
+
+     update -d -P
+
+To specify global options, simple use cvs as the COMMAND.
+
+`.cvsignore'
+------------
+
+Specifies additional ignore patterns.  (See *Note cvsignore:: in the
+*Note Repository Administrative Files:: section in this chapter for the
+syntax.)
+
+You can have a .cvsignore file in your home directory, which will apply
+every time you use CVS.  You can also have directory-specific ones in
+each project directory of a working copy (these last only apply to the
+directory where the .cvsignore is located, and not to its
+subdirectories).
+
+(See *Note $CVSIGNORE:: in the section *Note Environment Variables:: in
+this chapter, for a fuller discussion of ignore processing.)
+
+`.cvspass'
+----------
+
+Stores passwords for each repository accessed via the pserver method.
+Each line is of the form:
+
+REPOSITORY LIGHTLY_SCRAMBLED_PASSWORD
+
+The password is essentially stored in cleartext - a very mild
+scrambling is done to prevent accidental compromises (such as the root
+user unintentionally looking inside the file).  However, this scrambling
+will not deter any serious-minded person from gaining the password if
+they get access to the file.
+
+The .cvspass file is portable.  You can copy it from one machine to
+another and have all of your passwords at the new machine, without ever
+having run cvs login there.  (See also the *Note login:: and *Note
+logout:: commands.)
+
+`.cvswrappers'
+--------------
+
+This is a client side version of the cvswrappers file.  (See the *Note
+Repository Administrative Files:: section in this chapter.)  There can
+be a `.cvswrappers' file in your home directory and in each directory
+of a working copy directory, just as with `.cvsignore'.
+
+
+File: cvsbook.info,  Node: Working Copy Files,  Next: Environment Variables,  Prev: Run Control Files,  Up: CVS Reference
+
+Working Copy Files
+==================
+
+The CVS/ administrative subdirectories in each working copy contain some
+subset of the following files.
+
+   * CVS/Base/
+
+   * CVS/Baserev
+
+   * CVS/Baserev.tmp
+
+   * CVS/Checkin.prog
+
+   * CVS/Entries
+
+   * CVS/Entries.Backup
+
+   * CVS/Entries.Log
+
+   * CVS/Entries.Static
+
+   * CVS/Notify
+
+   * CVS/Notify.tmp
+
+   * CVS/Repository
+
+   * CVS/Root
+
+   * CVS/Tag
+
+   * CVS/Template
+
+   * CVS/Update.prog
+
+Here is what each file or directory does:
+
+`CVS/Base/'  (directory)
+------------------------
+
+If watches are on, `cvs edit' stores the original copy of the file in
+this directory.  That way, `cvs unedit' can work even if it can't reach
+the server.
+
+`CVS/Baserev'
+-------------
+
+Lists the revision for each file in `Base/'.  Each line looks like this:
+
+     FILE/REVISION/EXPANSION
+
+EXPANSION is currently ignored to allow for, well, future expansion.
+
+`CVS/Baserev.tmp'
+-----------------
+
+This is the temp file for the preceding.  (See `CVS/Notify.tmp' or
+`CVS/Entries.Backup' later on for further explanation.)
+
+`CVS/Checkin.prog'
+------------------
+
+Records the name of the program specified by the -i option in the
+modules file.  (See the *Note Repository Administrative Files:: section
+in this chapter.)
+
+`CVS/Entries'
+-------------
+
+Stores the revisions for the files in this directory.  Each line is of
+the form:
+
+     [CODE_LETTER]/FILE/REVISION/DATE/[KEYWORD_MODE]/[STICKY_OPTION]
+
+If CODE_LETTER is present, it must be `D' for directory (anything else
+is silently ignored by CVS, to allow for future expansion), and the
+rest of the items on the line are absent.
+
+This file is always present.
+
+`CVS/Entries.Backup'
+--------------------
+
+This is just a temp file.  If you're writing some program to modify the
+`Entries' file, have it write the new contents to `Entries.backup' and
+then atomically rename it to `Entries'.
+
+`CVS/Entries.Log'
+-----------------
+
+This is basically a patch file to be applied to `Entries' after
+`Entries' has been read (this is an efficiency hack, to avoid having to
+rewrite all of `Entries' for every little change).  The format is the
+same as `Entries', except that there is an additional mandatory code
+letter at the front of every line: An `A' means this line is to be
+added to what's in `Entries'; `R' means it's to be removed from what's
+in `Entries'.  Any other letters should be silently ignored, to allow
+for future expansion.
+
+`CVS/Entries.Static'
+--------------------
+
+If this file exists, it means only part of the directory was fetched
+from the repository, and CVS will not create additional files in that
+directory.  This condition can usually be cleared by using `update -d'.
+
+`CVS/Notify'
+------------
+
+Stores notifications that have not yet been sent to the server.
+
+`CVS/Notify.tmp'
+----------------
+
+Temp file for `Notify'.  The usual procedure for modifying `Notify' is
+to write out `Notify.tmp' and then rename it to `Notify'.
+
+`CVS/Repository'
+----------------
+
+The path to the project-specific subdirectory in the repository.  This
+may be an absolute path, or it may be relative to the path given in
+Root.
+
+This file is always present.
+
+`CVS/Root'
+----------
+
+This is the repository; that is, the value of the `$CVSROOT'
+environment variable or the argument to the -d global option.
+
+This file is always present.
+
+`CVS/Tag'
+---------
+
+If there is a sticky tag or date on this directory, it is recorded in
+the first line of the file.  The first character is a single letter
+indicating the type of tag: `T', `N', or `D', for branch tag, nonbranch
+tag, or date respectively.  The rest of the line is the tag or date
+itself.
+
+`CVS/Template'
+--------------
+
+Contains a log message template as specified by the rcsinfo file.  (See
+*Note Repository Administrative Files:: earlier in this chapter.)  It
+is relevant only for remote working copies; working copies on the same
+machine as the repository just read rcsinfo directly.
+
+`CVS/Update.prog'
+-----------------
+
+Records the name of the program specified by the -u option in the
+modules file.  (See the *Note Repository Administrative Files:: section
+in this chapter.)
+
+
+File: cvsbook.info,  Node: Environment Variables,  Prev: Working Copy Files,  Up: CVS Reference
+
+Environment Variables
+=====================
+
+These are all the environment variables that affect CVS.
+
+* Menu:
+
+* $COMSPEC::
+* $CVS_CLIENT_LOG::
+* $CVS_CLIENT_PORT::
+* $CVSEDITOR::
+* $CVSIGNORE::
+* $CVS_IGNORE_REMOTE_ROOT::
+* $CVS_PASSFILE::
+* $CVS_RCMD_PORT::
+* $CVSREAD::
+* $CVSROOT::
+* $CVS_RSH::
+* $CVS_SERVER::
+* $CVS_SERVER_SLEEP::
+* $CVSUMASK::
+* $CVSWRAPPERS::
+* $EDITOR::
+* $HOME %HOMEDRIVE% %HOMEPATH%::
+* $PATH::
+* $TEMP $TMP $TMPDIR::
+* $VISUAL::
+
+
+File: cvsbook.info,  Node: $COMSPEC,  Next: $CVS_CLIENT_LOG,  Up: Environment Variables
+
+$COMSPEC
+--------
+
+This is used in OS/2 only; it specifies the name of the command
+interpreter.  It defaults to `CMD.EXE'.
+
+
+File: cvsbook.info,  Node: $CVS_CLIENT_LOG,  Next: $CVS_CLIENT_PORT,  Prev: $COMSPEC,  Up: Environment Variables
+
+$CVS_CLIENT_LOG
+---------------
+
+Used for debugging the client/server protocol.  Set this variable to a
+file name before you start using CVS; all traffic to the server will be
+logged in filename.in, and everything from the server will be logged in
+filename.out.
+
+
+File: cvsbook.info,  Node: $CVS_CLIENT_PORT,  Next: $CVSEDITOR,  Prev: $CVS_CLIENT_LOG,  Up: Environment Variables
+
+$CVS_CLIENT_PORT
+----------------
+
+Used in Kerberos-authenticated client/server access.
+
+
+File: cvsbook.info,  Node: $CVSEDITOR,  Next: $CVSIGNORE,  Prev: $CVS_CLIENT_PORT,  Up: Environment Variables
+
+$CVSEDITOR
+----------
+
+Specifies the program to use to edit log messages for commits.  This
+overrides `$EDITOR' and `$VISUAL'.
+
+
+File: cvsbook.info,  Node: $CVSIGNORE,  Next: $CVS_IGNORE_REMOTE_ROOT,  Prev: $CVSEDITOR,  Up: Environment Variables
+
+$CVSIGNORE
+----------
+
+A whitespace-separated list of file names and wildcard patterns that CVS
+should ignore.  (See also the -I option to the *Note import:: command.)
+
+This variable is appended last to the ignore list during a command.  The
+list is built up in this order: `CVSROOT/cvsignore', the `.cvsignore'
+file in your home directory, the `$CVSIGNORE' variable, any -I command
+option, and finally the contents of `.cvsignore' files in the working
+copy used as CVS works in each directory.  A `!' as the ignore
+specification at any point nullifies the entire ignore list built up to
+that point.
+
+
+File: cvsbook.info,  Node: $CVS_IGNORE_REMOTE_ROOT,  Next: $CVS_PASSFILE,  Prev: $CVSIGNORE,  Up: Environment Variables
+
+$CVS_IGNORE_REMOTE_ROOT
+-----------------------
+
+Recently obsolete.
+
+
+File: cvsbook.info,  Node: $CVS_PASSFILE,  Next: $CVS_RCMD_PORT,  Prev: $CVS_IGNORE_REMOTE_ROOT,  Up: Environment Variables
+
+$CVS_PASSFILE
+-------------
+
+Tells CVS to use some file other than .cvspass in your home directory.
+(See the file `.cvspass' in the *Note Run Control Files:: section in
+this chapter.)
+
+
+File: cvsbook.info,  Node: $CVS_RCMD_PORT,  Next: $CVSREAD,  Prev: $CVS_PASSFILE,  Up: Environment Variables
+
+$CVS_RCMD_PORT
+--------------
+
+Specifies the port number to contact the rcmd daemon on the server side.
+(This variable is currently ignored in Unix CVS clients.)
+
+
+File: cvsbook.info,  Node: $CVSREAD,  Next: $CVSROOT,  Prev: $CVS_RCMD_PORT,  Up: Environment Variables
+
+$CVSREAD
+--------
+
+Makes working copy files read-only on checkout and update, if possible
+(the default is for them to be read-write).  (See also the -r global
+option.)
+
+
+File: cvsbook.info,  Node: $CVSROOT,  Next: $CVS_RSH,  Prev: $CVSREAD,  Up: Environment Variables
+
+$CVSROOT
+--------
+
+This specifies the path to the repository.  This is overridden with the
+-d global option and by the ambient repository for a given working copy.
+The path to the repository may be preceded by an access method,
+username, and host, according to the following syntax:
+
+     [[:METHOD:][[USER@]HOST]:]/REPOSITORY_PATH
+
+See the -d global option, in the section *Note Global Options:: near
+the beginning of this chapter, for a list of valid methods.
+
+
+File: cvsbook.info,  Node: $CVS_RSH,  Next: $CVS_SERVER,  Prev: $CVSROOT,  Up: Environment Variables
+
+$CVS_RSH
+--------
+
+Specifies an external program for connecting to the server when using
+the `:ext:' access method.  Defaults to `rsh', but `ssh' is a common
+replacement value.
+
+
+File: cvsbook.info,  Node: $CVS_SERVER,  Next: $CVS_SERVER_SLEEP,  Prev: $CVS_RSH,  Up: Environment Variables
+
+$CVS_SERVER
+-----------
+
+Program to invoke for CVS on the server side.  Defaults to `cvs', of
+course.
+
+
+File: cvsbook.info,  Node: $CVS_SERVER_SLEEP,  Next: $CVSUMASK,  Prev: $CVS_SERVER,  Up: Environment Variables
+
+$CVS_SERVER_SLEEP
+-----------------
+
+Delays the start of the server child process by the specified number of
+seconds.  This is used only for debugging, to allow time for a debugger
+to connect.
+
+
+File: cvsbook.info,  Node: $CVSUMASK,  Next: $CVSWRAPPERS,  Prev: $CVS_SERVER_SLEEP,  Up: Environment Variables
+
+$CVSUMASK
+---------
+
+Permissions for files and directories in the repository.  (You probably
+don't want to set this; it doesn't work for client/server anyway.)
+
+
+File: cvsbook.info,  Node: $CVSWRAPPERS,  Next: $EDITOR,  Prev: $CVSUMASK,  Up: Environment Variables
+
+$CVSWRAPPERS
+------------
+
+A whitespace-separated list of file names, wildcards, and arguments that
+CVS should use as wrappers. (See *Note cvswrappers:: in the *Note
+Repository Administrative Files:: section in this chapter for more
+information.)
+
+
+File: cvsbook.info,  Node: $EDITOR,  Next: $HOME %HOMEDRIVE% %HOMEPATH%,  Prev: $CVSWRAPPERS,  Up: Environment Variables
+
+$EDITOR
+-------
+
+(See *Note $CVSEDITOR::.)
+
+
+File: cvsbook.info,  Node: $HOME %HOMEDRIVE% %HOMEPATH%,  Next: $PATH,  Prev: $EDITOR,  Up: Environment Variables
+
+$HOME %HOMEDRIVE% %HOMEPATH%
+----------------------------
+
+Where the `.cvsrc', `.cvspass', and other such files are found (under
+Unix, only `$HOME' is used).  In Windows NT, `%HOMEDRIVE%' and
+`%HOMEPATH%' might be set for you; in Windows 95, you may need to set
+them for yourself.
+
+In Windows 95, you may also need to set `%HOME%'.  Make sure not to
+give it a trailing backslash; use set `HOME=C:' or something similar.
+
+
+File: cvsbook.info,  Node: $PATH,  Next: $TEMP $TMP $TMPDIR,  Prev: $HOME %HOMEDRIVE% %HOMEPATH%,  Up: Environment Variables
+
+$PATH
+-----
+
+Obsolete.
+
+
+File: cvsbook.info,  Node: $TEMP $TMP $TMPDIR,  Next: $VISUAL,  Prev: $PATH,  Up: Environment Variables
+
+$TEMP $TMP $TMPDIR
+------------------
+
+Where temporary files go (the server uses TMPDIR; Windows NT uses TMP).
+Setting this on the client side will not affect the server.  Setting
+this on either side will not affect where CVS stores temporary lock
+files.  (See *Note config:: in the *Note Repository Administrative
+Files:: section in this chapter for more information.)
+
+
+File: cvsbook.info,  Node: $VISUAL,  Prev: $TEMP $TMP $TMPDIR,  Up: Environment Variables
+
+$VISUAL
+-------
+
+(See *Note $CVSEDITOR::.)
+
+
+File: cvsbook.info,  Node: Third-Party Tools,  Next: Index,  Prev: CVS Reference,  Up: Top
+
+Third-Party Tools
+*****************
+
+Many people have written programs to augment CVS.  I call these
+"third-party tools" because they have their own maintainers, separate
+from the CVS development team.  Most of these programs are not
+distributed with CVS, although some are.  This chapter covers
+third-party tools that I have found useful, but that are not distributed
+with CVS.
+
+Although there are some very popular and widely used non-command-line or
+non-Unix interfaces to CVS (download sites are listed in *Note
+Repository Administration::), this chapter does not discuss most of
+them.  Their popularity makes it easy to find out more about them from
+mailing lists and newsgroups.  One exception to this is the Emacs
+pcl-cvs interface, which is very useful, but sometimes tricky to
+install.
+
+* Menu:
+
+* pcl-cvs -- An Emacs Interface To CVS::
+* cvsutils -- General Utilities For Use With CVS::
+* cvs2cl -- Generate GNU-Style ChangeLogs::
+* cvslock -- Lock Repositories For Atomicity::
+* cvsq -- Queue CVS Commands For Later Connection::
+* Other Packages::
+* Writing Your Own Tools::
+
+
+File: cvsbook.info,  Node: pcl-cvs -- An Emacs Interface To CVS,  Next: cvsutils -- General Utilities For Use With CVS,  Up: Third-Party Tools
+
+pcl-cvs - An Emacs Interface To CVS
+===================================
+
+Depends on: Emacs, Elib
+
+URLs:
+
+   * `ftp://rum.cs.yale.edu/pub/monnier/pcl-cvs/'
+
+   * `ftp://ftp.lysator.liu.se/pub/emacs/pcl-cvs-1.05.tar.gz'
+
+   * `ftp://ftp.red-bean.com/pub/kfogel/pcl-cvs-1.05.tar.gz'
+
+Authors: Per Cederqvist and Stefan Monnier (current maintainer)
+
+`pcl-cvs' is one of two Emacs/CVS interfaces.  The other is the native
+VC (Version Control) interface built into Emacs.  I prefer pcl-cvs
+because it was written exclusively for CVS and, therefore, works
+smoothly with the CVS way of doing things.  VC, on the other hand, was
+designed to work with several different back-end version control systems
+- RCS and SCCS, as well as CVS - and is not really "tuned" for CVS.
+For example, VC presents a file-based rather than a directory-based
+interface to revision control.
+
+The advantages of pcl-cvs are strong enough that many people choose to
+download and install it rather than use VC.  Unfortunately, pcl-cvs has
+two disadvantages: It can be a bit tricky to install (much of this
+section is devoted to overcoming possible installation hurdles), and its
+recent releases are a bit unstable.
+
+The latter problem is likely to be temporary, but it does raise the
+question of which version to use.  Stefan Monnier has just recently
+taken over the pcl-cvs maintainership; the latest release, 2.9.6
+(available from the first URL in the preceding list), was a bit bumpy
+when I tried it.  No doubt the problems will be smoothed out soon, but
+in the meantime, you might want to use an older version.  Because I've
+been using Version 1.05 daily for a long time now and it's performed
+quite well, I'm going to document that version here.  Fortunately, the
+installation procedures don't change much from version to version.  If
+you decide to use pcl-cvs, I suggest that you check Monnier's download
+site for a version newer than 2.9.6; if there is one, try it out before
+regressing all the way to 1.05.
+
+You'll notice that two URLs are given for Version 1.05.  The first is
+Per Cederqvist's site, where he still makes available an old archive of
+pcl-cvs.  However, since I'm not sure how much longer his archive will
+stay around, I'm also making the 1.05 distribution available from
+ftp.red-bean.com.
+
+Although the rest of these instructions use examples from a Version 1.05
+distribution, they should apply to later versions as well.
+
+* Menu:
+
+* Installing pcl-cvs::
+* Using pcl-cvs::
+* Error Handling In pcl-cvs::
+* The Future Of pcl-cvs::
+
+
+File: cvsbook.info,  Node: Installing pcl-cvs,  Next: Using pcl-cvs,  Up: pcl-cvs -- An Emacs Interface To CVS
+
+Installing pcl-cvs
+------------------
+
+If you don't normally deal with Emacs installation and site-maintenance
+issues, the pcl-cvs installation procedure may seem a bit daunting.  A
+little background on how Emacs works may help.
+
+Most higher-level Emacs features are written in a language called "Emacs
+Lisp" (Emacs itself is essentially an interpreter for this language).
+People add new features to Emacs by distributing files of Emacs Lisp
+code.  `pcl-cvs' is written in this language, and it depends on a
+library of useful, generic Emacs Lisp functions called "Elib" (also
+written in part by Per Cederqvist, but distributed separately from
+pcl-cvs).
+
+Elib is not included in the regular Emacs distribution (at least not FSF
+Emacs; I don't know about XEmacs), so you may have to download and
+install it yourself before you can use pcl-cvs.  You can get it from
+`ftp://ftp.lysator.liu.se/pub/emacs/elib-1.0.tar.gz'.  Installation
+instructions are contained within the package.
+
+Once Elib is installed, you're ready to build and install pcl-cvs.
+These instructions applies both to Version 1.05 and the 2.x series
+(although you should check the NEWS and INSTALL files in newer
+distributions to see what's changed).
+
+First, unpack pcl-cvs (I'm using Version 1.05, but it could just as
+easily have been 2.9.6)
+
+     floss$ zcat pcl-cvs-1.05.tar.gz | tar xvf -
+     pcl-cvs-1.05/
+     pcl-cvs-1.05/README
+     pcl-cvs-1.05/NEWS
+     pcl-cvs-1.05/INSTALL
+     pcl-cvs-1.05/ChangeLog
+     pcl-cvs-1.05/pcl-cvs.el
+     pcl-cvs-1.05/pcl-cvs.texinfo
+     pcl-cvs-1.05/compile-all.el
+     pcl-cvs-1.05/pcl-cvs-lucid.el
+     pcl-cvs-1.05/pcl-cvs-startup.el
+     pcl-cvs-1.05/pcl-cvs.info
+     pcl-cvs-1.05/Makefile
+     pcl-cvs-1.05/texinfo.tex
+
+and go into the source tree's top level:
+
+     floss$ cd pcl-cvs-1.05/
+
+A Makefile is supplied there.  According to the instructions in the
+INSTALL file, you're supposed to edit a few paths at the top of the
+Makefile and then run:
+
+     floss$ make install
+
+If that works, great.  However, this sometimes results in an error (the
+pcl-cvs code itself is very portable, but its installation procedures
+sometimes are not).  Do this if you get an error:
+
+     floss$ make clean
+     floss$ make
+
+If all goes well, these commands accomplish a significant part of the
+installation by byte-compiling all of the Emacs Lisp files.
+(Byte-compiling converts a file of human-readable Emacs Lisp code - an
+.el file - into a more compact and efficient representation - an .elc
+file.  Emacs can load and run an .elc file with better performance than
+it can a plain .el file.)
+
+I'll proceed as though the byte-compilation stage has succeeded.  If the
+byte compilation does not appear to succeed, don't worry: The .elc files
+are a luxury, not a necessity.  They improve performance slightly, but
+you can run pcl-cvs from the raw .el files with no problem.
+
+If the make install failed, the next step is to get the Emacs Lisp
+(whether .el or .elc) into a directory where Emacs can load it
+automatically.  Emacs has a designated directory on the system for
+locally installed Lisp.  To find this directory - it will have a file
+named `default.el' in it - check the following locations, in this order:
+
+  1. /usr/share/emacs/site-lisp/
+
+  2. /usr/local/share/emacs/site-lisp/
+
+  3. /usr/lib/emacs/site-lisp/
+
+  4. /usr/local/lib/emacs/site-lisp/
+
+Once you've found your site-lisp directory, copy all of the Lisp files
+to it (you may have to be root to do this):
+
+     floss# cp -f *.el *.elc /usr/share/emacs/site-lisp/
+
+The last step is to tell Emacs about the entry points to pcl-cvs (the
+main one being the function cvs-update), so it will know to load the
+pcl-cvs code on demand.  Because Emacs always reads the default.el file
+when it starts up, that's where you need to list the pcl-cvs entry
+points.
+
+Fortunately, pcl-cvs provides the necessary content for default.el.
+Simply put the contents of pcl-cvs-startup.el into default.el (or
+perhaps into your .emacs, if you're just installing this for yourself)
+and restart your Emacs.
+
+You may also want to copy the .info files into your info tree and add
+pcl-cvs to the table of contents in the dir file.
+
+
+File: cvsbook.info,  Node: Using pcl-cvs,  Next: Error Handling In pcl-cvs,  Prev: Installing pcl-cvs,  Up: pcl-cvs -- An Emacs Interface To CVS
+
+Using pcl-cvs
+-------------
+
+Once installed, pcl-cvs is very easy to use.  You just run the function
+cvs-update, and pcl-cvs brings up a buffer showing what files in your
+working copy have been modified or updated.  From there, you can commit,
+do diffs, and so on.
+
+Because cvs-update is the main entry point, I suggest that you bind it
+to a convenient key sequence before going any further.  I have it bound
+to `Ctrl+c v' in my .emacs:
+
+     (global-set-key "\C-cv" 'cvs-update)
+
+Otherwise, you can run it by typing `M-x cvs-update' (also known as
+`Esc-x cvs-update').
+
+When invoked, cvs-update runs cvs update as if in the directory of the
+file in the current buffer - just as if you typed cvs update on the
+command line in that directory.  Here's an example of what you might see
+inside Emacs:
+
+     PCL-CVS release 1.05 from CVS release $Name:  $.
+     Copyright (C) 1992, 1993 Per Cederqvist
+     Pcl-cvs comes with absolutely no warranty; for details consult the manual.
+     This is free software, and you are welcome to redistribute it under certain
+     conditions; again, consult the TeXinfo manual for details.
+      Modified ci README.txt
+      Modified ci fish.c
+     ---------- End ----
+
+Two files have been locally modified (some versions of pcl-cvs show the
+subdirectories where the files are located).  The next logical action is
+to commit one or both of the files, which is what the ci on each line
+means.  To commit one of them, go to its line and type `c'.  You are
+brought to a log message buffer, where you can type a log message as
+long as you want (real log message editing is the major advantage of
+pcl-cvs over the command line).  Type `Ctrl+c Ctrl+c' when done to
+complete the commit.
+
+If you want to commit multiple files at once, sharing a log message,
+first use m to mark the files that you intend to commit.  An asterisk
+appears next to each file as you mark it:
+
+     PCL-CVS release 1.05 from CVS release $Name:  $.
+     Copyright (C) 1992, 1993 Per Cederqvist
+     Pcl-cvs comes with absolutely no warranty; for details consult the manual.
+     This is free software, and you are welcome to redistribute it under certain
+     conditions; again, consult the TeXinfo manual for details.
+     * Modified ci README.txt
+     * Modified ci fish.c
+     ---------- End ----
+
+Now when you type c anywhere, it applies to all (and only) the marked
+files.  Write the log message and commit them with `Ctrl+c Ctrl+c' as
+before.
+
+You can also type `d' to run cvs diff on a file (or on marked files)
+and `f' to bring a file into Emacs for editing.  Other commands are
+available; type `Ctrl+h' m in the update buffer to see what else you
+can do.
+
+
+File: cvsbook.info,  Node: Error Handling In pcl-cvs,  Next: The Future Of pcl-cvs,  Prev: Using pcl-cvs,  Up: pcl-cvs -- An Emacs Interface To CVS
+
+Error Handling In pcl-cvs
+-------------------------
+
+The pcl-cvs program has historically had an odd way of dealing with
+error and informational messages from CVS (although this may be
+corrected in the latest versions).  When it encounters a message from
+CVS that it doesn't know about, it gets hysterical and throws you into a
+mail buffer, ready to send a pregenerated bug report to the author of
+pcl-cvs.  Unfortunately, among the CVS messages that pcl-cvs may not
+know about are the ones associated with conflicting merges, which,
+although not common, certainly do occur from time to time.
+
+If pcl-cvs suddenly dumps you into a mail buffer, don't panic.  Read
+over the contents of the buffer carefully - the offending CVS output
+should be in there somewhere.  If it looks like a merge, you can just
+get rid of the mail buffer and rerun cvs-update.  It should now succeed,
+because CVS won't output any merge messages (because the merge has
+already taken place).
+
+(Update: this problem appears to have been fixed in more recent versions
+of pcl-cvs, so very probably you can ignore this entire warning.)
+
+
+File: cvsbook.info,  Node: The Future Of pcl-cvs,  Prev: Error Handling In pcl-cvs,  Up: pcl-cvs -- An Emacs Interface To CVS
+
+The Future Of pcl-cvs
+---------------------
+
+Although I may be giving you the impression that pcl-cvs is barely
+maintained and a risky investment, the instability appears to be
+temporary.  Stefan Monnier is a responsive maintainer (I contacted him
+several times during the writing of this chapter, and he always answered
+right away; he is already making headway on some of the bugs in Version
+2.9.6).  Very likely by the time this is published, you will be able to
+download Version 2.9.7 or later with confidence.
+
+In fact, I just now got an encouraging email on this topic from Greg
+Woods, a former maintainer of pcl-cvs, reprinted here with his
+permission:
+
+     From: woods@most.weird.com (Greg A. Woods)
+     Subject: Re: pcl-cvs maintenance status, stability of recent "release"s?
+     To: kfogel@red-bean.com
+     Date: Sun, 29 Aug 1999 18:59:19 -0400 (EDT)
+     
+     [...]
+     I've been using Stefan's releases for some time now, and indeed I have
+     abandoned my own branch of it.
+     
+     He's done a lot of really good work on PCL-CVS and except for a few odd
+     quirks in the 2.9.6 version I'm using daily now it is quite usable (and
+     is approximately infinitely more usable with modern CVS than the one
+     that was in the CVS distribution! ;-).
+     
+     I've added a pcl-cvs.README file to my FTP site to point out that the
+     files there are indeed quite old (at least in Internet time! ;-) and to
+     give a pointer to Stefan's FTP site too.
+     
+     [...]
+
+In a later email, Greg said that the FSF is considering including
+pcl-cvs in their next release of Emacs (20.5), which would render most
+of the preceding installation advice obsolete.  Sigh.  It's hard to keep
+up with free software, sometimes.
+
+
+File: cvsbook.info,  Node: cvsutils -- General Utilities For Use With CVS,  Next: cvs2cl -- Generate GNU-Style ChangeLogs,  Prev: pcl-cvs -- An Emacs Interface To CVS,  Up: Third-Party Tools
+
+cvsutils - General Utilities For Use With CVS
+=============================================
+
+Depends on: Perl
+
+URLs:
+
+   * `http://www.red-bean.com/cvsutils'
+
+Authors: Tom Tromey (original author) and Pavel Roskin (current
+maintainer)
+
+The suite of small programs called `cvsutils' generally (although not
+always) performs "offline" operations in the CVS working copy.  Offline
+operations are those that can be done without contacting the
+repository, while still leaving the working copy in a consistent state
+for the next time the repository is contacted.  Offline behavior can be
+extremely handy when your network connection to the repository is slow
+or unreliable.
+
+The cvsutils programs are listed below in approximate order of
+usefulness (according to my opinion), with the more useful ones coming
+first.  Coincidentally, this also arranges them by safety.  Safety is an
+issue because some of these utilities can, in their normal course of
+operation, cause you to lose local modifications or files from your
+working copy.  Therefore, read the descriptions carefully before using
+these utilities.
+
+This documentation is accurate as of Version 0.1.4.  Be sure to read the
+README file in any later versions for more up-to-date information.
+
+* Menu:
+
+* cvsu::
+* cvsdo::
+* cvschroot::
+* cvsrmadm::
+* cvspurge::
+* cvsdiscard::
+* cvsco::
+* cvsdate::
+
+
+File: cvsbook.info,  Node: cvsu,  Next: cvsdo,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvsu
+----
+
+Danger level: None
+
+Contacts repository: No
+
+This does an offline cvs update by comparing the timestamps of files on
+disk with their timestamps recorded in CVS/Entries.  You can thus tell
+which files have been locally modified and which files are not known to
+be under CVS control.  Unlike `cvs update', cvsu does not bring down
+changes from the repository.
+
+Although it can take various options, cvsu is most commonly invoked
+without any options:
+
+     floss$ cvsu
+     ? ./bar
+     ? ./chapter-10.html
+     M ./chapter-10.sgml
+     D ./out
+     ? ./safe.sh
+     D ./tools
+
+The left-side codes are like the output of cvs update, except that `D'
+means directory.  This example shows that chapter-10.sgml has been
+modified locally.  What the example doesn't show is that cvsu ran
+instantly, whereas a normal cvs update would have required half a minute
+or so over my slow modem line.  Run
+
+     floss$ cvsu --help
+
+to see a list of options.
+
+
+File: cvsbook.info,  Node: cvsdo,  Next: cvschroot,  Prev: cvsu,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvsdo
+-----
+
+Danger level: Low to none
+
+Contacts repository: No
+
+This can simulate the working copy effects of cvs add and cvs remove,
+but without contacting the repository.  Of course, you'd still have to
+commit the changes to make them take effect in the repository, but at
+least the add and remove commands themselves can be sped up this way.
+Here's how to use it
+
+     floss$ cvsdo add FILENAME
+
+or
+
+     floss$ cvsdo remove FILENAME
+
+To see a list of further options, run:
+
+     floss$ cvsdo --help
+
+
+File: cvsbook.info,  Node: cvschroot,  Next: cvsrmadm,  Prev: cvsdo,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvschroot
+---------
+
+Danger level: Low
+
+Contacts repository: No
+
+This deals with a repository move by tweaking the working copy to point
+to the new repository.  This is useful when a repository is copied en
+masse to a new location.  When that happens, none of the revisions are
+affected, but the CVS/Root (and possibly the CVS/Repository) file of
+every working copy must be updated to point to the new location.  Using
+cvschroot is a lot faster than checking out a new copy.  Another
+advantage is that it doesn't lose your local changes.
+
+Usage:
+
+     floss$ cvschroot NEW_REPOS
+
+For example:
+
+     floss$ cvschroot :pserver:newuser@newhost.wherever.com:/home/cvs/myproj
+
+
+File: cvsbook.info,  Node: cvsrmadm,  Next: cvspurge,  Prev: cvschroot,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvsrmadm
+--------
+
+Danger level: Low to medium
+
+Contacts repository: No
+
+This removes all of the CVS/ administrative subdirectories in your
+working copy, leaving behind a tree similar to that created by cvs
+export.
+
+Although you won't lose any local changes by using cvsrmadm, your
+working copy will no longer be a working copy.
+
+Use with caution.
+
+
+File: cvsbook.info,  Node: cvspurge,  Next: cvsdiscard,  Prev: cvsrmadm,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvspurge
+--------
+
+Danger level: Medium
+
+Contacts repository: No
+
+This removes all non-CVS-controlled files in your working copy.  It does
+not undo any local changes to CVS-controlled files.
+
+Use with caution.
+
+
+File: cvsbook.info,  Node: cvsdiscard,  Next: cvsco,  Prev: cvspurge,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvsdiscard
+----------
+
+Danger level: Medium to high
+
+Contacts repository: Maybe
+
+This is the complement of cvspurge.  Instead of removing unknown files
+but keeping your local changes, cvsdiscard undoes any local changes
+(replacing those files with fresh copies from the repository), but keeps
+unknown files.
+
+Use with extreme caution.
+
+
+File: cvsbook.info,  Node: cvsco,  Next: cvsdate,  Prev: cvsdiscard,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvsco
+-----
+
+Danger level: High
+
+Contacts repository: Maybe
+
+This is the union of cvspurge and cvsdiscard.  It undoes any local
+changes and removes unknown files from the working copy.
+
+Use with truly paranoid caution.
+
+
+File: cvsbook.info,  Node: cvsdate,  Prev: cvsco,  Up: cvsutils -- General Utilities For Use With CVS
+
+cvsdate
+-------
+
+This script is apparently incomplete and possibly may never be finished.
+(See the README file for details.)
+

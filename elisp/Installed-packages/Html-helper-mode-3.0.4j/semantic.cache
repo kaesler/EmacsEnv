@@ -1,0 +1,15 @@
+;; Object Html-helper-mode-3.0.4j/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "Html-helper-mode-3.0.4j/"
+  :tables (list 
+   (semanticdb-table "html-helper-mode.el"
+    :major-mode 'emacs-lisp-mode
+    :tags 'nil
+    :file "html-helper-mode.el"
+    :pointmax 97534
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre4"
+  :semanticdb-version "2.0pre4"
+  )

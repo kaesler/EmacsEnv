@@ -1,0 +1,1294 @@
+This is cvsbook.info, produced by makeinfo version 4.0 from main.texi.
+
+START-INFO-DIR-ENTRY
+* CVS Book: (cvsbook).          A CVS tutorial and reference.
+END-INFO-DIR-ENTRY
+
+Copyright (C) 1999, 2000 Karl Fogel <kfogel@red-bean.com>
+
+This document is free software; you can redistribute and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+This document is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+This manual describes how to use and administer CVS (Concurrent Versions
+System).  It is part of a larger work entitled `Open Source Development
+With CVS'; please see the introduction for details.
+
+This is version 1.21 of this manual.
+
+
+File: cvsbook.info,  Node: Anonymous Access,  Next: Repository Structure,  Prev: The Password-Authenticating Server,  Up: Repository Administration
+
+Anonymous Access
+================
+
+So far we've only seen how to use the password-authenticating server to
+grant normal full access to the repository (although admittedly one can
+restrict that access through carefully arranged Unix file permissions).
+Turning this into anonymous, read-only access is a simple step: You just
+have to add a new file, or possibly two, in CVSROOT/.  The files' names
+are `readers' and `writers' - the former containing a list of usernames
+who can only read the repository, the latter users who can read and
+write.
+
+If you list a username in CVSROOT/readers, that user will have only read
+access to all projects in the repository.  If you list a username in
+CVSROOT/writers, that user will have write access, and every pserver
+user not listed in writers will have read-only access (that is, if the
+writers file exists at all, it implies read-only access for all those
+not listed in it).  If the same username is listed in both files, CVS
+resolves the conflict in the more conservative way: the user will have
+read-only access.
+
+The format of the files is very simple: one user per line (don't forget
+to put a newline after the last user).  Here is a sample readers file:
+
+     anonymous
+     splotnik
+     guest
+     jbrowse
+
+Note that the files apply to CVS usernames, not system usernames.  If
+you use user aliasing in the CVSROOT/passwd file (putting a system
+username after a second colon), the leftmost username is the one to list
+in a readers or writers file.
+
+Just to be painfully accurate about it, here is a formal description of
+the server's behavior in deciding whether to grant read-only or
+read-write access:
+
+If a readers file exists and this user is listed in it, then she gets
+read-only access.  If a writers file exists and this user is not listed
+in it, then she also gets read-only access (this is true even if a
+readers file exists but that person is not listed there).  If that
+person is listed in both, she gets read-only access.  In all other
+cases, that person gets full read-write access.
+
+Thus, a typical repository with anonymous CVS access has this (or
+something like it) in CVSROOT/passwd
+
+     anonymous:XR4EZcEs0szik
+
+this (or something like it) in /etc/passwd
+
+     anonymous:!:1729:105:Anonymous CVS User:/usr/local/newrepos:/bin/false
+
+and this in CVSROOT/readers:
+
+     anonymous
+
+And, of course, the aforementioned setup in /etc/services and
+/etc/inetd.conf.  That's all there is to it!
+
+Note that some older Unix systems don't support usernames longer than
+eight characters.  One way to get around this would be to call the user
+`anon' instead of `anonymous' in CVSROOT/passwd and in the system
+files, because people often assume that anon is short for anonymous
+anyway.  But it might be better to put something like this into the
+CVSROOT/passwd file
+
+     anonymous:XR4EZcEs0szik:cvsanon
+
+(and then of course use `cvsanon' in the system files).  That way,
+you'd be able to publish a repository address that uses `anonymous',
+which is more or less standard now.  People accessing the repository
+with
+
+     cvs -d :pserver:anonymous@cvs.foobar.com:/usr/local/newrepos (etc...)
+
+would actually run on the server as cvsanon (or whatever).  But they
+wouldn't need to know or care about how things are set up on the server
+side - they'd only see the published address.
+
+
+File: cvsbook.info,  Node: Repository Structure,  Next: RCS Format,  Prev: Anonymous Access,  Up: Repository Administration
+
+Repository Structure
+====================
+
+The new repository still has no projects in it.  Let's re-run the
+initial import from *Note An Overview of CVS::, watching what happens to
+the repository. (For simplicity's sake, all commands will assume that
+the CVSROOT environment variable has been set to /usr/local/newrepos, so
+there's no need to specify the repository with -d on imports and
+checkouts.)
+
+     floss$ ls /usr/local/newrepos
+     CVSROOT/
+     floss$ pwd
+     /home/jrandom/src/
+     floss$ ls
+     myproj/
+     floss$ cd myproj
+     floss$ cvs import -m "initial import into CVS" myproj jrandom start
+     N myproj/README.txt
+     N myproj/hello.c
+     cvs import: Importing /usr/local/newrepos/myproj/a-subdir
+     N myproj/a-subdir/whatever.c
+     cvs import: Importing /usr/local/newrepos/myproj/a-subdir/subsubdir
+     N myproj/a-subdir/subsubdir/fish.c
+     cvs import: Importing /usr/local/newrepos/myproj/b-subdir
+     N myproj/b-subdir/random.c
+     
+     No conflicts created by this import
+     
+     floss$ ls /usr/local/newrepos
+     CVSROOT/  myproj/
+     floss$ cd /usr/local/newrepos/myproj
+     floss$ ls
+     README.txt,v  a-subdir/     b-subdir/	  hello.c,v
+     floss$ cd a-subdir
+     floss$ ls
+     subsubdir/    whatever.c,v
+     floss$ cd ..
+     
+     floss$
+
+Before the import, the repository contained only its administrative
+area, CVSROOT.  After the import, a new directory - `myproj' -
+appeared.  The files and subdirectories inside that new directory look
+suspiciously like the project we imported, except that the files have
+the suffix `,v'.  These are RCS-format version control files (the `,v'
+stands for "version"), and they are the backbone of the repository.
+Each RCS file stores the revision history of its corresponding file in
+the project, including all branches and tags.
+
+
+File: cvsbook.info,  Node: RCS Format,  Next: What Happens When You Remove A File,  Prev: Repository Structure,  Up: Repository Administration
+
+RCS Format
+==========
+
+You do not need to know any of the RCS format to use CVS (although there
+is an excellent writeup included with the source distribution, see
+doc/RCSFILES).  However, a basic understanding of the format can be of
+immense help in troubleshooting CVS problems, so we'll take a brief peek
+into one of the files, `hello.c,v'.  Here are its contents:
+
+     head     1.1;
+     branch   1.1.1;
+     access   ;
+     symbols  start:1.1.1.1 jrandom:1.1.1;
+     locks    ; strict;
+     comment  @ * @;
+     
+     1.1
+     date     99.06.20.17.47.26;  author jrandom;  state Exp;
+     branches 1.1.1.1;
+     next;
+     
+     1.1.1.1
+     date     99.06.20.17.47.26;  author jrandom;  state Exp;
+     branches ;
+     next;
+     
+     desc
+     @@
+     
+     1.1
+     log
+     @Initial revision
+     @
+     text
+     @#include <stdio.h>
+     
+     void
+     main ()
+     {
+       printf ("Hello, world!\n");
+     }
+     @
+     
+     1.1.1.1
+     log
+     @initial import into CVS
+     @
+     text
+     @@
+
+Whew!  Most of that you can ignore; don't worry about the relationship
+between 1.1 and 1.1.1.1, for example, or the implied 1.1.1 branch -
+they aren't really significant from a user's or even an administrator's
+point of view.  What you should try to grok is the overall format.  At
+the top is a collection of header fields:
+
+     head     1.1;
+     branch   1.1.1;
+     access   ;
+     symbols  start:1.1.1.1 jrandom:1.1.1;
+     locks    ; strict;
+     comment  @ * @;
+
+Farther down in the file are groups of meta-information about each
+revision (but still not showing the contents of that revision), such as:
+
+     1.1
+     date     99.06.20.17.47.26;  author jrandom;  state Exp;
+     branches 1.1.1.1;
+     next     ;
+
+And finally, the log message and text of an actual revision:
+
+     1.1
+     log
+     @Initial revision
+     @
+     text
+     @#include <stdio.h>
+     
+     void
+     main ()
+     {
+       printf ("Hello, world!\n");
+     }
+     @
+     
+     1.1.1.1
+     log
+     @initial import into CVS
+     @
+     text
+     @@
+
+If you look closely, you'll see that the first revision's contents are
+stored under the heading 1.1, but that the log message there is "Initial
+revision", whereas the log message we actually used at import time was
+"initial import into CVS", which appears farther down, under `Revision
+1.1.1.1'.  You don't need to worry about this discrepancy right now.
+It happens because imports are a special circumstance: In order to make
+repeated imports into the same project have a useful effect, import
+actually places the initial revision on both the main trunk and on a
+special branch (the reasons for this will become clearer when we look
+at vendor branches in *Note Advanced CVS::).  For now, you can treat
+`1.1' and `1.1.1.1' as the same thing.
+
+The file becomes even more revealing after we commit the first
+modification to hello.c:
+
+     floss$ cvs -Q co myproj
+     floss$ cd myproj
+     floss$ emacs hello.c
+         (make some changes to the file)
+     
+     floss$ cvs ci -m "print goodbye too"
+     cvs commit: Examining .
+     cvs commit: Examining a-subdir
+     cvs commit: Examining a-subdir/subsubdir
+     cvs commit: Examining b-subdir
+     Checking in hello.c;
+     /usr/local/newrepos/myproj/hello.c,v  <--  hello.c
+     new revision: 1.2; previous revision: 1.1
+     done
+
+If you look at hello.c,v in the repository now, you can see the effect
+of the commit:
+
+     head  1.2;
+     access;
+     symbols
+           start:1.1.1.1 jrandom:1.1.1;
+     locks; strict;
+     comment   @ * @;
+     
+     1.2
+     date   99.06.21.01.49.40;   author jrandom;   state Exp;
+     branches;
+     next   1.1;
+     
+     1.1
+     date   99.06.20.17.47.26;   author jrandom;   state Exp;
+     branches
+            1.1.1.1;
+     next   ;
+     
+     1.1.1.1
+     date   99.06.20.17.47.26;   author jrandom;   state Exp;
+     branches;
+     next   ;
+     
+     desc
+     @@
+     
+     1.2
+     log
+     @print goodbye too
+     @
+     text
+     @#include <stdio.h>
+     
+     void
+     main ()
+     {
+       printf ("Hello, world!\n");
+       printf ("Goodbye, world!\n");
+     }
+     @
+     
+     1.1
+     log
+     @Initial revision
+     @
+     text
+     @d7 1
+     @
+     
+     1.1.1.1
+     log
+     @initial import into CVS
+     @
+     text
+     @@
+
+Now the full contents of Revision 1.2 are stored in the file, and the
+text for Revision 1.1 has been replaced with the cryptic formula:
+
+     d7 1
+
+The `d7 1' is a diff code that means "starting at line 7, delete 1
+line".  In other words, to derive Revision 1.1, delete line 7 from
+Revision 1.2!  Try working through it yourself.  You'll see that it
+does indeed produce Revision 1.1 - it simply does away with the line we
+added to the file.
+
+This demonstrates the basic principle of RCS format: It stores only the
+differences between revisions, thereby saving a lot of space compared
+with storing each revision in full.  To go backwards from the most
+recent revision to the previous one, it patches the later revision using
+the stored diff.  Of course, this means that the further back you travel
+in the revision history, the more patch operations must be performed
+(for example, if the file is on Revision 1.7 and CVS is asked to
+retrieve Revision 1.4, it has to produce 1.6 by patching backwards from
+1.7, then 1.5 by patching 1.6, then 1.4 by patching 1.5).  Fortunately,
+old revisions are also the ones least often retrieved, so the RCS system
+works out pretty well in practice: The more recent the revision, the
+cheaper it is to obtain.
+
+As for the header information at the top of the file, you don't need to
+know what all of it means.  However, the effects of certain operations
+show up very clearly in the headers, and a passing familiarity with them
+may prove useful.
+
+When you commit a new revision on the trunk, the `head' label is
+updated (note how it became 1.2 in the preceding example, when the
+second revision to hello.c was committed).  When you add a file as
+binary or tag it, those operations are recorded in the headers as well.
+As an example, we'll add foo.jpg as a binary file and then tag it a
+couple of times:
+
+     floss$ cvs add -kb foo.jpg
+     cvs add: scheduling file 'foo.jpg' for addition
+     cvs add: use 'cvs commit' to add this file permanently
+     floss$ cvs -q commit -m "added a random image; ask jrandom@red-bean.com why"
+     RCS file: /usr/local/newrepos/myproj/foo.jpg,v
+     done
+     Checking in foo.jpg;
+     /usr/local/newrepos/myproj/foo.jpg,v  <--  foo.jpg
+     initial revision: 1.1
+     done
+     floss$ cvs tag some_random_tag foo.jpg
+     T foo.jpg
+     floss$ cvs tag ANOTHER-TAG foo.jpg
+     T foo.jpg
+     floss$
+
+Now examine the header section of foo.jpg,v in the repository:
+
+     head   1.1;
+     access;
+     symbols
+           ANOTHER-TAG:1.1
+           some_random_tag:1.1;
+     locks; strict;
+     comment   @# @;
+     expand	@b@;
+
+Notice the b in the expand line at the end - it's due to our having
+used the -kb flag when adding the file, and means the file won't undergo
+any keyword or newline expansions, which would normally occur during
+checkouts and updates if it were a regular text file.  The tags appear
+in the symbols section, one tag per line - both of them are attached to
+the first revision, since that's what was tagged both times. (This also
+helps explain why tag names can only contain letters, numbers, hyphens,
+and underscores.  If the tag itself contained colons or dots, the RCS
+file's record of it might be ambiguous, because there would be no way to
+find the textual boundary between the tag and the revision to which it
+is attached.)
+
+RCS Format Always Quotes @ Signs
+================================
+
+The `@' symbol is used as a field delimiter in RCS files, which means
+that if one appears in the text of a file or in a log message, it must
+be quoted (otherwise, CVS would incorrectly interpret it as marking the
+end of that field).  It is quoted by doubling - that is, CVS always
+interprets `@@' as "literal @ sign", never as "end of current field".
+When we committed foo.jpg, the log message was
+
+     "added a random image; ask jrandom@red-bean.com why"
+
+which is stored in foo.jpg,v like this:
+
+     1.1
+     log
+     @added a random image; ask jrandom@@red-bean.com why
+     @
+
+The @ sign in jrandom@@red-bean.com will be automatically unquoted
+whenever CVS retrieves the log message:
+
+     floss$ cvs log foo.jpg
+     RCS file: /usr/local/newrepos/myproj/foo.jpg,v
+     Working file: foo.jpg
+     head: 1.1
+     branch:
+     locks: strict
+     access list:
+     symbolic names:
+           ANOTHER-TAG: 1.1
+           some_random_tag: 1.1
+     keyword substitution: b
+     total revisions: 1;	selected revisions: 1
+     description:
+     ----------------------------
+     revision 1.1
+     date: 1999/06/21 02:56:18;  author: jrandom;  state: Exp;
+     added a random image; ask jrandom@red-bean.com why
+     ============================================================================
+     
+     floss$
+
+The only reason you should care is that if you ever find yourself
+hand-editing RCS files (a rare circumstance, but not unheard of), you
+must remember to use double @ signs in revision contents and log
+messages.  If you don't, the RCS file will be corrupt and will probably
+exhibit strange and undesirable behaviors.
+
+Speaking of hand-editing RCS files, don't be fooled by the permissions
+in the repository:
+
+     floss$ ls -l
+     total 6
+     -r--r--r--   1 jrandom   users         410 Jun 20 12:47 README.txt,v
+     drwxrwxr-x   3 jrandom   users        1024 Jun 20 21:56 a-subdir/
+     drwxrwxr-x   2 jrandom   users        1024 Jun 20 21:56 b-subdir/
+     -r--r--r--   1 jrandom   users         937 Jun 20 21:56 foo.jpg,v
+     -r--r--r--   1 jrandom   users         564 Jun 20 21:11 hello.c,v
+     
+     floss$
+
+(For those not fluent in Unix ls output, the `-r--r--r--' lines on the
+left essentially mean that the files can be read but not changed.)
+Although the files appear to be read-only for everyone, the directory
+permissions must also be taken into account:
+
+     floss$ ls -ld .
+     drwxrwxr-x   4 jrandom   users        1024 Jun 20 22:16 ./
+     floss$
+
+The myproj/ directory itself - and its subdirectories - are all
+writeable by the owner (jrandom) and the group (users).  This means that
+CVS (running as jrandom, or as anyone in the users group) can create and
+delete files in those directories, even if it can't directly edit files
+already present.  CVS edits an RCS file by making a separate copy of it,
+so you should also make all of your changes in a temporary copy, and
+then replace the existing RCS file with the new one. (But please don't
+ask why the files themselves are read-only - there are historical
+reasons for that, having to do with the way RCS works when run as a
+standalone program.)
+
+Incidentally, having the files' group be `users' is probably not what
+you want, considering that the top-level directory of the repository
+was explicitly assigned group `cvs'.  You can correct the problem by
+running this command inside the repository:
+
+     floss$ cd /usr/local/newrepos
+     floss$ chgrp -R cvs myproj
+
+The usual Unix file-creation rules govern which group is assigned to new
+files that appear in the repository, so once in a while you may need to
+run chgrp or chmod on certain files or directories in the repository
+(setting the SGID bit with `chmod g+s' is often a good strategy: it
+makes children of a directory inherit the directory's group ownership,
+which is usually what you want in the repository).  There are no hard
+and fast rules about how you should structure repository permissions;
+it just depends on who is working on what projects.
+
+
+File: cvsbook.info,  Node: What Happens When You Remove A File,  Next: The CVSROOT/ Administrative Directory,  Prev: RCS Format,  Up: Repository Administration
+
+What Happens When You Remove A File
+===================================
+
+When you remove a file from a project, it doesn't just disappear.  CVS
+must be able to retrieve such files when you request an old snapshot of
+the project.  Instead, the file gets put in the `Attic', literally:
+
+     floss$ pwd
+     /home/jrandom/src/myproj
+     floss$ ls /usr/local/newrepos/myproj/
+     README.txt,v  a-subdir/     b-subdir/     foo.jpg,v   hello.c,v
+     floss$ rm foo.jpg
+     floss$ cvs rm foo.jpg
+     cvs remove: scheduling 'foo.jpg' for removal
+     cvs remove: use 'cvs commit' to remove this file permanently
+     floss$ cvs ci -m "Removed foo.jpg" foo.jpg
+     Removing foo.jpg;
+     /usr/local/newrepos/myproj/foo.jpg,v  <--  foo.jpg
+     new revision: delete; previous revision: 1.1
+     done
+     floss$ cd /usr/local/newrepos/myproj/
+     floss$ ls
+     Attic/      README.txt,v  a-subdir/     b-subdir/   hello.c,v
+     floss$ cd Attic
+     floss$ ls
+     foo.jpg,v
+     floss$
+
+In each repository directory of a project, the presence of an `Attic/'
+subdirectory means that at least one file has been removed from that
+directory (this means that you shouldn't use directories named Attic in
+your projects).  CVS doesn't merely move the RCS file into Attic/,
+however; it also commits a new revision into the file, with a special
+revision state of `dead'.  Here's the relevant section from
+Attic/foo.jpg,v:
+
+     1.2
+     date   99.06.21.03.38.07;   author jrandom;   state dead;
+     branches;
+     next	1.1;
+
+If the file is later brought back to life, CVS has a way of recording
+that it was dead at some point in the past and is now alive again.
+
+This means that if you want to restore a removed file, you can't just
+take it out of the Attic/ and put it back into the project.  Instead,
+you have to do something like this in a working copy:
+
+     floss$ pwd
+     /home/jrandom/src/myproj
+     floss$ cvs -Q update -p -r 1.1 foo.jpg > foo.jpg
+     floss$ ls
+     CVS/       README.txt   a-subdir/   b-subdir/   foo.jpg     hello.c
+     floss$ cvs add -kb foo.jpg
+     cvs add: re-adding file foo.jpg (in place of dead revision 1.2)
+     cvs add: use 'cvs commit' to add this file permanently
+     floss$ cvs ci -m "revived jpg image" foo.jpg
+     Checking in foo.jpg;
+     /usr/local/newrepos/myproj/foo.jpg,v  <-- foo.jpg
+     new revision: 1.3; previous revision: 1.2
+     done
+     floss$ cd /usr/local/newrepos/myproj/
+     floss$ ls
+     Attic/	      a-subdir/     foo.jpg,v
+     README.txt,v  b-subdir/     hello.c,v
+     floss$ ls Attic/
+     floss$
+
+There's a lot more to know about RCS format, but this is sufficient for
+a CVS adminstrator to maintain a repository.  It's quite rare to
+actually edit an RCS file; you'll usually just have to tweak file
+permissions in the repository, at least if my own experience is any
+guide.  Nevertheless, when CVS starts behaving truly weirdly (rare, but
+not completely outside the realm of possibility), you may want to
+actually look inside the RCS files to figure out what's going on.
+
+
+File: cvsbook.info,  Node: The CVSROOT/ Administrative Directory,  Next: Commit Emails,  Prev: What Happens When You Remove A File,  Up: Repository Administration
+
+The CVSROOT/ Administrative Directory
+=====================================
+
+The files in newrepos/CVSROOT/ are not part of any project, but are used
+to control CVS's behavior in the repository.  The best way to edit those
+files is to check out a working copy of CVSROOT, just like a regular
+project:
+
+     floss$ cvs co CVSROOT
+     cvs checkout: Updating CVSROOT
+     U CVSROOT/checkoutlist
+     U CVSROOT/commitinfo
+     U CVSROOT/config
+     U CVSROOT/cvswrappers
+     U CVSROOT/editinfo
+     U CVSROOT/loginfo
+     U CVSROOT/modules
+     U CVSROOT/notify
+     U CVSROOT/rcsinfo
+     U CVSROOT/taginfo
+     U CVSROOT/verifymsg
+     floss$
+
+We'll take the files in their approximate order of importance.  Note
+that each of the files comes with an explanatory comment at the
+beginning (the comment convention is the same across all of them: A `#'
+sign at the beginning of the line signifies a comment, and CVS ignores
+such lines when parsing the files).  Remember that any change you make
+to the administrative files in your checked out working copy won't
+affect CVS's behavior until you commit the changes.
+
+If you're extremely security conscious, you may want to arrange the
+Unix-level permissions on CVSROOT to be different from permissions
+elsewhere in the repository, in order to have fine-grained control over
+who can commit changes to CVSROOT.  As you'll see a little later, being
+able to modify the files in CVSROOT essentially gives any CVS user -
+even remote ones - the ability to run arbitrary commands on the
+repository machine.
+
+* Menu:
+
+* The config File::
+* The modules File::
+* The commitinfo And loginfo And rcsinfo Files::
+* The verifymsg And rcsinfo Files::
+* The taginfo File::
+* The cvswrappers File::
+* The editinfo File::
+* The notify File::
+* The checkoutlist File::
+
+
+File: cvsbook.info,  Node: The config File,  Next: The modules File,  Up: The CVSROOT/ Administrative Directory
+
+The config File
+---------------
+
+The "config" file allows you to configure certain global behavioral
+parameters.  It follows a very strict format
+
+     PARAMETER=VALUE
+     (etc)
+
+with no extra spaces allowed.  For example, here is a possible config
+file:
+
+     SystemAuth=yes
+     TopLevelAdmin=no
+     PreservePermissions=no
+
+(An absent entry would be equivalent to `no'.)
+
+The `SystemAuth' parameter governs whether CVS should look in the
+system passwd file if it fails to find a given username in the
+CVSROOT/passwd file.  CVS distributions are shipped with this set to
+`no' to be conservative about your system's security.
+
+`TopLevelAdmin' tells CVS whether to make a sibling CVS/ directory when
+it checks out a working copy.  This CVS/ directory would not be inside
+the working copy, but rather next to it.  It might be convenient to
+turn this on if you tend (and your repository's users tend) to check
+out many different projects from the same repository.  Otherwise, you
+should leave it off, as it can be disconcerting to see an extra CVS/
+directory appear where you don't expect it.
+
+`PreservePermissions' governs whether to preserve file permissions and
+similar metadata in the revision history.  This is a somewhat obscure
+feature that probably isn't worth describing in detail.  See the node
+`Special Files' in the Cederqvist if you're interested ("node" is
+Texinfo-speak for a particular location within an Info document.  To go
+to a node while reading Info, just type `g' followed by the name of the
+node, from anywhere inside the document).
+
+`LockDir' is also a rarely used feature.  In special circumstances, you
+may want to tell CVS to create its lockfiles somewhere other than
+directly in the project subdirectories, in order to avoid permission
+problems.  These lockfiles keep CVS from tripping over itself when
+multiple operations are performed on the same repository directory
+simultaneously.  Generally, you never need to worry about them, but
+sometimes users may have trouble updating or checking out from a
+repository directory because they're unable to create a lockfile (even
+on read-only operations, CVS needs to create a lockfile to avoid
+situations where it could end up reading while another invocation of CVS
+is writing).  The usual fix for this is to change repository
+permissions, but when that's not feasible, the LockDir parameter can
+come in handy.
+
+There are no other parameters at this time, but future versions of CVS
+may add new ones; you should always check the Cederqvist or the
+distribution config file itself for updates.
+
+
+File: cvsbook.info,  Node: The modules File,  Next: The commitinfo And loginfo And rcsinfo Files,  Prev: The config File,  Up: The CVSROOT/ Administrative Directory
+
+The modules File
+----------------
+
+In modules, you can define aliases and alternate groupings for projects
+in the repository.  The most basic module line is of the form:
+
+     MODULE_NAME   DIRECTORY_IN_REPOSITORY
+
+for example,
+
+     mp    myproj
+     asub  myproj/a-subdir
+
+(The paths given on the right are relative to the top of the
+repository.)  This gives developers an alternate name by which to check
+out a project or a portion of a project:
+
+     floss$ cvs co mp
+     cvs checkout: Updating mp
+     U mp/README.txt
+     U mp/foo.jpg
+     U mp/hello.c
+     cvs checkout: Updating mp/a-subdir
+     U mp/a-subdir/whatever.c
+     cvs checkout: Updating mp/a-subdir/subsubdir
+     U mp/a-subdir/subsubdir/fish.c
+     cvs checkout: Updating mp/b-subdir
+     U mp/b-subdir/random.c
+
+or
+
+     floss$ cvs -d /usr/local/newrepos/ co asub
+     cvs checkout: Updating asub
+     U asub/whatever.c
+     cvs checkout: Updating asub/subsubdir
+     U asub/subsubdir/fish.c
+
+Notice how in both cases the module's name became the name of the
+directory created for the working copy.  In the case of asub, it didn't
+even bother with the intermediate myproj/ directory, but created a
+top-level asub/ instead, even though it came from myproj/a-subdir in the
+repository.  Updates, commits, and all other CVS commands will behave
+normally in those working copies - the only thing unusual about them
+are their names.
+
+By putting file names after the directory name, you can define a module
+consisting of just some of the files in a given repository directory.
+For example
+
+     readme  myproj  README.txt
+
+and
+
+     no-readme  myproj  hello.c  foo.jpg
+
+would permit the following checkouts, respectively:
+
+     floss$ cvs -q co readme
+     U readme/README.txt
+     floss$ cvs -q co no-readme
+     U no-readme/hello.c
+     U no-readme/foo.jpg
+     floss$
+
+You can define a module that will include multiple repository
+directories by using the -a (for `alias') flag, but note that the
+directories will get them checked out under their original names.  For
+example, this line
+
+     twoproj  -a  myproj  yourproj
+
+would allow you to do this (assuming that both myproj/ and yourproj/ are
+in the repository):
+
+     floss$ cvs co twoproj
+     U myproj/README.txt
+     U myproj/foo.jpg
+     U myproj/hello.c
+     U myproj/a-subdir/whatever.c
+     U myproj/a-subdir/subsubdir/fish.c
+     U myproj/b-subdir/random.c
+     U yourproj/README
+     U yourproj/foo.c
+     U yourproj/some-subdir/file1.c
+     U yourproj/some-subdir/file2.c
+     U yourproj/some-subdir/another-subdir/blah.c
+
+The name `twoproj' was a convenient handle to pull in both projects,
+but it didn't affect the names of the working copies. (There is no
+requirement that alias modules refer to multiple directories, by the
+way; we could have omitted twoproj, in which case myproj would still
+have been checked out under the name `myproj'.)
+
+Modules can even refer to other modules, by prefixing them with an
+ampersand:
+
+     mp    myproj
+     asub  myproj/a-subdir
+     twoproj -a myproj yourproj
+     tp  &twoproj
+
+Doing a checkout of `tp' would have exactly the same result as the
+checkout of `twoproj' did.
+
+There are a few other tricks you can do with modules, most of them less
+frequently used than the ones just presented.  See the node modules in
+the Cederqvist for information about them.
+
+
+File: cvsbook.info,  Node: The commitinfo And loginfo And rcsinfo Files,  Next: The verifymsg And rcsinfo Files,  Prev: The modules File,  Up: The CVSROOT/ Administrative Directory
+
+The commitinfo And loginfo And rcsinfo Files
+--------------------------------------------
+
+Most of the other administrative files provide programmatic "hooks"
+into various parts of the commit process (for example, the ability to
+validate log messages or file states before permitting the commit, or
+the ability to notify a group of developers whenever a commit happens in
+a certain directory of the repository).
+
+The files generally share a common syntax.  Each line is of the form:
+
+     REGULAR_EXPRESSION    PROGRAM_TO_RUN
+
+The regular expression will be tested against the directory into which
+the commit is taking place (with the directory name relative to the top
+of the repository).  If it matches, the designated program will be run.
+The program will be passed the names of each of the files in the commit;
+it can do whatever it likes with those names, including opening up the
+files and examining their contents.  If the program returns with a
+nonzero exit status, the commit is prevented from taking place.
+
+("Regular expressions" are a system for concisely describing classes of
+strings.  If you aren't familiar with regular expressions, you can get
+by with the following short summary: `foo' would match any file whose
+name contains the string `foo'; and `foo.*bar' would match any file
+whose name contains `foo', followed by any number of characters,
+followed by the string `bar'.  That's because normal substrings match
+themselves, but `.' and `*' are special.  `.' matches any character,
+and `*' means match any number of the preceding character, including
+zero.  The `^' and `$' signs mean match at the beginning and end of the
+string, respectively; thus, `^foo.*bar.*baz$' would match any string
+beginning with `foo', containing `bar' somewhere in the middle, and
+ending with `baz'.  That's all we'll go into here; this summary is a
+very abbreviated subset of full regular expression syntax.)
+
+The "commitinfo" file is for generic hooks you want run on every
+commit.  Here are some example commitinfo lines:
+
+     ^a-subdir*     /usr/local/bin/check-asubdir.sh
+     ou             /usr/local/bin/validate-project.pl
+
+So any commit into myproj/a-subdir/ would match the first line, which
+would then run the check-asubdir.sh script.  A commit in any project
+whose name (actual repository directory name, not necessarily module
+name) contained the string `ou' would run the validate-project.pl
+script, unless the commit had already matched the previous a-subdir
+line.
+
+In place of a regular expression, the word `DEFAULT' or `ALL' may be
+used.  The DEFAULT line (or the first DEFAULT line, if there are more
+than one) will be run if no regular expression matches, and each of the
+ALL lines will be run in addition to any other lines that may match.
+
+The file names passed to the program do not refer to RCS files - they
+point to normal files, whose contents are exactly the same as the
+working-copy files being committed.  The only unusual aspect is that CVS
+has them temporarily placed inside the repository, so they'll be
+available to programs running on the machine where the repository is
+located.
+
+The "loginfo" file is similar to commitinfo, except that instead of
+acting on the files' contents, it acts on the log message.  The left
+side of the loginfo file contains regular expressions, including
+possibly DEFAULT and ALL lines.  The program invoked on the right side
+receives the log message on its standard input; it can do whatever it
+wants with that input.
+
+The program on the right side can also take an arbitrary number of
+command-line arguments.  One of those arguments can be a special `%'
+code, to be expanded by CVS at runtime, as follows:
+
+     %s    ------>      name(s) of the file(s) being committed
+     %V    ------>      revision number(s) before the commit
+     %v    ------>      revision number(s) after the commit
+
+The expansion always begins with the repository subdirectory (relative
+to the top of the repository), followed by the per-file information.
+For example, if the files committed were foo, bar, and baz, all in
+`myproj/a-subdir', then `%s' would expand into
+
+     myproj/a-subdir  foo  bar  baz
+
+whereas `%V' would expand to show their old revision numbers
+
+     myproj/a-subdir  1.7  1.134  1.12
+
+and `%v' their new revision numbers:
+
+     myproj/a-subdir  1.8  1.135  1.13
+
+You can combine `%' expressions by enclosing them in curly braces
+following `%' sign - this will expand them into a series of
+comma-separated sublists, each containing the corresponding information
+for one file in the commit.  For instance, `%{sv}' would expand to
+
+     myproj/a-subdir  foo,1.8  bar,1.135  baz,1.13
+
+and `%{sVv}' would expand to
+
+     myproj/a-subdir  foo,1.7,1.8  bar,1.134,1.135  baz,1.12,1.13
+
+(You may have to look carefully to distinguish the commas from the
+periods in those examples.)
+
+Here is a sample loginfo file:
+
+     ^myproj$   /usr/local/newrepos/CVSROOT/log.pl -m myproj-devel@foobar.com %s
+     ou         /usr/local/bin/ou-notify.pl  %{sv}
+     DEFAULT    /usr/local/bin/default-notify.pl  %{sVv}
+
+In the first line, any commit in the myproj subdirectory of the
+repository invokes `log.pl', passing it an email address (to which
+`log.pl' will send a mail containing the log message), followed by the
+repository, followed by all the files in the commit.
+
+In the second line, any commit in a repository subdirectory containing
+the string `ou' will invoke the (imaginary) `ou-notify.pl' script,
+passing it the repository followed by the file names and new revision
+numbers of the files in the commit.
+
+The third line invokes the (equally imaginary) `default-notify.pl'
+script for any commit that didn't match either of the two previous
+lines, passing it all possible information (path to repository, file
+names, old revisions, and new revisions).
+
+
+File: cvsbook.info,  Node: The verifymsg And rcsinfo Files,  Next: The taginfo File,  Prev: The commitinfo And loginfo And rcsinfo Files,  Up: The CVSROOT/ Administrative Directory
+
+The verifymsg And rcsinfo Files
+-------------------------------
+
+Sometimes you may just want a program to automatically verify that the
+log message conforms to a certain standard and to stop the commit if
+that standard is not met.  This can be accomplished by using
+`verifymsg', possibly with some help from `rcsinfo'.
+
+The "verifymsg" file is the usual combination of regular expressions
+and programs.  The program receives the log message on standard input;
+presumably it runs some checks to verify that the log message meets
+certain criteria, then it exits with status zero or nonzero.  If the
+latter, the commit will fail.
+
+Meanwhile, the left side of rcsinfo has the usual regular expressions,
+but the right side points to template files instead of programs.  A
+template file might be something like this
+
+     Condition:
+     Fix:
+     Comments:
+
+or some other collection of fields that a developer is supposed to fill
+out to form a valid log message.  The template is not very useful if
+everyone commits using the -m option explicitly, but many developers
+prefer not to do that.  Instead, they run
+
+     floss$ cvs commit
+
+and wait for CVS to automatically fire up a text editor (as specified in
+the EDITOR environment variable).  There they write a log message, then
+save the file and exit the editor, after which CVS continues with the
+commit.
+
+In that scenario, an rcsinfo template would insert itself into the
+editor before the user starts typing, so the fields would be displayed
+along with a reminder to fill them in.  Then when the user commits, the
+appropriate program in `verifymsg' is invoked.  Presumably, it will
+check that the message does follow that format, and its exit status will
+reflect the results of its inquiry (with zero meaning success).
+
+As an aid to the verification programs, the path to the template from
+the rcsinfo file is appended as the last argument to the program command
+line in `verifymsg'; that way, the program can base its verification
+process on the template itself, if desired.
+
+Note that when someone checks out a working copy to a remote machine,
+the appropriate rcsinfo template file is sent to the client as well
+(it's stored in the CVS/ subdirectory of the working copy).  However,
+this means that if the rcsinfo file on the server is changed after that,
+the client won't see the changes without re-checking out the project
+(merely doing an update won't work).
+
+Note also that in the verifymsg file, the ALL keyword is not supported
+(although DEFAULT still is).  This is to make it easier to override
+default verification scripts with subdirectory-specific ones.
+
+
+File: cvsbook.info,  Node: The taginfo File,  Next: The cvswrappers File,  Prev: The verifymsg And rcsinfo Files,  Up: The CVSROOT/ Administrative Directory
+
+The taginfo File
+----------------
+
+What loginfo does for log messages, taginfo does for tags.  The left
+side of taginfo is regular expressions, as usual, and the right side is
+programs.  Each program is automatically handed arguments when CVS tag
+is invoked, in this order:
+
+     arg 1:          tag name
+     arg 2:          operation ("add" => tag, "mov" => tag -F, "del" => tag -d)
+     arg 3:          repository
+     arg 4, 5, etc:  file revision [file revision ...]
+
+If the program returns nonzero, the tag is aborted.
+
+We haven't covered the -F option to tag before now, but it's exactly
+what the above implies: a way to move a tag from one revision to
+another.  For example, if the tag `Known_Working' is attached to
+Revision 1.7 of a file and you want it attached to Revision 1.11
+instead, you'd do this
+
+     cvs tag -r 1.11 -F Known_Working foo.c
+
+which removes the tag from 1.7, or wherever it was previously in that
+file, and puts it at 1.11.
+
+
+File: cvsbook.info,  Node: The cvswrappers File,  Next: The editinfo File,  Prev: The taginfo File,  Up: The CVSROOT/ Administrative Directory
+
+The cvswrappers File
+--------------------
+
+The redundantly-named cvswrappers file gives you a way to specify that
+certain files should be treated as binary, based on their file name.
+CVS does not assume that all .jpg files are JPG image data, for example,
+so it doesn't automatically use -kb when adding JPG files.  Nonetheless,
+certain projects would find it very useful to simply designate all JPG
+files as binary.  Here is a line in cvswrappers to do that:
+
+     *.jpg -k 'b'
+
+The `b' is separate and in quotes because it's not the only possible
+RCS keyword expansion mode; one could also specify `o', which means not
+to expand `$' sign keywords but to do newline conversion.  However, `b'
+is the most common parameter.
+
+There are a few other modes that can be specified from the wrappers
+file, but they're for such rare situations that they're probably not
+worth documenting here (translation: your author has never had to use
+them).  See the node `Wrappers' in the Cederqvist if you're curious.
+
+
+File: cvsbook.info,  Node: The editinfo File,  Next: The notify File,  Prev: The cvswrappers File,  Up: The CVSROOT/ Administrative Directory
+
+The editinfo File
+-----------------
+
+This file is obsolete, even though it's still included in distributions.
+Just ignore it.
+
+
+File: cvsbook.info,  Node: The notify File,  Next: The checkoutlist File,  Prev: The editinfo File,  Up: The CVSROOT/ Administrative Directory
+
+The notify File
+---------------
+
+This file is used in conjunction with CVS's `watch' features, which are
+described in *Note Advanced CVS::.  Nothing about it will make sense
+until you understand what watches are (they're a useful but
+non-essential feature), so see *Note Advanced CVS:: for details about
+this file and about watches.
+
+
+File: cvsbook.info,  Node: The checkoutlist File,  Prev: The notify File,  Up: The CVSROOT/ Administrative Directory
+
+The checkoutlist File
+---------------------
+
+If you look inside CVSROOT/, you'll see that working copies of the files
+exist side by side with their RCS revision files:
+
+     floss$ ls /usr/local/newrepos/CVSROOT
+     checkoutlist     config,v       history     notify     taginfo
+     checkoutlist,v   cvswrappers    loginfo     notify,v   taginfo,v
+     commitinfo       cvswrappers,v  loginfo,v   passwd     verifymsg
+     commitinfo,v     editinfo       modules     rcsinfo    verifymsg,v
+     config           editinfo,v     modules,v   rcsinfo,v
+     
+     floss$
+
+CVS only pays attention to the working versions, not the RCS files, when
+it's looking for guidance on how to behave.  Therefore, whenever you
+commit your working copy of CVSROOT/ (which might, after all, even be
+checked out to a different machine), CVS automatically updates any
+changed files in the repository itself.  You will know that this has
+happened because CVS will print a message at the end of such commits:
+
+     floss$ cvs ci -m "added mp and asub modules" modules
+     Checking in modules;
+     /usr/local/newrepos/CVSROOT/modules,v  <--  modules
+     new revision: 1.2; previous revision: 1.1
+     done
+     cvs commit: Rebuilding administrative file database
+
+CVS automatically knows about the standard administrative files, and
+will rebuild them in CVSROOT/ as necessary.  If you decide to put custom
+files in CVSROOT/ (such as programs or rcsinfo template files), you'll
+have to tell CVS explicitly to treat them the same way.
+
+That's the purpose of the checkoutlist file.  It has a different format
+from most of the files we've looked at so far
+
+     FILENAME     ERROR_MESSAGE_IF_FILE_CANNOT_BE_CHECKED_OUT
+
+for example,
+
+     log.pl           unable to check out / update log.pl in CVSROOT
+     
+     bugfix.tmpl      unable to check out / update bugfix.tmpl in CVSROOT
+
+Certain files in CVSROOT are traditionally not kept under revision
+control.  One such is the "history" file, which keeps a running record
+of all actions in the repository, for use by the `cvs history' command
+(which lists checkout, update, and tag activity for a given file or
+project directory).  Incidentally, if you just remove the `history'
+file, CVS will obligingly stop keeping that log.
+
+Note: sometimes the history file is the cause of permission problems,
+and the easiest way to solve them is to either make it world-writeable
+or just remove it.
+
+Another `unrevisioned' administrative file is passwd, the assumption
+being that having it checked out over the network might compromise the
+passwords (even though they're encrypted).  You'll have to decide based
+on your own security situation whether you want to add passwd to
+checkoutlist or not; by default, it is not in checkoutlist.
+
+Two final notes about the CVSROOT/ directory: It is possible, if you
+make a big enough mistake, to commit an administrative file that is
+broken in such a way as to prevent any commits from happening at all.
+If you do that, naturally you won't be able to commit a fixed version of
+the administrative file!  The solution is to go in and hand-edit the
+repository's working copy of the administrative file to correct the
+problem; the whole repository may stay inaccessible until you do that.
+
+Also, for security's sake, make sure your CVSROOT/ directory is only
+writeable by users you trust (by `trust', I mean you trust both their
+intentions and their ability not to compromise their password).  The
+`*info' files give people the ability to invoke arbitrary programs, so
+anyone who can commit or edit files in the CVSROOT/ directory can
+essentially run any command on the system.  That's something you should
+always keep in mind.
+
+
+File: cvsbook.info,  Node: Commit Emails,  Next: Finding Out More,  Prev: The CVSROOT/ Administrative Directory,  Up: Repository Administration
+
+Commit Emails
+=============
+
+The loginfo file is how one sets up commit emails - automated emails
+that go out to everyone working on a project whenever a commit takes
+place. (It may seem counterintuitive that this is done in loginfo
+instead of commitinfo, but the point is that one wants to include the
+log message in the email).  The program to do the mailing -
+`contrib/log.pl' in the CVS source distribution - can be installed
+anywhere on your system.  I customarily put it in the repository's
+CVSROOT/ subdirectory, but that's just a matter of taste.
+
+You may need to edit `log.pl' a bit to get it to work on your system,
+possibly changing the first line to point to your Perl interpreter, and
+maybe changing this line
+
+     $mailcmd = "| Mail -s 'CVS update: $modulepath'";
+
+to invoke your preferred mailer, which may or may not be named `Mail'.
+Once you've got it set the way you like it, you can put lines similar
+to these into your loginfo:
+
+     listerizer CVSROOT/log.pl %s -f CVSROOT/commitlog -m listerizer@red-bean.com
+     RoadMail   CVSROOT/log.pl %s -f CVSROOT/commitlog -m roadmail@red-bean.com
+     bk/*score  CVSROOT/log.pl %s -f CVSROOT/commitlog -m \
+                                             bkscore-devel@red-bean.com
+
+The `%s' expands to the names of the files being committed; the -f
+option to `log.pl' takes a file name, to which the log message will be
+appended (so CVSROOT/commitlog is an ever-growing file of log
+messages); and the -m flag takes an email address, to which `log.pl'
+will send a message about the commit.  The address is usually a mailing
+list, but you can specify the -m option as many times as necessary in
+one log.pl command line.
+
+
+File: cvsbook.info,  Node: Finding Out More,  Prev: Commit Emails,  Up: Repository Administration
+
+Finding Out More
+================
+
+Although this chapter tries to give a complete introduction to
+installing and administering CVS, I've left out things that are either
+too rarely used to be worth mentioning or already well documented in the
+Cederqvist manual.  The latter category includes setting up the other
+remote access methods: RSH/SSH, kserver (Kerberos 4), and GSSAPI (which
+includes Kerberos 5, among other things).  It should be noted that
+nothing special needs to be done for RSH/SSH connections, other than
+making sure that the user in question can log into the repository
+machine using RSH or SSH.  If they can and CVS is installed on both
+client and server, and they have the right permissions to use the
+repository directly from the server machine, then they should be able to
+access the repository remotely via the :ext: method.
+
+Descriptions of certain specialized features of CVS have been deferred
+to later chapters, so they can be introduced in contexts where their
+usefulness is obvious.  General CVS troubleshooting tips are found in
+*Note Tips And Troubleshooting::.  Although it's not necessary to read
+the entire Cederqvist manual, you should familiarize yourself with it;
+it will be an invaluable reference tool.  If for some reason you don't
+have Info working on your machine and don't want to print the manual,
+you can browse it online at `http://durak.org/cvswebsites/doc/' or
+`http://www.loria.fr/~molli/cvs/doc/cvs_toc.html'.
+
+
+File: cvsbook.info,  Node: Advanced CVS,  Next: Tips And Troubleshooting,  Prev: Repository Administration,  Up: Top
+
+Advanced CVS
+************
+
+Now that we've covered the basic concepts of CVS usage and repository
+administration, we'll look at how CVS can be incorporated into the
+entire process of development.  The fundamental CVS working cycle -
+checkout, update, commit, update, commit, and so on - was demonstrated
+by the examples in *Note An Overview of CVS::.  This chapter elaborates
+on the cycle and discusses how CVS can be used to help developers
+communicate, give overviews of project activity and history, isolate and
+reunite different branches of development, and automate frequently
+performed tasks.  Some of the techniques covered introduce new CVS
+commands, but many merely explain better ways to use commands that you
+already know.
+
+* Menu:
+
+* Watches (CVS As Telephone)::
+* Log Messages And Commit Emails::
+* Changing A Log Message After Commit::
+* Getting Rid Of A Working Copy::
+* History -- A Summary Of Repository Activity::
+* Annotations -- A Detailed View Of Project Activity::
+* Annotations And Branches::
+* Using Keyword Expansion::
+* Going Out On A Limb (How To Work With Branches And Survive)::
+* Tracking Third-Party Sources (Vendor Branches)::
+* Exporting For Public Distribution::
+* The Humble Guru::
+
+
+File: cvsbook.info,  Node: Watches (CVS As Telephone),  Next: Log Messages And Commit Emails,  Up: Advanced CVS
+
+Watches (CVS As Telephone)
+==========================
+
+A major benefit of using CVS on a project is that it can function as a
+communications device as well as a record-keeper.  This section
+concentrates on how CVS can be used to keep participants informed about
+what's going on in a project.  As is true with other aspects of CVS,
+these features reward cooperation.  The participants must want to be
+informed; if people choose not to use the communications features,
+there's nothing CVS can do about it.
+
+* Menu:
+
+* How Watches Work::
+* Enabling Watches In The Repository::
+* Using Watches In Development::
+* Ending An Editing Session::
+* Controlling What Actions Are Watched::
+* Finding Out Who Is Watching What::
+* Reminding People To Use Watches::
+* What Watches Look Like In The Repository::
+

@@ -1,0 +1,192 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: New Symbols,  Prev: Index,  Up: Top
+
+New Symbols Since the Previous Edition
+**************************************
+
+* Menu:
+
+* after-make-frame-functions:            Creating Frames.
+* assq-delete-all:                       Association Lists.
+* auto-raise-tool-bar-items:             Tool Bar.
+* auto-resize-tool-bar:                  Tool Bar.
+* auto-save-list-file-prefix:            Auto-Saving.
+* backup-directory-alist:                Making Backups.
+* base64-decode-region:                  Base 64.
+* base64-decode-string:                  Base 64.
+* base64-encode-region:                  Base 64.
+* base64-encode-string:                  Base 64.
+* beginning-of-defun-function:           List Motion.
+* buffer-has-markers-at:                 Information from Markers.
+* byte-to-position:                      Text Representations.
+* charset-bytes:                         Chars and Bytes.
+* charset-plist:                         Character Sets.
+* clear-face-cache:                      Font Selection.
+* clear-image-cache:                     Image Cache.
+* clear-this-command-keys:               Command Loop Info.
+* clrhash:                               Hash Access.
+* color-defined-p:                       Color Names.
+* color-gray-p:                          Color Names.
+* color-supported-p:                     Color Names.
+* color-values:                          Color Names.
+* constrain-to-field:                    Fields.
+* copy-hash-table:                       Other Hash.
+* create-glyph:                          Glyphs.
+* create-image:                          Defining Images.
+* default-header-line-format:            Header Lines.
+* defimage:                              Defining Images.
+* define-hash-table-test:                Defining Hash.
+* define-minor-mode:                     Defining Minor Modes.
+* defined-colors:                        Color Names.
+* delete-and-extract-region:             Deletion.
+* delete-field:                          Fields.
+* delete-minibuffer-contents:            Minibuffer Misc.
+* describe-current-display-table:        Display Table Format.
+* describe-display-table:                Display Table Format.
+* disable-point-adjustment:              Adjusting Point.
+* display-backing-store:                 Display Feature Testing.
+* display-color-cells:                   Display Feature Testing.
+* display-color-p:                       Display Feature Testing.
+* display-graphic-p:                     Display Feature Testing.
+* display-grayscale-p:                   Display Feature Testing.
+* display-message-or-buffer:             The Echo Area.
+* display-mm-height:                     Display Feature Testing.
+* display-mm-width:                      Display Feature Testing.
+* display-mouse-p:                       Display Feature Testing.
+* display-pixel-height:                  Display Feature Testing.
+* display-pixel-width:                   Display Feature Testing.
+* display-planes:                        Display Feature Testing.
+* display-popup-menus-p:                 Display Feature Testing.
+* display-save-under:                    Display Feature Testing.
+* display-screens:                       Display Feature Testing.
+* display-selections-p:                  Display Feature Testing.
+* display-visual-class:                  Display Feature Testing.
+* dolist:                                Iteration.
+* dotimes:                               Iteration.
+* emacs-startup-hook:                    Init File.
+* end-of-defun-function:                 List Motion.
+* face-attribute:                        Attribute Functions.
+* face-font-family-alternatives:         Font Selection.
+* face-font-registry-alternatives:       Font Selection.
+* face-font-selection-order:             Font Selection.
+* field-beginning:                       Fields.
+* field-end:                             Fields.
+* field-string:                          Fields.
+* field-string-no-properties:            Fields.
+* file-expand-wildcards:                 Contents of Directories.
+* find-file-wildcards:                   Visiting Functions.
+* find-image:                            Defining Images.
+* font-list-limit:                       Font Lookup.
+* fontification-functions:               Auto Faces.
+* frame-parameter:                       Parameter Access.
+* gethash:                               Hash Access.
+* global-disable-point-adjustment:       Adjusting Point.
+* hash-table-count:                      Other Hash.
+* hash-table-p:                          Other Hash.
+* hash-table-rehash-size:                Other Hash.
+* hash-table-rehash-threshold:           Other Hash.
+* hash-table-size:                       Other Hash.
+* hash-table-test:                       Other Hash.
+* hash-table-weakness:                   Other Hash.
+* header-line-format:                    Header Lines.
+* image-cache-eviction-delay:            Image Cache.
+* image-mask-p:                          Image Descriptors.
+* image-size:                            Showing Images.
+* indicate-empty-lines:                  Usual Display.
+* inhibit-field-text-motion:             Word Motion.
+* inhibit-modification-hooks:            Change Hooks.
+* keywordp:                              Constant Variables.
+* left-margin-width:                     Display Margins.
+* line-beginning-position:               Text Lines.
+* line-end-position:                     Text Lines.
+* locale-coding-system:                  Locales.
+* make-backup-file-name-function:        Making Backups.
+* make-category-table:                   Categories.
+* make-hash-table:                       Creating Hash.
+* make-temp-file:                        Unique File Names.
+* makehash:                              Creating Hash.
+* mapc:                                  Mapping Functions.
+* maphash:                               Hash Access.
+* minibuffer-contents:                   Minibuffer Misc.
+* minibuffer-contents-no-properties:     Minibuffer Misc.
+* minibuffer-prompt-end:                 Minibuffer Misc.
+* multibyte-syntax-as-symbol:            Parsing Expressions.
+* next-single-char-property-change:      Property Search.
+* parse-colon-path:                      System Environment.
+* play-sound:                            Sound Output.
+* play-sound-file:                       Sound Output.
+* play-sound-functions:                  Sound Output.
+* plist-member:                          Other Plists.
+* pop:                                   List Elements.
+* position-bytes:                        Text Representations.
+* previous-single-char-property-change:  Property Search.
+* print-circle:                          Output Variables.
+* print-gensym:                          Output Variables.
+* process-running-child-p process:       Input to Processes.
+* propertize:                            Changing Properties.
+* push:                                  Building Lists.
+* puthash:                               Hash Access.
+* redisplay-dont-pause:                  Forcing Redisplay.
+* remhash:                               Hash Access.
+* right-margin-width:                    Display Margins.
+* scalable-fonts-allowed:                Font Selection.
+* scroll-down-aggressively:              Textual Scrolling.
+* scroll-up-aggressively:                Textual Scrolling.
+* set-face-attribute:                    Attribute Functions.
+* set-window-margins:                    Display Margins.
+* show-help-function:                    Special Properties.
+* show-trailing-whitespace:              Standard Faces.
+* small-temporary-file-directory:        Unique File Names.
+* subr-arity:                            What Is a Function.
+* sxhash:                                Defining Hash.
+* system-messages-locale:                Locales.
+* system-time-locale:                    Locales.
+* temp-buffer-setup-hook:                Temporary Displays.
+* text-property-default-nonsticky:       Sticky Properties.
+* tool-bar-add-item:                     Tool Bar.
+* tool-bar-add-item-from-menu:           Tool Bar.
+* tool-bar-item-margin:                  Tool Bar.
+* tool-bar-item-relief:                  Tool Bar.
+* tool-bar-map:                          Tool Bar.
+* tty-color-alist:                       Text Terminal Colors.
+* tty-color-approximate:                 Text Terminal Colors.
+* tty-color-clear:                       Text Terminal Colors.
+* tty-color-define:                      Text Terminal Colors.
+* tty-color-translate:                   Text Terminal Colors.
+* user-init-file:                        Init File.
+* window-margins:                        Display Margins.
+* window-size-fixed:                     Resizing Windows.
+* with-syntax-table:                     Syntax Table Functions.
+* with-temp-message:                     The Echo Area.
+* x-family-fonts:                        Font Lookup.
+* x-font-family-list:                    Font Lookup.
+
+

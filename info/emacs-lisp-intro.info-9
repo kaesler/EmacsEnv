@@ -1,0 +1,1115 @@
+This is emacs-lisp-intro.info, produced by makeinfo version 4.0b from
+emacs-lisp-intro.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Emacs Lisp Intro: (eintr).
+  			A simple introduction to Emacs Lisp programming.
+END-INFO-DIR-ENTRY
+
+   This is an introduction to `Programming in Emacs Lisp', for people
+who are not programmers.
+
+   Edition 2.04, 2001 Dec 17
+
+   Copyright (C) 1990, '91, '92, '93, '94, '95, '97, 2001 Free Software
+Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Section being the Preface, with the Front-Cover Texts being
+no Front-Cover Texts, and with the Back-Cover Texts being no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: emacs-lisp-intro.info,  Node: sentence-end,  Next: re-search-forward,  Prev: Regexp Search,  Up: Regexp Search
+
+The Regular Expression for `sentence-end'
+=========================================
+
+   The symbol `sentence-end' is bound to the pattern that marks the end
+of a sentence.  What should this regular expression be?
+
+   Clearly, a sentence may be ended by a period, a question mark, or an
+exclamation mark.  Indeed, only clauses that end with one of those three
+characters should be considered the end of a sentence.  This means that
+the pattern should include the character set:
+
+     [.?!]
+
+   However, we do not want `forward-sentence' merely to jump to a
+period, a question mark, or an exclamation mark, because such a
+character might be used in the middle of a sentence.  A period, for
+example, is used after abbreviations.  So other information is needed.
+
+   According to convention, you type two spaces after every sentence,
+but only one space after a period, a question mark, or an exclamation
+mark in the body of a sentence.  So a period, a question mark, or an
+exclamation mark followed by two spaces is a good indicator of an end
+of sentence.  However, in a file, the two spaces may instead be a tab
+or the end of a line.  This means that the regular expression should
+include these three items as alternatives.
+
+   This group of alternatives will look like this:
+
+     \\($\\| \\|  \\)
+            ^   ^^
+           TAB  SPC
+
+Here, `$' indicates the end of the line, and I have pointed out where
+the tab and two spaces are inserted in the expression.  Both are
+inserted by putting the actual characters into the expression.
+
+   Two backslashes, `\\', are required before the parentheses and
+vertical bars: the first backslash quotes the following backslash in
+Emacs; and the second indicates that the following character, the
+parenthesis or the vertical bar, is special.
+
+   Also, a sentence may be followed by one or more carriage returns,
+like this:
+
+     [
+     ]*
+
+Like tabs and spaces, a carriage return is inserted into a regular
+expression by inserting it literally.  The asterisk indicates that the
+<RET> is repeated zero or more times.
+
+   But a sentence end does not consist only of a period, a question
+mark or an exclamation mark followed by appropriate space: a closing
+quotation mark or a closing brace of some kind may precede the space.
+Indeed more than one such mark or brace may precede the space.  These
+require a expression that looks like this:
+
+     []\"')}]*
+
+   In this expression, the first `]' is the first character in the
+expression; the second character is `"', which is preceded by a `\' to
+tell Emacs the `"' is _not_ special.  The last three characters are
+`'', `)', and `}'.
+
+   All this suggests what the regular expression pattern for matching
+the end of a sentence should be; and, indeed, if we evaluate
+`sentence-end' we find that it returns the following value:
+
+     sentence-end
+          => "[.?!][]\"')}]*\\($\\|     \\|  \\)[
+     ]*"
+
+
+File: emacs-lisp-intro.info,  Node: re-search-forward,  Next: forward-sentence,  Prev: sentence-end,  Up: Regexp Search
+
+The `re-search-forward' Function
+================================
+
+   The `re-search-forward' function is very like the `search-forward'
+function.  (*Note The `search-forward' Function: search-forward.)
+
+   `re-search-forward' searches for a regular expression.  If the
+search is successful, it leaves point immediately after the last
+character in the target.  If the search is backwards, it leaves point
+just before the first character in the target.  You may tell
+`re-search-forward' to return `t' for true.  (Moving point is therefore
+a `side effect'.)
+
+   Like `search-forward', the `re-search-forward' function takes four
+arguments:
+
+  1. The first argument is the regular expression that the function
+     searches for.  The regular expression will be a string between
+     quotations marks.
+
+  2. The optional second argument limits how far the function will
+     search; it is a bound, which is specified as a position in the
+     buffer.
+
+  3. The optional third argument specifies how the function responds to
+     failure: `nil' as the third argument causes the function to signal
+     an error (and print a message) when the search fails; any other
+     value causes it to return `nil' if the search fails and `t' if the
+     search succeeds.
+
+  4. The optional fourth argument is the repeat count.  A negative
+     repeat count causes `re-search-forward' to search backwards.
+
+   The template for `re-search-forward' looks like this:
+
+     (re-search-forward "REGULAR-EXPRESSION"
+                     LIMIT-OF-SEARCH
+                     WHAT-TO-DO-IF-SEARCH-FAILS
+                     REPEAT-COUNT)
+
+   The second, third, and fourth arguments are optional.  However, if
+you want to pass a value to either or both of the last two arguments,
+you must also pass a value to all the preceding arguments.  Otherwise,
+the Lisp interpreter will mistake which argument you are passing the
+value to.
+
+   In the `forward-sentence' function, the regular expression will be
+the value of the variable `sentence-end', namely:
+
+     "[.?!][]\"')}]*\\($\\|  \\|  \\)[
+     ]*"
+
+The limit of the search will be the end of the paragraph (since a
+sentence cannot go beyond a paragraph).  If the search fails, the
+function will return `nil'; and the repeat count will be provided by
+the argument to the `forward-sentence' function.
+
+
+File: emacs-lisp-intro.info,  Node: forward-sentence,  Next: forward-paragraph,  Prev: re-search-forward,  Up: Regexp Search
+
+`forward-sentence'
+==================
+
+   The command to move the cursor forward a sentence is a
+straightforward illustration of how to use regular expression searches
+in Emacs Lisp.  Indeed, the function looks longer and more complicated
+than it is; this is because the function is designed to go backwards as
+well as forwards; and, optionally, over more than one sentence.  The
+function is usually bound to the key command `M-e'.
+
+* Menu:
+
+* Complete forward-sentence::
+* fwd-sentence while loops::    Two `while' loops.
+* fwd-sentence re-search::      A regular expression search.
+
+
+File: emacs-lisp-intro.info,  Node: Complete forward-sentence,  Next: fwd-sentence while loops,  Prev: forward-sentence,  Up: forward-sentence
+
+Complete `forward-sentence' function definition
+-----------------------------------------------
+
+   Here is the code for `forward-sentence':
+
+     (defun forward-sentence (&optional arg)
+       "Move forward to next sentence-end.  With argument, repeat.
+     With negative argument, move backward repeatedly to sentence-beginning.
+     Sentence ends are identified by the value of sentence-end
+     treated as a regular expression.  Also, every paragraph boundary
+     terminates sentences as well."
+       (interactive "p")
+       (or arg (setq arg 1))
+       (while (< arg 0)
+         (let ((par-beg
+                (save-excursion (start-of-paragraph-text) (point))))
+           (if (re-search-backward
+                (concat sentence-end "[^ \t\n]") par-beg t)
+               (goto-char (1- (match-end 0)))
+             (goto-char par-beg)))
+         (setq arg (1+ arg)))
+       (while (> arg 0)
+         (let ((par-end
+                (save-excursion (end-of-paragraph-text) (point))))
+           (if (re-search-forward sentence-end par-end t)
+               (skip-chars-backward " \t\n")
+             (goto-char par-end)))
+         (setq arg (1- arg))))
+
+   The function looks long at first sight and it is best to look at its
+skeleton first, and then its muscle.  The way to see the skeleton is to
+look at the expressions that start in the left-most columns:
+
+     (defun forward-sentence (&optional arg)
+       "DOCUMENTATION..."
+       (interactive "p")
+       (or arg (setq arg 1))
+       (while (< arg 0)
+         BODY-OF-WHILE-LOOP
+       (while (> arg 0)
+         BODY-OF-WHILE-LOOP
+
+   This looks much simpler!  The function definition consists of
+documentation, an `interactive' expression, an `or' expression, and
+`while' loops.
+
+   Let's look at each of these parts in turn.
+
+   We note that the documentation is thorough and understandable.
+
+   The function has an `interactive "p"' declaration.  This means that
+the processed prefix argument, if any, is passed to the function as its
+argument.  (This will be a number.)  If the function is not passed an
+argument (it is optional) then the argument `arg' will be bound to 1.
+When `forward-sentence' is called non-interactively without an
+argument, `arg' is bound to `nil'.
+
+   The `or' expression handles the prefix argument.  What it does is
+either leave the value of `arg' as it is, but only if `arg' is bound to
+a value; or it sets the value of `arg' to 1, in the case when `arg' is
+bound to `nil'.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-sentence while loops,  Next: fwd-sentence re-search,  Prev: Complete forward-sentence,  Up: forward-sentence
+
+The `while' loops
+-----------------
+
+   Two `while' loops follow the `or' expression.  The first `while' has
+a true-or-false-test that tests true if the prefix argument for
+`forward-sentence' is a negative number.  This is for going backwards.
+The body of this loop is similar to the body of the second `while'
+clause, but it is not exactly the same.  We will skip this `while' loop
+and concentrate on the second `while' loop.
+
+   The second `while' loop is for moving point forward.  Its skeleton
+looks like this:
+
+     (while (> arg 0)            ; true-or-false-test
+       (let VARLIST
+         (if (TRUE-OR-FALSE-TEST)
+             THEN-PART
+           ELSE-PART
+       (setq arg (1- arg))))     ; `while' loop decrementer
+
+   The `while' loop is of the decrementing kind.  (*Note A Loop with a
+Decrementing Counter: Decrementing Loop.)  It has a true-or-false-test
+that tests true so long as the counter (in this case, the variable
+`arg') is greater than zero; and it has a decrementer that subtracts 1
+from the value of the counter every time the loop repeats.
+
+   If no prefix argument is given to `forward-sentence', which is the
+most common way the command is used, this `while' loop will run once,
+since the value of `arg' will be 1.
+
+   The body of the `while' loop consists of a `let' expression, which
+creates and binds a local variable, and has, as its body, an `if'
+expression.
+
+   The body of the `while' loop looks like this:
+
+     (let ((par-end
+            (save-excursion (end-of-paragraph-text) (point))))
+       (if (re-search-forward sentence-end par-end t)
+           (skip-chars-backward " \t\n")
+         (goto-char par-end)))
+
+   The `let' expression creates and binds the local variable `par-end'.
+As we shall see, this local variable is designed to provide a bound or
+limit to the regular expression search.  If the search fails to find a
+proper sentence ending in the paragraph, it will stop on reaching the
+end of the paragraph.
+
+   But first, let us examine how `par-end' is bound to the value of the
+end of the paragraph.  What happens is that the `let' sets the value of
+`par-end' to the value returned when the Lisp interpreter evaluates the
+expression
+
+     (save-excursion (end-of-paragraph-text) (point))
+
+In this expression, `(end-of-paragraph-text)' moves point to the end of
+the paragraph, `(point)' returns the value of point, and then
+`save-excursion' restores point to its original position.  Thus, the
+`let' binds `par-end' to the value returned by the `save-excursion'
+expression, which is the position of the end of the paragraph.  (The
+`(end-of-paragraph-text)' function uses `forward-paragraph', which we
+will discuss shortly.)
+
+   Emacs next evaluates the body of the `let', which is an `if'
+expression that looks like this:
+
+     (if (re-search-forward sentence-end par-end t) ; if-part
+         (skip-chars-backward " \t\n")              ; then-part
+       (goto-char par-end)))                        ; else-part
+
+   The `if' tests whether its first argument is true and if so,
+evaluates its then-part; otherwise, the Emacs Lisp interpreter
+evaluates the else-part.  The true-or-false-test of the `if' expression
+is the regular expression search.
+
+   It may seem odd to have what looks like the `real work' of the
+`forward-sentence' function buried here, but this is a common way this
+kind of operation is carried out in Lisp.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-sentence re-search,  Prev: fwd-sentence while loops,  Up: forward-sentence
+
+The regular expression search
+-----------------------------
+
+   The `re-search-forward' function searches for the end of the
+sentence, that is, for the pattern defined by the `sentence-end'
+regular expression.  If the pattern is found--if the end of the
+sentence is found--then the `re-search-forward' function does two
+things:
+
+  1. The `re-search-forward' function carries out a side effect, which
+     is to move point to the end of the occurrence found.
+
+  2. The `re-search-forward' function returns a value of true.  This is
+     the value received by the `if', and means that the search was
+     successful.
+
+The side effect, the movement of point, is completed before the `if'
+function is handed the value returned by the successful conclusion of
+the search.
+
+   When the `if' function receives the value of true from a successful
+call to `re-search-forward', the `if' evaluates the then-part, which is
+the expression `(skip-chars-backward " \t\n")'.  This expression moves
+backwards over any blank spaces, tabs or carriage returns until a
+printed character is found and then leaves point after the character.
+Since point has already been moved to the end of the pattern that marks
+the end of the sentence, this action leaves point right after the
+closing printed character of the sentence, which is usually a period.
+
+   On the other hand, if the `re-search-forward' function fails to find
+a pattern marking the end of the sentence, the function returns false.
+The false then causes the `if' to evaluate its third argument, which is
+`(goto-char par-end)':  it moves point to the end of the paragraph.
+
+   Regular expression searches are exceptionally useful and the pattern
+illustrated by `re-search-forward', in which the search is the test of
+an `if' expression, is handy.  You will see or write code incorporating
+this pattern often.
+
+
+File: emacs-lisp-intro.info,  Node: forward-paragraph,  Next: etags,  Prev: forward-sentence,  Up: Regexp Search
+
+`forward-paragraph': a Goldmine of Functions
+============================================
+
+   The `forward-paragraph' function moves point forward to the end of
+the paragraph.  It is usually bound to `M-}' and makes use of a number
+of functions that are important in themselves, including `let*',
+`match-beginning', and `looking-at'.
+
+   The function definition for `forward-paragraph' is considerably
+longer than the function definition for `forward-sentence' because it
+works with a paragraph, each line of which may begin with a fill prefix.
+
+   A fill prefix consists of a string of characters that are repeated at
+the beginning of each line.  For example, in Lisp code, it is a
+convention to start each line of a paragraph-long comment with `;;; '.
+In Text mode, four blank spaces make up another common fill prefix,
+creating an indented paragraph.  (*Note Fill Prefix: (emacs)Fill
+Prefix, for more information about fill prefixes.)
+
+   The existence of a fill prefix means that in addition to being able
+to find the end of a paragraph whose lines begin on the left-most
+column, the `forward-paragraph' function must be able to find the end
+of a paragraph when all or many of the lines in the buffer begin with
+the fill prefix.
+
+   Moreover, it is sometimes practical to ignore a fill prefix that
+exists, especially when blank lines separate paragraphs.  This is an
+added complication.
+
+* Menu:
+
+* forward-paragraph in brief::  Key parts of the function definition.
+* fwd-para let::                The `let*' expression.
+* fwd-para while::              The forward motion `while' loop.
+* fwd-para between paragraphs::  Movement between paragraphs.
+* fwd-para within paragraph::   Movement within paragraphs.
+* fwd-para no fill prefix::     When there is no fill prefix.
+* fwd-para with fill prefix::   When there is a fill prefix.
+* fwd-para summary::            Summary of `forward-paragraph' code.
+
+
+File: emacs-lisp-intro.info,  Node: forward-paragraph in brief,  Next: fwd-para let,  Prev: forward-paragraph,  Up: forward-paragraph
+
+Shortened `forward-paragraph' function definition
+-------------------------------------------------
+
+   Rather than print all of the `forward-paragraph' function, we will
+only print parts of it.  Read without preparation, the function can be
+daunting!
+
+   In outline, the function looks like this:
+
+     (defun forward-paragraph (&optional arg)
+       "DOCUMENTATION..."
+       (interactive "p")
+       (or arg (setq arg 1))
+       (let*
+           VARLIST
+         (while (< arg 0)        ; backward-moving-code
+           ...
+           (setq arg (1+ arg)))
+         (while (> arg 0)        ; forward-moving-code
+           ...
+           (setq arg (1- arg)))))
+
+   The first parts of the function are routine: the function's argument
+list consists of one optional argument.  Documentation follows.
+
+   The lower case `p' in the `interactive' declaration means that the
+processed prefix argument, if any, is passed to the function.  This
+will be a number, and is the repeat count of how many paragraphs point
+will move.  The `or' expression in the next line handles the common
+case when no argument is passed to the function, which occurs if the
+function is called from other code rather than interactively.  This
+case was described earlier.  (*Note The `forward-sentence' function:
+forward-sentence.)  Now we reach the end of the familiar part of this
+function.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para let,  Next: fwd-para while,  Prev: forward-paragraph in brief,  Up: forward-paragraph
+
+The `let*' expression
+---------------------
+
+   The next line of the `forward-paragraph' function begins a `let*'
+expression.  This is a different kind of expression than we have seen
+so far.  The symbol is `let*' not `let'.
+
+   The `let*' special form is like `let' except that Emacs sets each
+variable in sequence, one after another, and variables in the latter
+part of the varlist can make use of the values to which Emacs set
+variables in the earlier part of the varlist.
+
+   In the `let*' expression in this function, Emacs binds two
+variables: `fill-prefix-regexp' and `paragraph-separate'.  The value to
+which `paragraph-separate' is bound depends on the value of
+`fill-prefix-regexp'.
+
+   Let's look at each in turn.  The symbol `fill-prefix-regexp' is set
+to the value returned by evaluating the following list:
+
+     (and fill-prefix
+          (not (equal fill-prefix ""))
+          (not paragraph-ignore-fill-prefix)
+          (regexp-quote fill-prefix))
+
+This is an expression whose first element is the `and' special form.
+
+   As we learned earlier (*note The `kill-new' function: kill-new
+function.), the `and' special form evaluates each of its arguments
+until one of the arguments returns a value of `nil', in which case the
+`and' expression returns `nil'; however, if none of the arguments
+returns a value of `nil', the value resulting from evaluating the last
+argument is returned.  (Since such a value is not `nil', it is
+considered true in Lisp.)  In other words, an `and' expression returns
+a true value only if all its arguments are true.
+
+   In this case, the variable `fill-prefix-regexp' is bound to a
+non-`nil' value only if the following four expressions produce a true
+(i.e., a non-`nil') value when they are evaluated; otherwise,
+`fill-prefix-regexp' is bound to `nil'.
+
+`fill-prefix'
+     When this variable is evaluated, the value of the fill prefix, if
+     any, is returned.  If there is no fill prefix, this variable
+     returns `nil'.
+
+`(not (equal fill-prefix "")'
+     This expression checks whether an existing fill prefix is an empty
+     string, that is, a string with no characters in it.  An empty
+     string is not a useful fill prefix.
+
+`(not paragraph-ignore-fill-prefix)'
+     This expression returns `nil' if the variable
+     `paragraph-ignore-fill-prefix' has been turned on by being set to a
+     true value such as `t'.
+
+`(regexp-quote fill-prefix)'
+     This is the last argument to the `and' special form.  If all the
+     arguments to the `and' are true, the value resulting from
+     evaluating this expression will be returned by the `and' expression
+     and bound to the variable `fill-prefix-regexp',
+
+The result of evaluating this `and' expression successfully is that
+`fill-prefix-regexp' will be bound to the value of `fill-prefix' as
+modified by the `regexp-quote' function.  What `regexp-quote' does is
+read a string and return a regular expression that will exactly match
+the string and match nothing else.  This means that
+`fill-prefix-regexp' will be set to a value that will exactly match the
+fill prefix if the fill prefix exists.  Otherwise, the variable will be
+set to `nil'.
+
+   The second local variable in the `let*' expression is
+`paragraph-separate'.  It is bound to the value returned by evaluating
+the expression:
+
+     (if fill-prefix-regexp
+         (concat paragraph-separate
+                 "\\|^" fill-prefix-regexp "[ \t]*$")
+       paragraph-separate)))
+
+   This expression shows why `let*' rather than `let' was used.  The
+true-or-false-test for the `if' depends on whether the variable
+`fill-prefix-regexp' evaluates to `nil' or some other value.
+
+   If `fill-prefix-regexp' does not have a value, Emacs evaluates the
+else-part of the `if' expression and binds `paragraph-separate' to its
+local value.  (`paragraph-separate' is a regular expression that
+matches what separates paragraphs.)
+
+   But if `fill-prefix-regexp' does have a value, Emacs evaluates the
+then-part of the `if' expression and binds `paragraph-separate' to a
+regular expression that includes the `fill-prefix-regexp' as part of
+the pattern.
+
+   Specifically, `paragraph-separate' is set to the original value of
+the paragraph separate regular expression concatenated with an
+alternative expression that consists of the `fill-prefix-regexp'
+followed by a blank line.  The `^' indicates that the
+`fill-prefix-regexp' must begin a line, and the optional whitespace to
+the end of the line is defined by `"[ \t]*$"'.)  The `\\|' defines this
+portion of the regexp as an alternative to `paragraph-separate'.
+
+   Now we get into the body of the `let*'.  The first part of the body
+of the `let*' deals with the case when the function is given a negative
+argument and is therefore moving backwards.  We will skip this section.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para while,  Next: fwd-para between paragraphs,  Prev: fwd-para let,  Up: forward-paragraph
+
+The forward motion `while' loop
+-------------------------------
+
+   The second part of the body of the `let*' deals with forward motion.
+It is a `while' loop that repeats itself so long as the value of `arg'
+is greater than zero.  In the most common use of the function, the
+value of the argument is 1, so the body of the `while' loop is
+evaluated exactly once, and the cursor moves forward one paragraph.
+
+   This part handles three situations: when point is between paragraphs,
+when point is within a paragraph and there is a fill prefix, and when
+point is within a paragraph and there is no fill prefix.
+
+   The `while' loop looks like this:
+
+     (while (> arg 0)
+       (beginning-of-line)
+     
+       ;; between paragraphs
+       (while (prog1 (and (not (eobp))
+                          (looking-at paragraph-separate))
+                (forward-line 1)))
+     
+       ;; within paragraphs, with a fill prefix
+       (if fill-prefix-regexp
+           ;; There is a fill prefix; it overrides paragraph-start.
+           (while (and (not (eobp))
+                       (not (looking-at paragraph-separate))
+                       (looking-at fill-prefix-regexp))
+             (forward-line 1))
+     
+         ;; within paragraphs, no fill prefix
+         (if (re-search-forward paragraph-start nil t)
+             (goto-char (match-beginning 0))
+           (goto-char (point-max))))
+     
+       (setq arg (1- arg)))
+
+   We can see immediately that this is a decrementing counter `while'
+loop, using the expression `(setq arg (1- arg))' as the decrementer.
+
+   The body of the loop consists of three expressions:
+
+     ;; between paragraphs
+     (beginning-of-line)
+     (while
+         BODY-OF-WHILE)
+     
+     ;; within paragraphs, with fill prefix
+     (if TRUE-OR-FALSE-TEST
+         THEN-PART
+     
+     ;; within paragraphs, no fill prefix
+       ELSE-PART
+
+When the Emacs Lisp interpreter evaluates the body of the `while' loop,
+the first thing it does is evaluate the `(beginning-of-line)'
+expression and move point to the beginning of the line.  Then there is
+an inner `while' loop.  This `while' loop is designed to move the
+cursor out of the blank space between paragraphs, if it should happen
+to be there.  Finally, there is an `if' expression that actually moves
+point to the end of the paragraph.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para between paragraphs,  Next: fwd-para within paragraph,  Prev: fwd-para while,  Up: forward-paragraph
+
+Between paragraphs
+------------------
+
+   First, let us look at the inner `while' loop.  This loop handles the
+case when point is between paragraphs; it uses three functions that are
+new to us: `prog1', `eobp' and `looking-at'.
+
+   * `prog1' is similar to the `progn' special form, except that
+     `prog1' evaluates its arguments in sequence and then returns the
+     value of its first argument as the value of the whole expression.
+     (`progn' returns the value of its last argument as the value of
+     the expression.) The second and subsequent arguments to `prog1'
+     are evaluated only for their side effects.
+
+   * `eobp' is an abbreviation of `End Of Buffer P' and is a function
+     that returns true if point is at the end of the buffer.
+
+   * `looking-at' is a function that returns true if the text following
+     point matches the regular expression passed `looking-at' as its
+     argument.
+
+   The `while' loop we are studying looks like this:
+
+     (while (prog1 (and (not (eobp))
+                        (looking-at paragraph-separate))
+                   (forward-line 1)))
+
+This is a `while' loop with no body!  The true-or-false-test of the
+loop is the expression:
+
+     (prog1 (and (not (eobp))
+                 (looking-at paragraph-separate))
+            (forward-line 1))
+
+The first argument to the `prog1' is the `and' expression.  It has
+within in it a test of whether point is at the end of the buffer and
+also a test of whether the pattern following point matches the regular
+expression for separating paragraphs.
+
+   If the cursor is not at the end of the buffer and if the characters
+following the cursor mark the separation between two paragraphs, then
+the `and' expression is true.  After evaluating the `and' expression,
+the Lisp interpreter evaluates the second argument to `prog1', which is
+`forward-line'.  This moves point forward one line.  The value returned
+by the `prog1' however, is the value of its first argument, so the
+`while' loop continues so long as point is not at the end of the buffer
+and is between paragraphs.  When, finally, point is moved to a
+paragraph, the `and' expression tests false.  Note however, that the
+`forward-line' command is carried out anyhow.  This means that when
+point is moved from between paragraphs to a paragraph, it is left at
+the beginning of the second line of the paragraph.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para within paragraph,  Next: fwd-para no fill prefix,  Prev: fwd-para between paragraphs,  Up: forward-paragraph
+
+Within paragraphs
+-----------------
+
+   The next expression in the outer `while' loop is an `if' expression.
+The Lisp interpreter evaluates the then-part of the `if' when the
+`fill-prefix-regexp' variable has a value other than `nil', and it
+evaluates the else-part when the value of `if fill-prefix-regexp' is
+`nil', that is, when there is no fill prefix.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para no fill prefix,  Next: fwd-para with fill prefix,  Prev: fwd-para within paragraph,  Up: forward-paragraph
+
+No fill prefix
+--------------
+
+   It is simplest to look at the code for the case when there is no fill
+prefix first.  This code consists of yet another inner `if' expression,
+and reads as follows:
+
+     (if (re-search-forward paragraph-start nil t)
+         (goto-char (match-beginning 0))
+       (goto-char (point-max)))
+
+This expression actually does the work that most people think of as the
+primary purpose of the `forward-paragraph' command: it causes a regular
+expression search to occur that searches forward to the start of the
+next paragraph and if it is found, moves point there; but if the start
+of another paragraph if not found, it moves point to the end of the
+accessible region of the buffer.
+
+   The only unfamiliar part of this is the use of `match-beginning'.
+This is another function that is new to us.  The `match-beginning'
+function returns a number specifying the location of the start of the
+text that was matched by the last regular expression search.
+
+   The `match-beginning' function is used here because of a
+characteristic of a forward search: a successful forward search,
+regardless of whether it is a plain search or a regular expression
+search, will move point to the end of the text that is found.  In this
+case, a successful search will move point to the end of the pattern for
+`paragraph-start', which will be the beginning of the next paragraph
+rather than the end of the current one.
+
+   However, we want to put point at the end of the current paragraph,
+not at the beginning of the next one.  The two positions may be
+different, because there may be several blank lines between paragraphs.
+
+   When given an argument of 0, `match-beginning' returns the position
+that is the start of the text that the most recent regular expression
+search matched.  In this case, the most recent regular expression
+search is the one looking for `paragraph-start', so `match-beginning'
+returns the beginning position of the pattern, rather than the end of
+the pattern.  The beginning position is the end of the paragraph.
+
+   (Incidentally, when passed a positive number as an argument, the
+`match-beginning' function will place point at that parenthesized
+expression in the last regular expression.  It is a useful function.)
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para with fill prefix,  Next: fwd-para summary,  Prev: fwd-para no fill prefix,  Up: forward-paragraph
+
+With a fill prefix
+------------------
+
+   The inner `if' expression just discussed is the else-part of an
+enclosing `if' expression which tests whether there is a fill prefix.
+If there is a fill prefix, the then-part of this `if' is evaluated.  It
+looks like this:
+
+     (while (and (not (eobp))
+                 (not (looking-at paragraph-separate))
+                 (looking-at fill-prefix-regexp))
+       (forward-line 1))
+
+What this expression does is move point forward line by line so long as
+three conditions are true:
+
+  1. Point is not at the end of the buffer.
+
+  2. The text following point does not separate paragraphs.
+
+  3. The pattern following point is the fill prefix regular expression.
+
+   The last condition may be puzzling, until you remember that point was
+moved to the beginning of the line early in the `forward-paragraph'
+function.  This means that if the text has a fill prefix, the
+`looking-at' function will see it.
+
+
+File: emacs-lisp-intro.info,  Node: fwd-para summary,  Prev: fwd-para with fill prefix,  Up: forward-paragraph
+
+Summary
+-------
+
+   In summary, when moving forward, the `forward-paragraph' function
+does the following:
+
+   * Move point to the beginning of the line.
+
+   * Skip over lines between paragraphs.
+
+   * Check whether there is a fill prefix, and if there is:
+
+        -- Go forward line by line so long as the line is not a
+          paragraph separating line.
+
+   * But if there is no fill prefix,
+
+        -- Search for the next paragraph start pattern.
+
+        -- Go to the beginning of the paragraph start pattern, which
+          will be the end of the previous paragraph.
+
+        -- Or else go to the end of the accessible portion of the
+          buffer.
+
+   For review, here is the code we have just been discussing, formatted
+for clarity:
+
+     (interactive "p")
+     (or arg (setq arg 1))
+     (let* (
+            (fill-prefix-regexp
+             (and fill-prefix (not (equal fill-prefix ""))
+                  (not paragraph-ignore-fill-prefix)
+                  (regexp-quote fill-prefix)))
+     
+            (paragraph-separate
+             (if fill-prefix-regexp
+                 (concat paragraph-separate
+                         "\\|^"
+                         fill-prefix-regexp
+                         "[ \t]*$")
+               paragraph-separate)))
+     
+       OMITTED-BACKWARD-MOVING-CODE ...
+     
+       (while (> arg 0)                ; forward-moving-code
+         (beginning-of-line)
+     
+         (while (prog1 (and (not (eobp))
+                            (looking-at paragraph-separate))
+                  (forward-line 1)))
+     
+         (if fill-prefix-regexp
+             (while (and (not (eobp))  ; then-part
+                         (not (looking-at paragraph-separate))
+                         (looking-at fill-prefix-regexp))
+               (forward-line 1))
+                                       ; else-part: the inner-if
+           (if (re-search-forward paragraph-start nil t)
+               (goto-char (match-beginning 0))
+             (goto-char (point-max))))
+     
+         (setq arg (1- arg)))))        ; decrementer
+
+   The full definition for the `forward-paragraph' function not only
+includes this code for going forwards, but also code for going
+backwards.
+
+   If you are reading this inside of GNU Emacs and you want to see the
+whole function, you can type `C-h f' (`describe-function') and the name
+of the function.  This gives you the function documentation and the
+name of the library containing the function's source.  Place point over
+the name of the library and press the RET key; you will be taken
+directly to the source.  (Be sure to install your sources!  Without
+them, you are like a person who tries to drive a car with his eyes
+shut!)
+
+   Or - a good habit to get into - you can type `M-.' (`find-tag') and
+the name of the function when prompted for it.  This will take you
+directly to the source.  If the `find-tag' function first asks you for
+the name of a `TAGS' table, give it the name of the `TAGS' file such as
+`/usr/local/share/emacs/21.0.100/lisp/TAGS'.  (The exact path to your
+`TAGS' file depends on how your copy of Emacs was installed.)
+
+   You can also create your own `TAGS' file for directories that lack
+one.  *Note Create Your Own `TAGS' File: etags.
+
+
+File: emacs-lisp-intro.info,  Node: etags,  Next: Regexp Review,  Prev: forward-paragraph,  Up: Regexp Search
+
+Create Your Own `TAGS' File
+===========================
+
+   The `M-.' (`find-tag') command takes you directly to the source for
+a function, variable, node, or other source.  The function depends on
+tags tables to tell it where to go.
+
+   You often need to build and install tags tables yourself.  They are
+not built automatically.  A tags table is called a `TAGS' file; the
+name is in upper case letters.
+
+   You can create a `TAGS' file by calling the `etags' program that
+comes as a part of the Emacs distribution.  Usually, `etags' is
+compiled and installed when Emacs is built.  (`etags' is not an Emacs
+Lisp function or a part of Emacs; it is a C program.)
+
+   To create a `TAGS' file, first switch to the directory in which you
+want to create the file.  In Emacs you can do this with the `M-x cd'
+command, or by visiting a file in the directory, or by listing the
+directory with `C-x d' (`dired').  Then run the compile command, with
+`etags *.el' as the command to execute
+
+     M-x compile RET etags *.el RET
+
+to create a `TAGS' file.
+
+   For example, if you have a large number of files in your `~/emacs'
+directory, as I do--I have 137 `.el' files in it, of which I load
+12--you can create a `TAGS' file for the Emacs Lisp files in that
+directory.
+
+   The `etags' program takes all the usual shell `wildcards'.  For
+example, if you have two directories for which you want a single `TAGS
+file', type `etags *.el ../elisp/*.el', where `../elisp/' is the second
+directory:
+
+     M-x compile RET etags *.el ../elisp/*.el RET
+
+   Type
+
+     M-x compile RET etags --help RET
+
+to see a list of the options accepted by `etags' as well as a list of
+supported languages.
+
+   The `etags' program handles more than 20 languages, including Emacs
+Lisp, Common Lisp, Scheme, C, C++, Ada, Fortran, Java, LaTeX, Pascal,
+Perl, Python, Texinfo, makefiles, and most assemblers.  The program has
+no switches for specifying the language; it recognizes the language in
+an input file according to its file name and contents.
+
+   `etags' is very helpful when you are writing code yourself and want
+to refer back to functions you have already written.  Just run `etags'
+again at intervals as you write new functions, so they become part of
+the `TAGS' file.
+
+   If you think an appropriate `TAGS' file already exists for what you
+want, but do not know where it is, you can use the `locate' program to
+attempt to find it.
+
+   Type `M-x locate RET TAGS RET' and Emacs will list for you the full
+path names of all your `TAGS' files.  On my system, this command lists
+34 `TAGS' files.  On the other hand, a `plain vanilla' system I
+recently installed did not contain any `TAGS' files.
+
+   If the tags table you want has been created, you can use the `M-x
+visit-tags-table' command to specify it.  Otherwise, you will need to
+create the tag table yourself and then use `M-x visit-tags-table'.
+
+Building Tags in the Emacs sources
+..................................
+
+   The GNU Emacs sources come with a `Makefile' that contains a
+sophisticated `etags' command that creates, collects, and merges tags
+tables from all over the Emacs sources and puts the information into
+one `TAGS' file in the `src/' directory below the top level of your
+Emacs source directory.
+
+   To build this `TAGS' file, go to the top level of your Emacs source
+directory and run the compile command `make tags':
+
+     M-x compile RET make tags RET
+
+(The `make tags' command works well with the GNU Emacs sources, as well
+as with some other source packages.)
+
+   For more information, see *Note Tag Tables: (emacs)Tags.
+
+
+File: emacs-lisp-intro.info,  Node: Regexp Review,  Next: re-search Exercises,  Prev: etags,  Up: Regexp Search
+
+Review
+======
+
+   Here is a brief summary of some recently introduced functions.
+
+`while'
+     Repeatedly evaluate the body of the expression so long as the first
+     element of the body tests true.  Then return `nil'.  (The
+     expression is evaluated only for its side effects.)
+
+     For example:
+
+          (let ((foo 2))
+            (while (> foo 0)
+              (insert (format "foo is %d.\n" foo))
+              (setq foo (1- foo))))
+          
+               =>      foo is 2.
+                       foo is 1.
+                       nil
+
+     (The `insert' function inserts its arguments at point; the
+     `format' function returns a string formatted from its arguments
+     the way `message' formats its arguments; `\n' produces a new line.)
+
+`re-search-forward'
+     Search for a pattern, and if the pattern is found, move point to
+     rest just after it.
+
+     Takes four arguments, like `search-forward':
+
+       1. A regular expression that specifies the pattern to search for.
+
+       2. Optionally, the limit of the search.
+
+       3. Optionally, what to do if the search fails, return `nil' or an
+          error message.
+
+       4. Optionally, how many times to repeat the search; if negative,
+          the search goes backwards.
+
+`let*'
+     Bind some variables locally to particular values, and then
+     evaluate the remaining arguments, returning the value of the last
+     one.  While binding the local variables, use the local values of
+     variables bound earlier, if any.
+
+     For example:
+
+          (let* ((foo 7)
+                (bar (* 3 foo)))
+            (message "`bar' is %d." bar))
+               => `bar' is 21.
+
+`match-beginning'
+     Return the position of the start of the text found by the last
+     regular expression search.
+
+`looking-at'
+     Return `t' for true if the text after point matches the argument,
+     which should be a regular expression.
+
+`eobp'
+     Return `t' for true if point is at the end of the accessible part
+     of a buffer.  The end of the accessible part is the end of the
+     buffer if the buffer is not narrowed; it is the end of the
+     narrowed part if the buffer is narrowed.
+
+`prog1'
+     Evaluate each argument in sequence and then return the value of the
+     _first_.
+
+     For example:
+
+          (prog1 1 2 3 4)
+               => 1
+
+
+File: emacs-lisp-intro.info,  Node: re-search Exercises,  Prev: Regexp Review,  Up: Regexp Search
+
+Exercises with `re-search-forward'
+==================================
+
+   * Write a function to search for a regular expression that matches
+     two or more blank lines in sequence.
+
+   * Write a function to search for duplicated words, such as `the the'.
+     *Note Syntax of Regular Expressions: (emacs)Regexps, for
+     information on how to write a regexp (a regular expression) to
+     match a string that is composed of two identical halves.  You can
+     devise several regexps; some are better than others.  The function
+     I use is described in an appendix, along with several regexps.
+     *Note `the-the' Duplicated Words Function: the-the.
+
+
+File: emacs-lisp-intro.info,  Node: Counting Words,  Next: Words in a defun,  Prev: Regexp Search,  Up: Top
+
+Counting: Repetition and Regexps
+********************************
+
+   Repetition and regular expression searches are powerful tools that
+you often use when you write code in Emacs Lisp.  This chapter
+illustrates the use of regular expression searches through the
+construction of word count commands using `while' loops and recursion.
+
+* Menu:
+
+* Why Count Words::
+* count-words-region::          Use a regexp, but find a problem.
+* recursive-count-words::       Start with case of no words in region.
+* Counting Exercise::
+
+
+File: emacs-lisp-intro.info,  Node: Why Count Words,  Next: count-words-region,  Prev: Counting Words,  Up: Counting Words
+
+Counting words
+==============
+
+   The standard Emacs distribution contains a function for counting the
+number of lines within a region.  However, there is no corresponding
+function for counting words.
+
+   Certain types of writing ask you to count words.  Thus, if you write
+an essay, you may be limited to 800 words; if you write a novel, you
+may discipline yourself to write 1000 words a day.  It seems odd to me
+that Emacs lacks a word count command.  Perhaps people use Emacs mostly
+for code or types of documentation that do not require word counts; or
+perhaps they restrict themselves to the operating system word count
+command, `wc'.  Alternatively, people may follow the publishers'
+convention and compute a word count by dividing the number of
+characters in a document by five.  In any event, here are commands to
+count words.
+
+
+File: emacs-lisp-intro.info,  Node: count-words-region,  Next: recursive-count-words,  Prev: Why Count Words,  Up: Counting Words
+
+The `count-words-region' Function
+=================================
+
+   A word count command could count words in a line, paragraph, region,
+or buffer.  What should the command cover?  You could design the
+command to count the number of words in a complete buffer.  However,
+the Emacs tradition encourages flexibility--you may want to count words
+in just a section, rather than all of a buffer.  So it makes more sense
+to design the command to count the number of words in a region.  Once
+you have a `count-words-region' command, you can, if you wish, count
+words in a whole buffer by marking it with `C-x h'
+(`mark-whole-buffer').
+
+   Clearly, counting words is a repetitive act: starting from the
+beginning of the region, you count the first word, then the second
+word, then the third word, and so on, until you reach the end of the
+region.  This means that word counting is ideally suited to recursion
+or to a `while' loop.
+
+* Menu:
+
+* Design count-words-region::   The definition using a `while' loop.
+* Whitespace Bug::              The Whitespace Bug in `count-words-region'.
+

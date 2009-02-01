@@ -1,0 +1,70 @@
+#!/home/johnh/BIN/perl5 -w
+
+#
+# mkindex -- index notes files
+# $Id: mkrawindex,v 1.12 1998/12/22 01:27:12 johnh Exp $
+#
+# Copyright (C) 1994-1998 by John Heidemann.
+# Comments to <johnh@isi.edu>.
+#
+# This file is under the Gnu Public License, version 2.
+# For details see the COPYING which accompanies this distribution.
+#
+
+sub usage {
+    print STDOUT <<END;
+usage: $0 file [file...]
+	Writes a raw index to stdout.
+
+	If no files are specified as arguments,
+	they are read from stdin.
+
+To make an index do:
+    ./mkrawindex /h/local/users/johnh/STUFF/NOTES/9????? |
+	sort -f -t# +1 +0 |
+	sed 's:/h/local/users/johnh:~:' >index
+END
+    exit 1
+}
+
+require 5.000;
+BEGIN { unshift(@INC, "/home/johnh/NOTES/BIN"); };
+use Notes;
+&usage if ($#ARGV == 0 && $ARGV[0] eq '-?');
+
+my($opthost) = "";
+# could be localhost to have urls be file://localhost/foo instead of
+# file:///foo.
+
+#
+#
+#
+foreach (@ARGV) {
+    &add_file_to_index($_);
+}
+if ($#ARGV == -1) {
+    while (<>) {
+        &add_file_to_index($_);
+    };
+};
+
+exit 0;
+
+
+sub add_file_to_index {
+    local ($fn) = @_;
+
+    my($n) = new Notes($fn);
+    my($subs_ref) = $n->subjects();
+    if (!defined($subs_ref)) {
+	warn "$0: no subjects for file $fn.\n";
+	return;
+    };
+    foreach (@$subs_ref) {
+	warn("$0: subject $_ in $fn has leading spaces.\n")
+	    if (/^\s$/);
+	warn("$0: subject $_ in $fn has trailing spaces.\n")
+	    if (/\s$/);
+        print "file://$opthost$fn#* $_\n";
+    };
+}

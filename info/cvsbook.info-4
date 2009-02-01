@@ -1,0 +1,1083 @@
+This is cvsbook.info, produced by makeinfo version 4.0 from main.texi.
+
+START-INFO-DIR-ENTRY
+* CVS Book: (cvsbook).          A CVS tutorial and reference.
+END-INFO-DIR-ENTRY
+
+Copyright (C) 1999, 2000 Karl Fogel <kfogel@red-bean.com>
+
+This document is free software; you can redistribute and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2, or (at your option) any
+later version.
+
+This document is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+This manual describes how to use and administer CVS (Concurrent Versions
+System).  It is part of a larger work entitled `Open Source Development
+With CVS'; please see the introduction for details.
+
+This is version 1.21 of this manual.
+
+
+File: cvsbook.info,  Node: Multiple Merges,  Next: Creating A Tag Or Branch Without A Working Copy,  Prev: Merging Changes From Branch To Trunk,  Up: Branches
+
+Multiple Merges
+---------------
+
+Sometimes a branch will continue to be actively developed even after the
+trunk has undergone a merge from it.  For example, this can happen if a
+second bug in the previous public release is discovered and has to be
+fixed on the branch.  Maybe someone didn't get the joke in random.c, so
+on the branch, you have to add a line explaining it
+
+     floss$ pwd
+     /home/whatever/myproj_branch
+     floss$ cat b-subdir/random.c
+     /* Print out a random number. */
+     #include <stdio.h>
+     void main ()
+     {
+       printf ("A random number.\n");
+       printf ("Get the joke?\n");
+     }
+     floss$
+
+and commit.  If that bug fix also needs to be merged into the trunk, you
+might be tempted to try the same update command as before in the trunk
+working copy to "re-merge":
+
+     floss$ cvs -q update -d -j Release-1999_05_01-bugfixes
+     RCS file: /usr/local/cvs/myproj/hello.c,v
+     retrieving revision 1.5
+     retrieving revision 1.5.2.1
+     Merging differences between 1.5 and 1.5.2.1 into hello.c
+     RCS file: /usr/local/cvs/myproj/b-subdir/random.c,v
+     retrieving revision 1.2
+     retrieving revision 1.2.2.2
+     Merging differences between 1.2 and 1.2.2.2 into random.c
+     rcsmerge: warning: conflicts during merge
+     floss$
+
+As you can see, that didn't have quite the desired effect-we got a
+conflict, even though the trunk copy hadn't been modified there and,
+therefore, no conflict was expected.
+
+The trouble was that the update command behaved exactly as described: It
+tried to take all the changes between the branch's root and tip and
+merge them into the current working copy.  The only problem is, some of
+those changes had already been merged into this working copy.  That's
+why we got the conflict:
+
+     floss$ pwd
+     /home/whatever/myproj
+     floss$ cat b-subdir/random.c
+     /* Print out a random number. */
+     #include <stdio.h
+     void main ()
+     {
+     <<<<<<< random.c
+       printf ("A random number.\n");
+     =======
+       printf ("A random number.\n");
+       printf ("Get the joke?\n");
+     >>>>>>> 1.2.2.2
+     }
+     floss$
+
+You could go through resolving all such conflicts by hand-it's usually
+not hard to tell what you need to do in each file.  Nevertheless, it is
+even better to avoid a conflict in the first place.  By passing two -j
+flags instead of one, you'll get only those changes from where you last
+merged to the tip instead of all of the changes on the branch, from root
+to tip.  The first -j gives the starting point on the branch, and the
+second is just the plain branch name (which implies the tip of the
+branch).
+
+The question then is, how can you specify the point on the branch from
+which you last merged? One way is to qualify by using a date along with
+the branch tag name.  CVS provides a special syntax for this:
+
+     floss$ cvs -q update -d -j "Release-1999_05_01-bugfixes:2 days ago" \
+                          -j Release-1999_05_01-bugfixes
+     RCS file: /usr/local/cvs/myproj/b-subdir/random.c,v
+     retrieving revision 1.2.2.1
+     retrieving revision 1.2.2.2
+     Merging differences between 1.2.2.1 and 1.2.2.2 into random.c
+     floss$
+
+If the branch tag name is followed by a colon and then a date (in any of
+the usual CVS date syntaxes), CVS will include only changes later than
+that date.  So if you knew that the original bug fix was committed on
+the branch three days ago, the preceding command would merge the second
+bug fix only.
+
+A better way, if you plan ahead, is to tag the branch after each bug fix
+(just a regular tag - we're not starting a new branch here or anything
+like that).  Suppose after fixing the bug in the branch and committing,
+you do this in the branch's working copy:
+
+     floss$ cvs -q tag Release-1999_05_01-bugfixes-fix-number-1
+     T README.txt
+     T hello.c
+     T a-subdir/whatever.c
+     T a-subdir/subsubdir/fish.c
+     T b-subdir/random.c
+     floss$
+
+Then, when it's time to merge the second change into the trunk, you can
+use that conveniently placed tag to delimit the earlier revision:
+
+     floss$ cvs -q update -d -j Release-1999_05_01-bugfixes-fix-number-1 \
+                          -j Release-1999_05_01-bugfixes
+     RCS file: /usr/local/cvs/myproj/b-subdir/random.c,v
+     retrieving revision 1.2.2.1
+     retrieving revision 1.2.2.2
+     Merging differences between 1.2.2.1 and 1.2.2.2 into random.c
+     floss$
+
+This way, of course, is much better than trying to recall how long ago
+you made one change versus another, but it only works if you remember to
+tag the branch every time it is merged to the trunk.  The lesson,
+therefore, is to tag early and tag often! It's better to err on the side
+of too many tags (as long as they all have descriptive names) than to
+have too few.  In these last examples, for instance, there was no
+requirement that the new tag on the branch have a name similar to the
+branch tag itself.  Although I named it
+`Release-1999_05_01-bugfixes-fix-number-1', it could just as easily
+have been `fix1'.  However, the former is preferable, because it
+contains the name of the branch and thus won't ever be confused with a
+tag on some other branch.  (Remember that tag names are unique within
+files, not within branches.  You can't have two tags named `fix1' in
+the same file, even if they refer to revisions on different branches.)
+
+
+File: cvsbook.info,  Node: Creating A Tag Or Branch Without A Working Copy,  Prev: Multiple Merges,  Up: Branches
+
+Creating A Tag Or Branch Without A Working Copy
+-----------------------------------------------
+
+As stated earlier, tagging affects the repository, not the working copy.
+That begs the question: Why require a working copy at all when tagging?
+The only purpose that it serves is to designate which project and which
+revisions of the various files in the project are being tagged.  If you
+could specify the project and revisions independently of the working
+copy, no working copy would be necessary.
+
+There is such a way: the rtag command (for "repository tag").  It's very
+similar to tag; a couple of examples will explain its usage.  Let's go
+back to the moment when the first bug report came in and we needed to
+create a branch rooted at the last public release.  We checked out a
+working copy at the release tag and then ran `tag -b' on it:
+
+     floss$ cvs tag -b Release-1999_05_01-bugfixes
+
+This created a branch rooted at `Release-1999_05_01'.  However, because
+we know the release tag, we could have used it in an rtag command to
+specify where to root the branch, not even bothering with a working
+copy:
+
+     floss$ cvs rtag -b -r Release-1999_05_01 Release-1999_05_01-bugfixes myproj
+
+That's all there is to it.  That command can be issued from anywhere,
+inside or outside a working copy.  However, your CVSROOT environment
+variable would have to point to the repository, of course, or you can
+specify it with the global -d option.  It works for non-branch tagging,
+too, but it's less useful that way because you have to specify each
+file's revision number, one by one.  (Or you can refer to it by tag, but
+then you'd obviously already have a tag there, so why would you want to
+set a second one on the exact same revisions?)
+
+You now know enough to get around in CVS and probably enough to start
+working with other people on a project.  There are still a few minor
+features that haven't been introduced, as well as some unmentioned but
+useful options to features already seen.  These will all be presented as
+appropriate in chapters to come, in scenarios that will demonstrate both
+how and why to use them.  When in doubt, don't hesitate to consult the
+Cederqvist manual; it is an indispensable resource for serious CVS
+users.
+
+
+File: cvsbook.info,  Node: Repository Administration,  Next: Advanced CVS,  Prev: An Overview of CVS,  Up: Top
+
+Repository Administration
+*************************
+
+In *Note An Overview of CVS::, you learned enough CVS to use it
+effectively as a project participant.  If you're going to be a project
+maintainer, however, you'll need to know how to install CVS and
+administer repositories.  In this chapter, we'll throw back the curtain
+and look in detail at how the repository is structured, and how CVS uses
+it.  You'll learn all the major steps CVS goes through during updates
+and commits, and how you can modify its behavior.  By understanding how
+CVS works, you'll also be able to trace problems to their causes, and
+fix them in maintainable ways.
+
+This may sound very involved, but remember that CVS has already proven
+quite long-lived, and will probably be around for many years to come.
+Whatever you learn now will be useful for a long time.  CVS also tends
+to become more indispensable the more you use it.  If you're going to be
+that dependent on something (and trust me, you are), it's worth really
+getting to know it.
+
+With that in mind, let's begin at the beginning: putting CVS on your
+system.
+
+* Menu:
+
+* Getting And Installing CVS::             Putting CVS on your system.
+* Anatomy Of A CVS Distribution::          What's in the CVS distribution.
+* Starting A Repository::                  Setting up a repository.
+* The Password-Authenticating Server::     One method of remote access.
+* Anonymous Access::                       Granting access to the public.
+* Repository Structure::                   How the repository is arranged.
+* RCS Format::                             How repository storage works.
+* What Happens When You Remove A File::    CVS keeps an Attic for old files.
+* The CVSROOT/ Administrative Directory::  Run-time server configuration files.
+* Commit Emails::                          Arranging automatic commit notices.
+* Finding Out More::                       Other sources of information.
+
+
+File: cvsbook.info,  Node: Getting And Installing CVS,  Next: Anatomy Of A CVS Distribution,  Up: Repository Administration
+
+Getting And Installing CVS
+==========================
+
+In many cases, you won't have to go out and get CVS, because it will
+already be on your system.  If you run one of the major Linux or FreeBSD
+distributions, it's probably already installed in /usr/bin or some other
+likely location.  If not, Red Hat Linux users can usually find an RPM
+(Red Hat Package) for the latest, or nearly latest, version of CVS in
+their distributions.  And Debian users can install the latest Debian
+package with these commands:
+
+     floss$ apt-get update
+     floss$ apt-get install cvs
+
+If CVS isn't already on your machine, you'll probably have to build it
+from source.  If you're a non-Unix user, you'll probably find it easier
+to get a prebuilt binary for your operating system (more on that later).
+Fortunately, CVS is fully "autoconfiscated" - that is, it uses the GNU
+autoconfiguration mechanism, making compilation from source
+surprisingly easy.
+
+* Menu:
+
+* Getting And Building CVS Under Unix::
+* Getting And Installing CVS Under Windows::
+* Getting And Installing CVS On A Macintosh::
+* Limitations Of The Windows And Macintosh Versions::
+
+
+File: cvsbook.info,  Node: Getting And Building CVS Under Unix,  Next: Getting And Installing CVS Under Windows,  Up: Getting And Installing CVS
+
+Getting And Building CVS Under Unix
+-----------------------------------
+
+As of this writing, there are two canonical sites from which you can
+download CVS.  One is the Free Software Foundation's FTP site,
+`ftp://ftp.gnu.org/gnu/cvs/', which offers CVS as an official GNU tool.
+The other is Cyclic Software's download site.  Cyclic Software is, if
+not the maintainer of CVS, then the "maintainer of the maintainers", by
+providing a repository server and download access for users and
+developers.  They distribute releases from
+`http://download.cyclic.com/pub/'.
+
+Either location is fine.  In the following example, I use Cyclic
+Software's site.  If you point your FTP client (probably your Web
+browser) there, you'll see a list of directories, something like this:
+
+     Index of /pub
+         cvs-1.10.5/            18-Feb-99 21:36      -
+         cvs-1.10.6/            17-May-99 10:34      -
+         cvs-1.10/              09-Dec-98 17:26      -
+         macintosh/             23-Feb-99 00:53      -
+         os2/                   09-Dec-98 17:26      -
+         packages/              09-Dec-98 17:26      -
+         rcs/                   09-Dec-98 17:26      -
+         tkcvs/                 09-Dec-98 17:26      -
+         training/              09-Dec-98 17:26      -
+         unix/                  09-Dec-98 17:26      -
+         vms/                   09-Dec-98 17:26      -
+
+Pay attention to the directories beginning with "cvs-" (you can ignore
+most of the others).  There are three such directories, which means that
+you're already faced with a choice: Get the designated "stable" release,
+or go with a newer (but less-tested) interim release.  The stable
+releases have only one decimal point, as in "cvs-1.10", whereas the
+interim releases have minor version increments tacked on the end, as in
+"1.10.5".
+
+The GNU site usually only offers the major releases, not the interim
+ones, so you won't see all of this if you get CVS from there.  In
+general, the interim releases have been pretty safe, and sometimes
+contain fixes to bugs that were found in the major release.  Your best
+policy is to go with the highest interim release, but if you encounter
+any problems with it, be prepared to drop back to the previous release,
+as many times as necessary.  The highest release listed in the earlier
+example is cvs-1.10.6.  Entering that directory, we see this:
+
+     Index of /pub/cvs-1.10.6
+         cvs-1.10.6.tar.gz      17-May-99 08:44   2.2M
+
+That's it - the full source code to CVS.  Just download it to your
+machine, and you're ready to build.  At this point, if you're already
+familiar with the standard build process for GNU tools, you know what to
+do and probably don't need to read anything between here and the section
+*Note Anatomy Of A CVS Distribution::.  On the other hand, if you're not
+sure how to proceed, then read on....
+
+The following compilation instructions and examples assume that you have
+a fairly standard distribution of Unix.  Any of the free versions of
+Unix (for example, FreeBSD or Linux) should work with no problem, as
+should the major commercial Unix versions (such as SunOS/Solaris, AIX,
+HP-UX, or Ultrix).  Even if these instructions don't work for you
+exactly as written, don't give up hope.  Although covering the details
+of compiling on every operating system is beyond the scope of this book,
+I'll give some pointers to other help resources later in this chapter.
+
+Anyway, to proceed with the compilation, first unpack the tar file using
+GNU gunzip and tar (if you don't have these installed on your system,
+you can get gunzip from `ftp://ftp.gnu.org/gnu/gzip/' and GNU's version
+of tar from `ftp://ftp.gnu.org/gnu/tar/'):
+
+     floss$ gunzip cvs-1.10.6.tar.gz
+     floss$ tar xvf cvs-1.10.6.tar
+
+You'll see a lot of file names fly by on your screen.
+
+Now you have a new directory on your machine - cvs-1.10.6 - and it is
+populated with the CVS source code.  Go into that directory and
+configure CVS for your system, by using the provided configure script:
+
+     floss$ cd cvs-1.10.6
+     floss$  ./configure
+     creating cache ./config.cache
+     checking for gcc... gcc
+     checking whether we are using GNU C... yes
+     checking whether gcc accepts -g... yes
+     checking how to run the C preprocessor... gcc -E
+       (etc)
+
+When the configure command finishes, the source tree will know
+everything it needs to know about compiling on your machine.  The next
+step is to type:
+
+     floss$ make
+
+You'll see lots of output fly by, then type:
+
+     floss$ make install
+
+You'll see yet more output fly by; when it's all over, CVS will be
+installed on your system.  (You will probably need to do that last step
+as the superuser.)
+
+By default, the CVS executable will end up as `/usr/local/bin/cvs'.
+This assumes you have a decent make program installed on your system
+(again, if you don't have one, get the GNU project's make from
+`ftp://ftp.gnu.org/gnu/make/').
+
+If you want CVS to install to a location other than /usr/local/bin, you
+should change how you run the initial configuration step.  For example,
+
+     floss$ ./configure --prefix=/usr
+
+results in CVS being installed as /usr/bin/cvs (it always ends up as
+PREFIX/bin/cvs).  The default prefix is /usr/local, which is fine for
+most installations.
+
+Note To Experienced Users: Although older versions of CVS consisted of
+more than just an executable in that they depended on having RCS
+installed as well, this has not been the case since Version 1.10.
+Therefore, you don't need to worry about any libraries or executables
+other than cvs itself.
+
+If you just intend to use CVS to access remote repositories, the
+preceding is all you need to do.  If you also plan to serve a repository
+from this system, a few additional steps are necessary, which are
+covered later in this chapter.
+
+
+File: cvsbook.info,  Node: Getting And Installing CVS Under Windows,  Next: Getting And Installing CVS On A Macintosh,  Prev: Getting And Building CVS Under Unix,  Up: Getting And Installing CVS
+
+Getting And Installing CVS Under Windows
+----------------------------------------
+
+Unless you're truly religious about having the source code to your
+executable, you don't need to compile CVS from source on your Windows
+box.  Unlike Unix, the necessary compilation tools probably do not
+already exist on your system, so a source build would involve first
+going out and getting those tools.  Because such a project is beyond the
+scope of this book, I'll just give instructions for getting a
+precompiled CVS binary.
+
+First, note that Windows binary distributions of CVS are usually made
+only for major releases of CVS - not for the interim releases - and are
+not found on the GNU FTP site.  So you'll need to go to Cyclic
+Software's download site, where in the major version directory,
+`http://download.cyclic.com/pub/cvs-1.10/', you'll see an extra
+subdirectory
+
+     Index of /pub/cvs-1.10
+         cvs-1.10.tar.gz        14-Aug-98 09:35   2.4M
+         windows/
+
+inside of which is a ZIP file:
+
+     Index of /pub/cvs-1.10/windows
+         cvs-1.10-win.zip       14-Aug-98 10:10   589k
+
+This ZIP file contains a binary distribution of CVS.  Download and
+extract that ZIP file:
+
+     floss$ unzip cvs-1.10-win.zip
+     
+     Archive:  cvs-1.10-win.zip
+       inflating: cvs.html
+       inflating: cvs.exe
+       inflating: README
+       inflating: FAQ
+       inflating: NEWS
+       inflating: patch.exe
+       inflating: win32gnu.dll
+
+The README there contains detailed instructions.  For most
+installations, they can be summarized as follows: Put all of the EXE and
+DLL files in a directory in your PATH.  Additionally, if you're going to
+be using the pserver method to access a remote repository, you may need
+to put the following in your `C:\AUTOEXEC.BAT' file and reboot:
+
+     set HOME=C:
+
+This tells CVS where to store the .cvspass file.
+
+CVS running under Windows cannot currently serve repositories to remote
+machines; it can be a client (connecting to remote repositories), and
+operate in local mode (using a repository on the same machine).  For the
+most part, this book assumes that CVS under Windows is operating as a
+client.  However, it shouldn't be too hard to set up a local repository
+under Windows after reading the Unix-oriented instructions in the rest
+of this chapter.
+
+If you are only accessing remote repositories, you may not even need to
+run CVS.  There is a tool called WinCvs that implements only the
+client-side portion of CVS.  It is distributed separately from CVS
+itself but, like CVS, is freely available under the GNU General Public
+License.  More information is available from `http://www.wincvs.org'.
+
+
+File: cvsbook.info,  Node: Getting And Installing CVS On A Macintosh,  Next: Limitations Of The Windows And Macintosh Versions,  Prev: Getting And Installing CVS Under Windows,  Up: Getting And Installing CVS
+
+Getting And Installing CVS On A Macintosh
+-----------------------------------------
+
+CVS is available for the Macintosh, but not as part of the main
+distribution.  At the moment, there are actually three separate
+Macintosh CVS clients available:
+
+   * MacCvs - `http://www.wincvs.org'
+
+   * MacCVSClient - `http://www.glink.net.hk/~jb/MacCVSClient'       or
+     `http://www.cyclic.com/maccvsclient/'
+
+   * MacCVS Pro - `http://www.maccvs.org'
+
+Frankly, I have no idea which one is best.  Try them all, not
+necessarily in the order given, and see which one you like.  MacCVS Pro
+seems to be under active development.  MacCvs is apparently a companion
+project of WinCVS and shares a home page with it. (As of this writing, a
+notice on the WinCVS page states, "Development of MacCvs will be resumed
+soon.", whatever that means.)
+
+
+File: cvsbook.info,  Node: Limitations Of The Windows And Macintosh Versions,  Prev: Getting And Installing CVS On A Macintosh,  Up: Getting And Installing CVS
+
+Limitations Of The Windows And Macintosh Versions
+-------------------------------------------------
+
+The Windows and Macintosh distributions of CVS are generally limited in
+functionality.  They can all act as clients, meaning that they can
+contact a repository server to obtain a working copy, commit, update,
+and so on.  But they can't serve repositories themselves.  If you set it
+up right, the Windows port can use a local-disk repository, but it still
+can't serve projects from that repository to other machines.  In
+general, if you want to have a network-accessible CVS repository, you
+must run the CVS server on a Unix box.
+
+
+File: cvsbook.info,  Node: Anatomy Of A CVS Distribution,  Next: Starting A Repository,  Prev: Getting And Installing CVS,  Up: Repository Administration
+
+Anatomy Of A CVS Distribution
+=============================
+
+The preceding instructions are designed to get you up and running
+quickly, but there's a lot more inside a CVS source distribution than
+just the code.  Here's a quick road map to the source tree, so you'll
+know which parts are useful resources and which can be ignored.
+
+* Menu:
+
+* Informational Files::             NEWS, BUGS, FAQ, etc.
+* Subdirectories::                  How the distribution is laid out.
+* The Cederqvist Manual::           The CVS Online Manual.
+* Other Sources Of Information::    Where else to find help.
+
+
+File: cvsbook.info,  Node: Informational Files,  Next: Subdirectories,  Up: Anatomy Of A CVS Distribution
+
+Informational Files
+-------------------
+
+In the top level of the distribution tree, you'll find several files
+containing useful information (and pointers to further information).
+They are, in approximate order of importance:
+
+   * `NEWS' - This file lists the changes from one release to the next,
+     in reverse chronological order (that is, most recent first).  If
+     you've already been using CVS for a while and have just upgraded
+     to a new version, you should look at the NEWS file to see what new
+     features are available.  Also, although most changes to CVS
+     preserve backward compatibility, noncompatible changes do occur
+     from time to time.  It's better to read about them here than be
+     surprised when CVS doesn't behave the way you expect it to.
+
+   * `BUGS' - This file contains exactly what you think it does: a list
+     of known bugs in CVS.  They usually aren't show-stoppers, but you
+     should read over them whenever you install a new release.
+
+   * `DEVEL-CVS' - This file is the CVS "constitution".  It describes
+     the process by which changes are accepted into the main CVS
+     distribution and the procedures through which a person becomes a
+     CVS developer.  You don't really need to read it if you just want
+     to use CVS; however, it's highly interesting if you want to
+     understand how the mostly uncoordinated efforts of people
+     scattered across the globe coalesce into a working, usable piece
+     of software.  And of course, it's required reading if you plan to
+     submit a patch (be it a bug fix or new feature) to CVS.
+
+   * `HACKING' - Despite its name, the HACKING file doesn't say much
+     about the design or implementation of CVS.  It's mainly a guide to
+     coding standards and other technical administrivia for people
+     thinking of writing a patch to CVS.  It can be thought of as an
+     addendum to the DEVEL-CVS file.  After you understand the basic
+     philosophy of CVS development, you must read the HACKING file to
+     translate that into concrete coding practices.
+
+   * `FAQ' - This is the CVS "Frequently Asked Questions" document.
+     Unfortunately it has a rather spotty maintenance history.  David
+     Grubbs took care of it until 1995, then he (presumably) got too
+     busy and it languished for a while.  Eventually, in 1997, Pascal
+     Molli took over maintenance.  Molli also didn't have time to
+     maintain it by hand, but at least he found time to put it into his
+     automated FAQ-O-Matic system, which allows the public to maintain
+     the FAQ in a decentralized manner (basically, anyone can edit or
+     add entries via a Web form).  This was probably a good thing, in
+     that at least the FAQ was once again being maintained; however,
+     its overall organization and quality control are not on the same
+     level as if a person were maintaining it.
+
+     The master version of the FAQ is always available from Molli's Web
+     site (`http://www.loria.fr/~molli/cvs-index.html', under the link
+     "Documentation").  The FAQ file shipped with CVS distributions is
+     generated automatically from that FAQ-O-Matic database, so by the
+     time it reaches the public it's already a little bit out of date.
+     Nevertheless, it can be quite helpful when you're looking for
+     hints and examples about how to do something specific (say,
+     merging a large branch back into the trunk or resurrecting a
+     removed file).  The best way to use it is as a reference document;
+     you can bring it up in your favorite editor and do text searches
+     on terms that interest you.  Trying to use it as a tutorial would
+     be a mistake - it's missing too many important facts about CVS to
+     serve as a complete guide.
+
+
+
+File: cvsbook.info,  Node: Subdirectories,  Next: The Cederqvist Manual,  Prev: Informational Files,  Up: Anatomy Of A CVS Distribution
+
+Subdirectories
+--------------
+
+The CVS distribution contains a number of subdirectories.  In the course
+of a normal installation, you won't have to navigate among them, but if
+you want to go poking around in the sources, it's nice to know what each
+one does.  Here they are:
+
+     contrib/
+     diff/
+     doc/
+     emx/
+     lib/
+     man/
+     os2/
+     src/
+     tools/
+     vms/
+     windows-NT/
+     zlib/
+
+The majority of these can be ignored.  The emx/, os2/, vms/, and
+windows-NT/ subdirectories all contain operating-system-specific source
+code, which you would only need if you're actually trying to debug a
+code-level problem in CVS (an unlikely situation, though not unheard
+of).  The diff/ and zlib/ subdirectories contain CVS's internal
+implementations of the diff program and the GNU gzip compression
+library, respectively. (CVS uses the latter to reduce the number of bits
+it has to send over the network when accessing remote repositories.)
+
+The contrib/ and tools/ subdirectories contain free third-party software
+meant to be used with CVS.  In contrib/, you will find an assortment of
+small, specialized shell scripts (read contrib/README to find out what
+they do).  The tools/ subdirectory used to contain contributed software,
+but now contains a README file, which says in part:
+
+     This subdirectory formerly contained tools that can be used with CVS.
+     In particular, it used to contain a copy of pcl-cvs version 1.x.
+     Pcl-cvs is an Emacs interface to CVS.
+     
+     If you are looking for pcl-cvs, we'd suggest pcl-cvs version 2.x, at:
+         ftp://ftp.weird.com/pub/local/
+
+The PCL-CVS package it's referring to is very handy, and I'll have more
+to say about it in *Note Third-Party Tools::.
+
+The src/ and lib/ subdirectories contain the bulk of the CVS source
+code, which involves the CVS internals.  The main data structures and
+commands are implemented in src/, whereas lib/ contains small code
+modules of general utility that CVS uses.
+
+The man/ subdirectory contains the CVS man pages (intended for the Unix
+online manual system).  When you ran make install, they were
+incorporated into your Unix system's regular man pages, so you can type
+
+     floss$ man cvs
+
+and get a rather terse introduction and subcommand reference to CVS.
+Although useful as a quick reference, the man pages may not be as up to
+date or complete as the Cederqvist manual (see the next section);
+however, the man pages are more likely to be incomplete than actually
+wrong, if it's any comfort.
+
+
+File: cvsbook.info,  Node: The Cederqvist Manual,  Next: Other Sources Of Information,  Prev: Subdirectories,  Up: Anatomy Of A CVS Distribution
+
+The Cederqvist Manual
+---------------------
+
+That leaves the doc/ subdirectory, whose most important inhabitant is
+the famed "Cederqvist".  These days, it's probably a stretch to call it
+"the Cederqvist".  Although Per Cederqvist (of Signum Support,
+Linkoping Sweden, www.signum.se) wrote the first version around 1992, it
+has been updated since then by many other people.  For example, when
+contributors add a new feature to CVS, they usually also document it in
+the Cederqvist.
+
+The Cederqvist manual is written in Texinfo format, which is used by the
+GNU project because it's relatively easy to produce both online and
+printed output from it (in Info and PostScript formats, respectively).
+The Texinfo master file is doc/cvs.texinfo, but CVS distributions come
+with the Info and PostScript pregenerated, so you don't have to worry
+about running any Texinfo tools yourself.
+
+Although the Cederqvist can be used as an introduction and tutorial, it
+is probably most useful as a reference document.  For that reason, most
+people browse it online instead of printing it out (although the
+PostScript file is `doc/cvs.ps', for those with paper to spare).  If
+this is the first time you've installed CVS on your system, you'll have
+to take an extra step to make sure the manual is accessible online.
+
+The Info files (doc/cvs.info, doc/cvs.info-1, doc/cvs.info-2, and so on)
+were installed for you when you ran make install.  Although the files
+were copied into the system's Info tree, you may still have to add a
+line for CVS to the Info table of contents, the "Top" node. (This will
+only be necessary if this is the first time CVS has been installed on
+your system; otherwise, the entry from previous installations should
+already be in the table of contents.)
+
+If you've added new Info documentation before, you may be familiar with
+the process.  First figure out where the Info pages were installed.  If
+you used the default installation (in /usr/local/), then the Info files
+are /usr/local/info/cvs.info*.  If you installed using
+
+     floss$ ./configure --prefix=/usr
+
+the files ended up as /usr/info/cvs.*.  After you locate the files,
+you'll need to add a line for CVS to the Info table of contents, which
+is in a file named dir in that directory (so in the latter case, it
+would be /usr/info/dir).  If you don't have root access, ask your system
+administrator to do it.  Here is an excerpt from dir before the
+reference to CVS documentation was added:
+
+     * Bison: (bison).         The Bison parser generator.
+     * Cpp: (cpp).             The GNU C preprocessor.
+     * Flex: (flex).           A fast scanner generator
+
+And here is the same region of dir afterwards:
+
+     * Bison: (bison).         The Bison parser generator.
+     * Cpp: (cpp).             The GNU C preprocessor.
+     * Cvs: (cvs).             Concurrent Versions System
+     * Flex: (flex).           A fast scanner generator
+
+The format of the line is very important.  You must include the
+asterisk, spaces, and colon in `* Cvs:' and the parentheses and period
+in `(cvs).' after it.  If any of these elements are missing, the Info
+dir format will be corrupt, and you'll be unable to read the Cederqvist.
+
+Once the manual is installed and referred to from the table of contents,
+you can read it with any Info-compatible browser.  The ones most likely
+to be installed on a typical Unix system are either the command-line
+Info reader, which can be invoked this way if you want to go straight to
+the CVS pages
+
+     floss$ info cvs
+
+and the one within Emacs, which is invoked by typing
+
+     M-x info
+
+or
+
+     C-h i
+
+Take whatever time is necessary to get the Cederqvist set up properly on
+your system when you install CVS; it will pay off many times down the
+road when you need to look something up.
+
+
+File: cvsbook.info,  Node: Other Sources Of Information,  Prev: The Cederqvist Manual,  Up: Anatomy Of A CVS Distribution
+
+Other Sources Of Information
+----------------------------
+
+In addition to the Cederqvist, the FAQ, and the other files in the
+distribution itself, there are Internet resources devoted to CVS.  If
+you're going to administrate a CVS server, you'll probably want to join
+the info-cvs mailing list.  To subscribe, send email to
+<info-cvs-request@gnu.org> (the list itself is <info-cvs@gnu.org>).
+Traffic can be medium to heavy, around 10 to 20 emails a day, most of
+them questions seeking answers.  The majority of these can be deleted
+without reading (unless you want to help people by answering their
+questions, which is always nice), but every now and then someone will
+announce the discovery of a bug or announce a patch that implements
+some feature you've been wanting.
+
+You can also join the formal bug report mailing list, which includes
+every bug report sent in.  This probably isn't necessary, unless you
+intend to help fix the bugs, which would be great, or you're
+terrifically paranoid and want to know about every problem other people
+find with CVS.  If you do want to join, send email to
+<bug-cvs-request@gnu.org>.
+
+There's also a Usenet newsgroup, `comp.software.config-mgmt', which is
+about version control and configuration management systems in general,
+in which there is a fair amount of discussion about CVS.
+
+Finally, there are at least three Web sites devoted to CVS.  Cyclic
+Software's `http://www.cyclic.com' has been CVS's informal home site
+for a few years, and probably will continue to be for the foreseeable
+future.  Cyclic Software also provides server space and Net access for
+the repository where the CVS sources are kept.  The Cyclic Web pages
+contain comprehensive links to experimental patches for CVS,
+third-party tools that work with CVS, documentation, mailing list
+archives, and just about everything else.  If you can't find what you
+need in the distribution, `http://www.cyclic.com' is the place to start
+looking.
+
+Two other good sites are Pascal Molli's
+`http://www.loria.fr/~molli/cvs-index.html' and Sean Dreilinger's
+`http://durak.org/cvswebsites/'.  The biggest attraction at Molli's
+site is, of course, the FAQ, but it also has links to CVS-related tools
+and mailing list archives.  Dreilinger's site specializes in information
+about using CVS to manage Web documents and also has a CVS-specific
+search engine.
+
+
+File: cvsbook.info,  Node: Starting A Repository,  Next: The Password-Authenticating Server,  Prev: Anatomy Of A CVS Distribution,  Up: Repository Administration
+
+Starting A Repository
+=====================
+
+Once the CVS executable is installed on your system, you can start using
+it right away as a client to access remote repositories, following the
+procedures described in *Note An Overview of CVS::.  However, if you
+want to serve revisions from your machine, you have to create a
+repository there.  The command to do that is
+
+     floss$ cvs -d /usr/local/newrepos init
+
+where `/usr/local/newrepos' is a path to wherever you want the
+repository to be (of course, you must have write permission to that
+location, which may imply running the command as the root user).  It may
+seem somewhat counterintuitive that the location of the new repository
+is specified before the init subcommand instead of after it, but by
+using the -d option, it stays consistent with other CVS commands.
+
+The command will return silently after it is run.  Let's examine the new
+directory:
+
+     floss$ ls -ld /usr/local/newrepos
+     drwxrwxr-x   3 root     root         1024 Jun 19 17:59 /usr/local/newrepos/
+     floss$ cd /usr/local/newrepos
+     floss$ ls
+     CVSROOT
+     floss$ cd CVSROOT
+     floss$ ls
+     checkoutlist     config,v        history     notify     taginfo,v
+     checkoutlist,v   cvswrappers     loginfo     notify,v   verifymsg
+     commitinfo       cvswrappers,v   loginfo,v   rcsinfo    verifymsg,v
+     commitinfo,v     editinfo        modules     rcsinfo,v
+     config           editinfo,v      modules,v   taginfo
+     
+     floss$
+
+The single subdirectory in the new repository - CVSROOT/ - contains
+various administrative files that control CVS's behavior.  Later on,
+we'll examine those files one by one; for now, the goal is just to get
+the repository working.  In this case, "working" means users can import,
+check out, update, and commit projects.
+
+Don't confuse the CVSROOT environment variable introduced in *Note An
+Overview of CVS:: with this CVSROOT subdirectory in the repository.
+They are unrelated - it is an unfortunate coincidence that they share
+the same name.  The former is a way for users to avoid having to type
+`-d <repository-location>' every time they use CVS; the latter is the
+administrative subdirectory of a repository.
+
+Once the repository is created, you must take care of its permissions.
+CVS does not require any particular, standardized permission or file
+ownership scheme; it merely needs write access to the repository.
+However - partly for security reasons, but mainly for your own sanity
+as an administrator - I highly recommend that you take the following
+steps:
+
+  1. Add a Unix group `cvs' to your system.  Any users who need to
+     access the repository should be in this group.  For example,
+     here's the relevant line from my machine's `/etc/group' file:
+
+          cvs:*:105:kfogel,sussman,jimb,noel,lefty,fitz,craig,anonymous,jrandom
+
+  2. Make the repository's group ownership and permissions reflect this
+     new group:
+
+          floss$ cd /usr/local/newrepos
+          floss$ chgrp -R cvs .
+          floss$ chmod ug+rwx . CVSROOT
+
+
+Now any of the users listed in that group can start a project by running
+`cvs import', as described in *Note An Overview of CVS::.  Checkout,
+update, and commit should work as well.  They can also reach the
+repository from remote locations by using the `:ext:' method, assuming
+that they have rsh or ssh access to the repository machine. (You may
+have noticed that the chgrp and chmod commands in that example gave
+write access to a user named `anonymous', which is not what one would
+expect.  The reason is that even anonymous, read-only repository users
+need system-level write access, so that their CVS processes can create
+temporary lockfiles inside the repository.  CVS enforces the
+"read-only" restriction of anonymous access not through Unix file
+permissions, but by other means, which will be covered in *Note
+Anonymous Access::.)
+
+If your repository is intended to serve projects to the general public,
+where contributors won't necessarily have accounts on the repository
+machine, you should set up the password-authenticating server now
+(*note The Password-Authenticating Server::).  It's necessary for
+anonymous read-only access, and it's also probably the easiest way to
+grant commit access to certain people without giving them full accounts
+on the machine.
+
+
+File: cvsbook.info,  Node: The Password-Authenticating Server,  Next: Anonymous Access,  Prev: Starting A Repository,  Up: Repository Administration
+
+The Password-Authenticating Server
+==================================
+
+Before running through the steps needed to set up the password server,
+let's examine how such connections work in the abstract.  When a remote
+CVS client uses the `:pserver:' method to connect to a repository, the
+client is actually contacting a specific port number on the server
+machine - specifically, port number 2401 (which is 49 squared, if you
+like that sort of thing).  Port 2401 is the designated default port for
+the CVS pserver, although one could arrange for a different port to be
+used as long as both client and server agree on it.
+
+The CVS server is not actually waiting for connections at that port -
+the server won't get started up until a connection actually arrives.
+Instead, the Unix inetd (InterNET Daemon) program is listening on that
+port, and needs to know that when it receives a connection request
+there, it should start up the CVS server and connect it to the incoming
+client.
+
+This is accomplished by modifying inetd's configuration files:
+`/etc/services' and `/etc/inetd.conf'.  The services file maps raw port
+numbers to service names and then inetd.conf tells inetd what to do for
+a given service name.
+
+First, put a line like this into /etc/services (after checking to make
+sure it isn't already there):
+
+     cvspserver	2401/tcp
+
+Then in /etc/inetd.conf, put this:
+
+     cvspserver stream tcp nowait root /usr/local/bin/cvs cvs \
+        --allow-root=/usr/local/newrepos pserver
+
+(In the actual file, this should be all one long line, with no
+backslash.)  If your system uses tcpwrappers, you may want to use
+something like this instead:
+
+     cvspserver stream tcp nowait root /usr/sbin/tcpd /usr/local/bin/cvs \
+        --allow-root=/usr/local/newrepos pserver
+
+Now, restart inetd so it notices the changes to its configuration files
+(if you don't know how to restart the daemon, just reboot the machine -
+that will work too).
+
+That's enough to permit connections, but you'll also want to set up
+special CVS passwords - separate from the users' regular login
+passwords - so people can access the repository without compromising
+overall system security.
+
+The CVS password file is CVSROOT/passwd in the repository.  It was not
+created by default when you ran cvs init, because CVS doesn't know for
+sure that you'll be using pserver.  Even if the password file had been
+created, CVS would have no way of knowing what usernames and passwords
+to create.  So, you'll have to create one yourself; here's a sample
+CVSRoot/passwd file:
+
+     kfogel:rKa5jzULzmhOo
+     anonymous:XR4EZcEs0szik
+     melissa:tGX1fS8sun6rY:pubcvs
+
+The format is as simple as it looks.  Each line is:
+
+     <USERNAME>:<ENCRYPTED_PASSWORD>:<OPTIONAL_SYSTEM_USERNAME>
+
+The extra colon followed by an optional system username tells CVS that
+connections authenticated with USERNAME should run as the system account
+SYSTEM_USERNAME - in other words, that CVS session would only be able
+to do things in the repository that someone logged in as SYSTEM_USERNAME
+could do.
+
+If no system username is given, USERNAME must match an actual login
+account name on the system, and the session will run with that user's
+permissions.  In either case, the encrypted password should not be the
+same as the user's actual login password.  It should be an independent
+password used only for CVS pserver connections.
+
+The password is encrypted using the same algorithm as the standard Unix
+system passwords stored in /etc/passwd.  You may be wondering at this
+point, how does one acquire an encrypted version of a password?  For
+Unix system passwords, the passwd command takes care of the encryption
+in /etc/passwd for you.  Unfortunately, there is no corresponding cvs
+passwd command (it has been proposed several times, but no one's gotten
+around to writing it - perhaps you'll do it?).
+
+This is an inconvenience, but only a slight one.  If nothing else, you
+can always temporarily change a regular user's system password using
+passwd, cut and paste the encrypted text from /etc/passwd into
+CVSROOT/passwd, and then restore the old password (note that on some
+systems, the encrypted passwords are found in /etc/shadow and are
+readable only by root.)
+
+That scheme is workable but rather cumbersome.  It would be much easier
+to have a command-line utility that takes a plain text password as its
+argument and outputs the encrypted version.  Here is such a tool,
+written in Perl:
+
+     #!/usr/bin/perl
+     
+     srand (time());
+     my $randletter = "(int (rand (26)) + (int (rand (1) + .5) % 2 ? 65 : 97))";
+     my $salt = sprintf ("%c%c", eval $randletter, eval $randletter);
+     my $plaintext = shift;
+     my $crypttext = crypt ($plaintext, $salt);
+     
+     print "${crypttext}\n";
+
+I keep the preceding script in `/usr/local/bin/cryptout.pl':
+
+     floss$ ls -l /usr/local/bin/cryptout.pl
+     
+     -rwxr-xr-x   1   root   root   265  Jun 14 20:41 /usr/local/bin/cryptout.pl
+     floss$ cryptout.pl "some text"
+     sB3A79YDX5L4s
+     
+     floss$
+
+If I took the output of this example and used it to create the following
+entry in CVSROOT/passwd
+
+     jrandom:sB3A79YDX5L4s:craig
+
+then someone could connect to the repository with the following command:
+
+     remote$ cvs -d :pserver:jrandom@floss.red-bean.com:/usr/local/newrepos login
+
+They could then type `some text' as their password and thereafter be
+able to execute CVS commands with the same access privileges as the
+system user `craig'.
+
+If someone attempts to authenticate with a username and password that
+don't appear in CVSROOT/passwd, CVS will check to see if that username
+and password are present in /etc/passwd.  If they are (and if the
+password matches, of course), CVS will grant access.  It behaves this
+way for the administrator's convenience, so that separate CVSROOT/passwd
+entries don't have to be set up for regular system users.  However, this
+behavior is also a security hole, because it means that if one of those
+users does connect to the CVS server, her regular login password will
+have crossed over the network in cleartext, potentially vulnerable to
+the eyes of password sniffers.  A bit further on, you'll learn how to
+turn off this "fallback" behavior, so that CVS consults only its own
+passwd file.  Whether you leave it on or off, you should probably force
+any CVS users who also have login accounts to maintain different
+passwords for the two functions.
+
+Although the passwd file authenticates for the whole repository, with a
+little extra work you can still use it to grant project-specific access.
+Here's one method:
+
+Suppose you want to grant some remote developers access to project
+`foo', and others access to project `bar', and you don't want
+developers from one project to have commit access to the other.  You can
+accomplish this by creating project-specific user accounts and groups on
+the system and then mapping to those accounts in the CVSROOT/passwd
+file.
+
+Here's the relevant excerpt from /etc/passwd
+
+     cvs-foo:*:600:600:Public CVS Account for Project Foo:/usr/local/cvs:/bin/false
+     cvs-bar:*:601:601:Public CVS Account for Project Bar:/usr/local/cvs:/bin/false
+
+and from /etc/group
+
+     cvs-foo:*:600:cvs-foo
+     cvs-bar:*:601:cvs-bar
+
+and, finally, CVSROOT/passwd:
+
+     kcunderh:rKa5jzULzmhOo:cvs-foo
+     jmankoff:tGX1fS8sun6rY:cvs-foo
+     brebard:cAXVPNZN6uFH2:cvs-foo
+     xwang:qp5lsf7nzRzfs:cvs-foo
+     dstone:JDNNF6HeX/yLw:cvs-bar
+     twp:glUHEM8KhcbO6:cvs-bar
+     ffranklin:cG6/6yXbS9BHI:cvs-bar
+     yyang:YoEqcCeCUq1vQ:cvs-bar
+
+Some of the CVS usernames map onto the system user account `cvs-foo'
+and some onto `cvs-bar'.  Because CVS runs under the user ID of the
+system account, you just have to make sure that the relevant parts of
+the repository are writeable only by the appropriate users and groups.
+If you just make sure that the user accounts are locked down pretty
+tight (no valid login password, `/bin/false' as the shell), then this
+system is reasonably secure (but see later in this chapter about
+CVSROOT permissions!).  Also, CVS does record changes and log messages
+under the CVS username, not the system username, so you can still tell
+who is responsible for a given change.
+

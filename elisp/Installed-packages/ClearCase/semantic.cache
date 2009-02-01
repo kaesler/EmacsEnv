@@ -1,0 +1,18 @@
+;; Object ClearCase/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "ClearCase/"
+  :tables (list 
+   (semanticdb-table "clearcase.el"
+    :major-mode 'emacs-lisp-mode
+    :tags '(("clearcase-ct-eotxn-cmd" variable (:constant-flag t :default-value "pwd -h
+") nil [171575 171619]) ("clearcase-ct-eotxn-response" variable (:constant-flag t :default-value "Usage: pwd
+") nil [171620 171673]) ("clearcase-ct-eotxn-response-length" variable (:constant-flag t :default-value (length clearcase-ct-eotxn-response)) nil [171674 171756]) ("clearcase-ct-subproc-timeout" variable (:constant-flag t :default-value 30) nil [171758 171835]) ("clearcase-ct-tq" variable nil nil [171837 171924]) ("clearcase-ct-return" variable nil nil [171926 172014]) ("clearcase-ct-view" variable nil nil [172016 172115]) ("clearcase-ct-wdir" variable nil nil [172117 172229]) ("clearcase-ct-running" variable nil nil [172231 172264]) ("clearcase-ct-accept-process-output" function (:arguments ("proc" "timeout")) nil [172266 172362]) ("clearcase-ct-start-cleartool" function nil nil [172364 173986]) ("clearcase-ct-sentinel" function (:arguments ("process" "event-string")) nil [174016 174357]) ("clearcase-ct-kill-cleartool" function (:user-visible-flag t) nil [174359 174573]) ("clearcase-ct-callback" function (:arguments ("arg" "val")) nil [174575 175014]) ("clearcase-ct-do-cleartool-command" function (:arguments ("command" "file" "comment" "&optional" "extra-args")) nil [175016 177831]) ("clearcase-ct-cd" function (:arguments ("dir")) nil [177833 178049]) ("clearcase-ct-cleartool-cmd" function (:arguments ("&rest" "cmd")) nil [178051 178139]) ("clearcase-ct-get-command-stdout" function (:arguments ("program" "&rest" "args")) nil [178186 178558]) ("clearcase-disable-tq" variable (:default-value clearcase-on-mswindows) nil [178611 178742]) ("clearcase-ct-blocking-call" function (:arguments ("&rest" "cmd")) nil [178744 180586]) ("clearcase-ct-kill-tq" function nil nil [180588 180778]) ("clearcase-ct-kill-buffer-hook" function nil nil [180780 181167]) ("add-hook" code nil nil [181169 181228]))
+    :file "clearcase.el"
+    :pointmax 181235
+    :unmatched-syntax 'nil
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0beta2"
+  :semanticdb-version "2.0beta2"
+  )

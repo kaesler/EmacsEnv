@@ -1,0 +1,1129 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Format Properties,  Next: Sticky Properties,  Prev: Special Properties,  Up: Text Properties
+
+Formatted Text Properties
+-------------------------
+
+   These text properties affect the behavior of the fill commands.  They
+are used for representing formatted text.  *Note Filling::, and *Note
+Margins::.
+
+`hard'
+     If a newline character has this property, it is a "hard" newline.
+     The fill commands do not alter hard newlines and do not move words
+     across them.  However, this property takes effect only if the
+     variable `use-hard-newlines' is non-`nil'.
+
+`right-margin'
+     This property specifies an extra right margin for filling this
+     part of the text.
+
+`left-margin'
+     This property specifies an extra left margin for filling this part
+     of the text.
+
+`justification'
+     This property specifies the style of justification for filling
+     this part of the text.
+
+
+File: elisp,  Node: Sticky Properties,  Next: Saving Properties,  Prev: Format Properties,  Up: Text Properties
+
+Stickiness of Text Properties
+-----------------------------
+
+   Self-inserting characters normally take on the same properties as the
+preceding character.  This is called "inheritance" of properties.
+
+   In a Lisp program, you can do insertion with inheritance or without,
+depending on your choice of insertion primitive.  The ordinary text
+insertion functions such as `insert' do not inherit any properties.
+They insert text with precisely the properties of the string being
+inserted, and no others.  This is correct for programs that copy text
+from one context to another--for example, into or out of the kill ring.
+To insert with inheritance, use the special primitives described in this
+section.  Self-inserting characters inherit properties because they work
+using these primitives.
+
+   When you do insertion with inheritance, _which_ properties are
+inherited, and from where, depends on which properties are "sticky".
+Insertion after a character inherits those of its properties that are
+"rear-sticky".  Insertion before a character inherits those of its
+properties that are "front-sticky".  When both sides offer different
+sticky values for the same property, the previous character's value
+takes precedence.
+
+   By default, a text property is rear-sticky but not front-sticky;
+thus, the default is to inherit all the properties of the preceding
+character, and nothing from the following character.
+
+   You can control the stickiness of various text properties with two
+specific text properties, `front-sticky' and `rear-nonsticky', and with
+the variable `text-property-default-nonsticky'.  You can use the
+variable to specify a different default for a given property.  You can
+use those two text properties to make any specific properties sticky or
+nonsticky in any particular part of the text.
+
+   If a character's `front-sticky' property is `t', then all its
+properties are front-sticky.  If the `front-sticky' property is a list,
+then the sticky properties of the character are those whose names are
+in the list.  For example, if a character has a `front-sticky' property
+whose value is `(face read-only)', then insertion before the character
+can inherit its `face' property and its `read-only' property, but no
+others.
+
+   The `rear-nonsticky' property works the opposite way.  Most
+properties are rear-sticky by default, so the `rear-nonsticky' property
+says which properties are _not_ rear-sticky.  If a character's
+`rear-nonsticky' property is `t', then none of its properties are
+rear-sticky.  If the `rear-nonsticky' property is a list, properties
+are rear-sticky _unless_ their names are in the list.
+
+ - Variable: text-property-default-nonsticky
+     This variable holds an alist which defines the default
+     rear-stickiness of various text properties.  Each element has the
+     form `(PROPERTY . NONSTICKINESS)', and it defines the stickiness
+     of a particular text property, PROPERTY.
+
+     If NONSTICKINESS is non-`nil', this means that the property
+     PROPERTY is rear-nonsticky by default.  Since all properties are
+     front-nonsticky by default, this makes PROPERTY nonsticky in both
+     directions by default.
+
+     The text properties `front-sticky' and `rear-nonsticky', when
+     used, take precedence over the default NONSTICKINESS specifed in
+     `text-property-default-nonsticky'.
+
+   Here are the functions that insert text with inheritance of
+properties:
+
+ - Function: insert-and-inherit &rest strings
+     Insert the strings STRINGS, just like the function `insert', but
+     inherit any sticky properties from the adjoining text.
+
+ - Function: insert-before-markers-and-inherit &rest strings
+     Insert the strings STRINGS, just like the function
+     `insert-before-markers', but inherit any sticky properties from the
+     adjoining text.
+
+   *Note Insertion::, for the ordinary insertion functions which do not
+inherit.
+
+
+File: elisp,  Node: Saving Properties,  Next: Lazy Properties,  Prev: Sticky Properties,  Up: Text Properties
+
+Saving Text Properties in Files
+-------------------------------
+
+   You can save text properties in files (along with the text itself),
+and restore the same text properties when visiting or inserting the
+files, using these two hooks:
+
+ - Variable: write-region-annotate-functions
+     This variable's value is a list of functions for `write-region' to
+     run to encode text properties in some fashion as annotations to
+     the text being written in the file.  *Note Writing to Files::.
+
+     Each function in the list is called with two arguments: the start
+     and end of the region to be written.  These functions should not
+     alter the contents of the buffer.  Instead, they should return
+     lists indicating annotations to write in the file in addition to
+     the text in the buffer.
+
+     Each function should return a list of elements of the form
+     `(POSITION . STRING)', where POSITION is an integer specifying the
+     relative position within the text to be written, and STRING is the
+     annotation to add there.
+
+     Each list returned by one of these functions must be already
+     sorted in increasing order by POSITION.  If there is more than one
+     function, `write-region' merges the lists destructively into one
+     sorted list.
+
+     When `write-region' actually writes the text from the buffer to the
+     file, it intermixes the specified annotations at the corresponding
+     positions.  All this takes place without modifying the buffer.
+
+ - Variable: after-insert-file-functions
+     This variable holds a list of functions for `insert-file-contents'
+     to call after inserting a file's contents.  These functions should
+     scan the inserted text for annotations, and convert them to the
+     text properties they stand for.
+
+     Each function receives one argument, the length of the inserted
+     text; point indicates the start of that text.  The function should
+     scan that text for annotations, delete them, and create the text
+     properties that the annotations specify.  The function should
+     return the updated length of the inserted text, as it stands after
+     those changes.  The value returned by one function becomes the
+     argument to the next function.
+
+     These functions should always return with point at the beginning of
+     the inserted text.
+
+     The intended use of `after-insert-file-functions' is for converting
+     some sort of textual annotations into actual text properties.  But
+     other uses may be possible.
+
+   We invite users to write Lisp programs to store and retrieve text
+properties in files, using these hooks, and thus to experiment with
+various data formats and find good ones.  Eventually we hope users will
+produce good, general extensions we can install in Emacs.
+
+   We suggest not trying to handle arbitrary Lisp objects as text
+property names or values--because a program that general is probably
+difficult to write, and slow.  Instead, choose a set of possible data
+types that are reasonably flexible, and not too hard to encode.
+
+   *Note Format Conversion::, for a related feature.
+
+
+File: elisp,  Node: Lazy Properties,  Next: Clickable Text,  Prev: Saving Properties,  Up: Text Properties
+
+Lazy Computation of Text Properties
+-----------------------------------
+
+   Instead of computing text properties for all the text in the buffer,
+you can arrange to compute the text properties for parts of the text
+when and if something depends on them.
+
+   The primitive that extracts text from the buffer along with its
+properties is `buffer-substring'.  Before examining the properties,
+this function runs the abnormal hook `buffer-access-fontify-functions'.
+
+ - Variable: buffer-access-fontify-functions
+     This variable holds a list of functions for computing text
+     properties.  Before `buffer-substring' copies the text and text
+     properties for a portion of the buffer, it calls all the functions
+     in this list.  Each of the functions receives two arguments that
+     specify the range of the buffer being accessed.  (The buffer
+     itself is always the current buffer.)
+
+   The function `buffer-substring-no-properties' does not call these
+functions, since it ignores text properties anyway.
+
+   In order to prevent the hook functions from being called more than
+once for the same part of the buffer, you can use the variable
+`buffer-access-fontified-property'.
+
+ - Variable: buffer-access-fontified-property
+     If this value's variable is non-`nil', it is a symbol which is used
+     as a text property name.  A non-`nil' value for that text property
+     means, "the other text properties for this character have already
+     been computed."
+
+     If all the characters in the range specified for `buffer-substring'
+     have a non-`nil' value for this property, `buffer-substring' does
+     not call the `buffer-access-fontify-functions' functions.  It
+     assumes these characters already have the right text properties,
+     and just copies the properties they already have.
+
+     The normal way to use this feature is that the
+     `buffer-access-fontify-functions' functions add this property, as
+     well as others, to the characters they operate on.  That way, they
+     avoid being called over and over for the same text.
+
+
+File: elisp,  Node: Clickable Text,  Next: Fields,  Prev: Lazy Properties,  Up: Text Properties
+
+Defining Clickable Text
+-----------------------
+
+   There are two ways to set up "clickable text" in a buffer.  There
+are typically two parts of this: to make the text highlight when the
+mouse is over it, and to make a mouse button do something when you
+click it on that part of the text.
+
+   Highlighting is done with the `mouse-face' text property.  Here is
+an example of how Dired does it:
+
+     (condition-case nil
+         (if (dired-move-to-filename)
+             (put-text-property (point)
+                                (save-excursion
+                                  (dired-move-to-end-of-filename)
+                                  (point))
+                                'mouse-face 'highlight))
+       (error nil))
+
+The first two arguments to `put-text-property' specify the beginning
+and end of the text.
+
+   The usual way to make the mouse do something when you click it on
+this text is to define `mouse-2' in the major mode's keymap.  The job
+of checking whether the click was on clickable text is done by the
+command definition.  Here is how Dired does it:
+
+     (defun dired-mouse-find-file-other-window (event)
+       "In dired, visit the file or directory name you click on."
+       (interactive "e")
+       (let (file)
+         (save-excursion
+           (set-buffer (window-buffer (posn-window (event-end event))))
+           (save-excursion
+             (goto-char (posn-point (event-end event)))
+             (setq file (dired-get-filename))))
+         (select-window (posn-window (event-end event)))
+         (find-file-other-window (file-name-sans-versions file t))))
+
+The reason for the outer `save-excursion' construct is to avoid
+changing the current buffer; the reason for the inner one is to avoid
+permanently altering point in the buffer you click on.  In this case,
+Dired uses the function `dired-get-filename' to determine which file to
+visit, based on the position found in the event.
+
+   Instead of defining a mouse command for the major mode, you can
+define a key binding for the clickable text itself, using the `keymap'
+text property:
+
+     (let ((map (make-sparse-keymap)))
+       (define-key map [mouse-2] 'operate-this-button)
+       (put-text-property (point)
+                          (save-excursion
+                            (dired-move-to-end-of-filename)
+                            (point))
+                          'keymap map))
+
+This method makes it possible to define different commands for various
+clickable pieces of text.  Also, the major mode definition (or the
+global definition) remains available for the rest of the text in the
+buffer.
+
+
+File: elisp,  Node: Fields,  Next: Not Intervals,  Prev: Clickable Text,  Up: Text Properties
+
+Defining and Using Fields
+-------------------------
+
+   A field is a range of consecutive characters in the buffer that are
+identified by having the same value (comparing with `eq') of the
+`field' property (either a text-property or an overlay property).  This
+section describes special functions that are available for operating on
+fields.
+
+   You specify a field with a buffer position, POS.  We think of each
+field as containing a range of buffer positions, so the position you
+specify stands for the field containing that position.
+
+   When the characters before and after POS are part of the same field,
+there is no doubt which field contains POS: the one those characters
+both belong to.  When POS is at a boundary between fields, which field
+it belongs to depends on the stickiness of the `field' properties of
+the two surrounding characters (*note Sticky Properties::).  The field
+whose property would be inherited by text inserted at POS is the field
+that contains POS.
+
+   There is an anomalous case where newly inserted text at POS would
+not inherit the `field' property from either side.  This happens if the
+previous character's `field' property is not rear-sticky, and the
+following character's `field' property is not front-sticky.  In this
+case, POS belongs to neither the preceding field nor the following
+field; the field functions treat it as belonging to an empty field
+whose beginning and end are both at POS.
+
+   In all of these functions, if POS is omitted or `nil', the value of
+point is used by default.
+
+ - Function: field-beginning &optional pos escape-from-edge
+     This function returns the beginning of the field specified by POS.
+
+     If POS is at the beginning of its field, and ESCAPE-FROM-EDGE is
+     non-`nil', then the return value is always the beginning of the
+     preceding field that _ends_ at POS, regardless of the stickiness
+     of the `field' properties around POS.
+
+ - Function: field-end &optional pos escape-from-edge
+     This function returns the end of the field specified by POS.
+
+     If POS is at the end of its field, and ESCAPE-FROM-EDGE is
+     non-`nil', then the return value is always the end of the following
+     field that _begins_ at POS, regardless of the stickiness of the
+     `field' properties around POS.
+
+ - Function: field-string &optional pos
+     This function returns the contents of the field specified by POS,
+     as a string.
+
+ - Function: field-string-no-properties &optional pos
+     This function returns the contents of the field specified by POS,
+     as a string, discarding text properties.
+
+ - Function: delete-field &optional pos
+     This function deletes the text of the field specified by POS.
+
+ - Function: constrain-to-field new-pos old-pos &optional
+          escape-from-edge only-in-line inhibit-capture-property
+     This function "constrains" NEW-POS to the field that OLD-POS
+     belongs to--in other words, it returns the position closest to
+     NEW-POS that is in the same field as OLD-POS.
+
+     If NEW-POS is `nil', then `constrain-to-field' uses the value of
+     point instead, and moves point to the resulting position.
+
+     If OLD-POS is at the boundary of two fields, then the acceptable
+     positions for NEW-POS depend on the value of the optional argument
+     ESCAPE-FROM-EDGE.  If ESCAPE-FROM-EDGE is `nil', then NEW-POS is
+     constrained to the field that has the same `field' property
+     (either a text-property or an overlay property) that new
+     characters inserted at OLD-POS would get.  (This depends on the
+     stickiness of the `field' property for the characters before and
+     after OLD-POS.)  If ESCAPE-FROM-EDGE is non-`nil', NEW-POS is
+     constrained to the union of the two adjacent fields.
+     Additionally, if two fields are separated by another field with the
+     special value `boundary', then any point within this special field
+     is also considered to be "on the boundary."
+
+     If the optional argument ONLY-IN-LINE is non-`nil', and
+     constraining NEW-POS in the usual way would move it to a different
+     line, NEW-POS is returned unconstrained.  This used in commands
+     that move by line, such as `next-line' and `beginning-of-line', so
+     that they respect field boundaries only in the case where they can
+     still move to the right line.
+
+     If the optional argument INHIBIT-CAPTURE-PROPERTY is non-`nil',
+     and OLD-POS has a non-`nil' property of that name, then any field
+     boundaries are ignored.
+
+     You can cause `constrain-to-field' to ignore all field boundaries
+     (and so never constrain anything) by binding the variable
+     `inhibit-field-text-motion' to a non-nil value.
+
+
+File: elisp,  Node: Not Intervals,  Prev: Fields,  Up: Text Properties
+
+Why Text Properties are not Intervals
+-------------------------------------
+
+   Some editors that support adding attributes to text in the buffer do
+so by letting the user specify "intervals" within the text, and adding
+the properties to the intervals.  Those editors permit the user or the
+programmer to determine where individual intervals start and end.  We
+deliberately provided a different sort of interface in Emacs Lisp to
+avoid certain paradoxical behavior associated with text modification.
+
+   If the actual subdivision into intervals is meaningful, that means
+you can distinguish between a buffer that is just one interval with a
+certain property, and a buffer containing the same text subdivided into
+two intervals, both of which have that property.
+
+   Suppose you take the buffer with just one interval and kill part of
+the text.  The text remaining in the buffer is one interval, and the
+copy in the kill ring (and the undo list) becomes a separate interval.
+Then if you yank back the killed text, you get two intervals with the
+same properties.  Thus, editing does not preserve the distinction
+between one interval and two.
+
+   Suppose we "fix" this problem by coalescing the two intervals when
+the text is inserted.  That works fine if the buffer originally was a
+single interval.  But suppose instead that we have two adjacent
+intervals with the same properties, and we kill the text of one interval
+and yank it back.  The same interval-coalescence feature that rescues
+the other case causes trouble in this one: after yanking, we have just
+one interval.  One again, editing does not preserve the distinction
+between one interval and two.
+
+   Insertion of text at the border between intervals also raises
+questions that have no satisfactory answer.
+
+   However, it is easy to arrange for editing to behave consistently for
+questions of the form, "What are the properties of this character?"  So
+we have decided these are the only questions that make sense; we have
+not implemented asking questions about where intervals start or end.
+
+   In practice, you can usually use the text property search functions
+in place of explicit interval boundaries.  You can think of them as
+finding the boundaries of intervals, assuming that intervals are always
+coalesced whenever possible.  *Note Property Search::.
+
+   Emacs also provides explicit intervals as a presentation feature; see
+*Note Overlays::.
+
+
+File: elisp,  Node: Substitution,  Next: Transposition,  Prev: Text Properties,  Up: Text
+
+Substituting for a Character Code
+=================================
+
+   The following functions replace characters within a specified region
+based on their character codes.
+
+ - Function: subst-char-in-region start end old-char new-char &optional
+          noundo
+     This function replaces all occurrences of the character OLD-CHAR
+     with the character NEW-CHAR in the region of the current buffer
+     defined by START and END.
+
+     If NOUNDO is non-`nil', then `subst-char-in-region' does not
+     record the change for undo and does not mark the buffer as
+     modified.  This was useful for controlling the old selective
+     display feature (*note Selective Display::).
+
+     `subst-char-in-region' does not move point and returns `nil'.
+
+          ---------- Buffer: foo ----------
+          This is the contents of the buffer before.
+          ---------- Buffer: foo ----------
+          
+          (subst-char-in-region 1 20 ?i ?X)
+               => nil
+          
+          ---------- Buffer: foo ----------
+          ThXs Xs the contents of the buffer before.
+          ---------- Buffer: foo ----------
+
+ - Function: translate-region start end table
+     This function applies a translation table to the characters in the
+     buffer between positions START and END.
+
+     The translation table TABLE is a string; `(aref TABLE OCHAR)'
+     gives the translated character corresponding to OCHAR.  If the
+     length of TABLE is less than 256, any characters with codes larger
+     than the length of TABLE are not altered by the translation.
+
+     The return value of `translate-region' is the number of characters
+     that were actually changed by the translation.  This does not
+     count characters that were mapped into themselves in the
+     translation table.
+
+
+File: elisp,  Node: Registers,  Next: Base 64,  Prev: Transposition,  Up: Text
+
+Registers
+=========
+
+   A register is a sort of variable used in Emacs editing that can hold
+a variety of different kinds of values.  Each register is named by a
+single character.  All ASCII characters and their meta variants (but
+with the exception of `C-g') can be used to name registers.  Thus,
+there are 255 possible registers.  A register is designated in Emacs
+Lisp by the character that is its name.
+
+ - Variable: register-alist
+     This variable is an alist of elements of the form `(NAME .
+     CONTENTS)'.  Normally, there is one element for each Emacs
+     register that has been used.
+
+     The object NAME is a character (an integer) identifying the
+     register.
+
+   The CONTENTS of a register can have several possible types:
+
+a number
+     A number stands for itself.  If `insert-register' finds a number
+     in the register, it converts the number to decimal.
+
+a marker
+     A marker represents a buffer position to jump to.
+
+a string
+     A string is text saved in the register.
+
+a rectangle
+     A rectangle is represented by a list of strings.
+
+`(WINDOW-CONFIGURATION POSITION)'
+     This represents a window configuration to restore in one frame,
+     and a position to jump to in the current buffer.
+
+`(FRAME-CONFIGURATION POSITION)'
+     This represents a frame configuration to restore, and a position
+     to jump to in the current buffer.
+
+(file FILENAME)
+     This represents a file to visit; jumping to this value visits file
+     FILENAME.
+
+(file-query FILENAME POSITION)
+     This represents a file to visit and a position in it; jumping to
+     this value visits file FILENAME and goes to buffer position
+     POSITION.  Restoring this type of position asks the user for
+     confirmation first.
+
+   The functions in this section return unpredictable values unless
+otherwise stated.
+
+ - Function: get-register reg
+     This function returns the contents of the register REG, or `nil'
+     if it has no contents.
+
+ - Function: set-register reg value
+     This function sets the contents of register REG to VALUE.  A
+     register can be set to any value, but the other register functions
+     expect only certain data types.  The return value is VALUE.
+
+ - Command: view-register reg
+     This command displays what is contained in register REG.
+
+ - Command: insert-register reg &optional beforep
+     This command inserts contents of register REG into the current
+     buffer.
+
+     Normally, this command puts point before the inserted text, and the
+     mark after it.  However, if the optional second argument BEFOREP
+     is non-`nil', it puts the mark before and point after.  You can
+     pass a non-`nil' second argument BEFOREP to this function
+     interactively by supplying any prefix argument.
+
+     If the register contains a rectangle, then the rectangle is
+     inserted with its upper left corner at point.  This means that
+     text is inserted in the current line and underneath it on
+     successive lines.
+
+     If the register contains something other than saved text (a
+     string) or a rectangle (a list), currently useless things happen.
+     This may be changed in the future.
+
+
+File: elisp,  Node: Transposition,  Next: Registers,  Prev: Substitution,  Up: Text
+
+Transposition of Text
+=====================
+
+   This subroutine is used by the transposition commands.
+
+ - Function: transpose-regions start1 end1 start2 end2 &optional
+          leave-markers
+     This function exchanges two nonoverlapping portions of the buffer.
+     Arguments START1 and END1 specify the bounds of one portion and
+     arguments START2 and END2 specify the bounds of the other portion.
+
+     Normally, `transpose-regions' relocates markers with the transposed
+     text; a marker previously positioned within one of the two
+     transposed portions moves along with that portion, thus remaining
+     between the same two characters in their new position.  However,
+     if LEAVE-MARKERS is non-`nil', `transpose-regions' does not do
+     this--it leaves all markers unrelocated.
+
+
+File: elisp,  Node: Base 64,  Next: MD5 Checksum,  Prev: Registers,  Up: Text
+
+Base 64 Encoding
+================
+
+   Base 64 code is used in email to encode a sequence of 8-bit bytes as
+a longer sequence of ASCII graphic characters.  It is defined in
+Internet RFC(1)2045.  This section describes the functions for
+converting to and from this code.
+
+ - Function: base64-encode-region beg end &optional no-line-break
+     This function converts the region from BEG to END into base 64
+     code.  It returns the length of the encoded text.  An error is
+     signaled if a character in the region is multibyte, i.e. in a
+     multibyte buffer the region must contain only characters from the
+     charsets `ascii', `eight-bit-control' and `eight-bit-graphic'.
+
+     Normally, this function inserts newline characters into the encoded
+     text, to avoid overlong lines.  However, if the optional argument
+     NO-LINE-BREAK is non-`nil', these newlines are not added, so the
+     output is just one long line.
+
+ - Function: base64-encode-string string &optional no-line-break
+     This function converts the string STRING into base 64 code.  It
+     returns a string containing the encoded text.  As for
+     `base64-encode-region', an error is signaled if a character in the
+     string is multibyte.
+
+     Normally, this function inserts newline characters into the encoded
+     text, to avoid overlong lines.  However, if the optional argument
+     NO-LINE-BREAK is non-`nil', these newlines are not added, so the
+     result string is just one long line.
+
+ - Function: base64-decode-region beg end
+     This function converts the region from BEG to END from base 64
+     code into the corresponding decoded text.  It returns the length of
+     the decoded text.
+
+     The decoding functions ignore newline characters in the encoded
+     text.
+
+ - Function: base64-decode-string string
+     This function converts the string STRING from base 64 code into
+     the corresponding decoded text.  It returns a string containing the
+     decoded text.
+
+     The decoding functions ignore newline characters in the encoded
+     text.
+
+   ---------- Footnotes ----------
+
+   (1) An RFC, an acronym for "Request for Comments", is a numbered
+Internet informational document describing a standard.  RFCs are
+usually written by technical experts acting on their own initiative,
+and are traditionally written in a pragmatic, experience-driven manner.
+
+
+File: elisp,  Node: MD5 Checksum,  Next: Change Hooks,  Prev: Base 64,  Up: Text
+
+MD5 Checksum
+============
+
+   MD5 cryptographic checksums, or "message digests", are 128-bit
+"fingerprints" of a document or program.  They are used to verify that
+you have an exact and unaltered copy of the data.  The algorithm to
+calculate the MD5 message digest is defined in Internet RFC(1)1321.
+This section describes the Emacs facilities for computing message
+digests.
+
+ - Function: md5 object &optional start end coding-system noerror
+     This function returns the MD5 message digest of OBJECT, which
+     should be a buffer or a string.
+
+     The two optional arguments START and END are character positions
+     specifying the portion of OBJECT to compute the message digest
+     for.  If they are `nil' or omitted, the digest is computed for the
+     whole of OBJECT.
+
+     The function `md5' does not compute the message digest directly
+     from the internal Emacs representation of the text (*note Text
+     Representations::).  Instead, it encodes the text using a coding
+     system, and computes the message digest from the encoded text.  The
+     optional fourth argument CODING-SYSTEM specifies which coding
+     system to use for encoding the text.  It should be the same coding
+     system that you used to read the text, or that you used or will use
+     when saving or sending the text.  *Note Coding Systems::, for more
+     information about coding systems.
+
+     If CODING-SYSTEM is `nil' or omitted, the default depends on
+     OBJECT.  If OBJECT is a buffer, the default for CODING-SYSTEM is
+     whatever coding system would be chosen by default for writing this
+     text into a file.  If OBJECT is a string, the user's most
+     preferred coding system (*note prefer-coding-system:
+     (emacs)Recognize Coding.) is used.
+
+     Normally, `md5' signals an error if the text can't be encoded
+     using the specified or chosen coding system.  However, if NOERROR
+     is non-`nil', it silently uses `raw-text' coding instead.
+
+   ---------- Footnotes ----------
+
+   (1) For an explanation of what is an RFC, see the footnote in *Note
+Base 64::.
+
+
+File: elisp,  Node: Change Hooks,  Prev: MD5 Checksum,  Up: Text
+
+Change Hooks
+============
+
+   These hook variables let you arrange to take notice of all changes in
+all buffers (or in a particular buffer, if you make them buffer-local).
+See also *Note Special Properties::, for how to detect changes to
+specific parts of the text.
+
+   The functions you use in these hooks should save and restore the
+match data if they do anything that uses regular expressions;
+otherwise, they will interfere in bizarre ways with the editing
+operations that call them.
+
+ - Variable: before-change-functions
+     This variable holds a list of functions to call before any buffer
+     modification.  Each function gets two arguments, the beginning and
+     end of the region that is about to change, represented as
+     integers.  The buffer that is about to change is always the
+     current buffer.
+
+ - Variable: after-change-functions
+     This variable holds a list of functions to call after any buffer
+     modification.  Each function receives three arguments: the
+     beginning and end of the region just changed, and the length of
+     the text that existed before the change.  All three arguments are
+     integers.  The buffer that's about to change is always the current
+     buffer.
+
+     The length of the old text is the difference between the buffer
+     positions before and after that text as it was before the change.
+     As for the changed text, its length is simply the difference
+     between the first two arguments.
+
+ - Macro: combine-after-change-calls body...
+     The macro executes BODY normally, but arranges to call the
+     after-change functions just once for a series of several
+     changes--if that seems safe.
+
+     If a program makes several text changes in the same area of the
+     buffer, using the macro `combine-after-change-calls' around that
+     part of the program can make it run considerably faster when
+     after-change hooks are in use.  When the after-change hooks are
+     ultimately called, the arguments specify a portion of the buffer
+     including all of the changes made within the
+     `combine-after-change-calls' body.
+
+     *Warning:* You must not alter the values of
+     `after-change-functions' within the body of a
+     `combine-after-change-calls' form.
+
+     *Note:* If the changes you combine occur in widely scattered parts
+     of the buffer, this will still work, but it is not advisable,
+     because it may lead to inefficient behavior for some change hook
+     functions.
+
+   The two variables above are temporarily bound to `nil' during the
+time that any of these functions is running.  This means that if one of
+these functions changes the buffer, that change won't run these
+functions.  If you do want a hook function to make changes that run
+these functions, make it bind these variables back to their usual
+values.
+
+   One inconvenient result of this protective feature is that you cannot
+have a function in `after-change-functions' or
+`before-change-functions' which changes the value of that variable.
+But that's not a real limitation.  If you want those functions to change
+the list of functions to run, simply add one fixed function to the hook,
+and code that function to look in another variable for other functions
+to call.  Here is an example:
+
+     (setq my-own-after-change-functions nil)
+     (defun indirect-after-change-function (beg end len)
+       (let ((list my-own-after-change-functions))
+         (while list
+           (funcall (car list) beg end len)
+           (setq list (cdr list)))))
+     
+     (add-hooks 'after-change-functions
+                'indirect-after-change-function)
+
+ - Variable: first-change-hook
+     This variable is a normal hook that is run whenever a buffer is
+     changed that was previously in the unmodified state.
+
+ - Variable: inhibit-modification-hooks
+     If this variable is non-`nil', all of the change hooks are
+     disabled; none of them run.  This affects all the hook variables
+     described above in this section, as well as the hooks attached to
+     certain special text properties (*note Special Properties::) and
+     overlay properties (*note Overlay Properties::).
+
+     This variable is available starting in Emacs 21.
+
+
+File: elisp,  Node: Non-ASCII Characters,  Next: Searching and Matching,  Prev: Text,  Up: Top
+
+Non-ASCII Characters
+********************
+
+   This chapter covers the special issues relating to non-ASCII
+characters and how they are stored in strings and buffers.
+
+* Menu:
+
+* Text Representations::    Unibyte and multibyte representations
+* Converting Representations::  Converting unibyte to multibyte and vice versa.
+* Selecting a Representation::  Treating a byte sequence as unibyte or multi.
+* Character Codes::         How unibyte and multibyte relate to
+                                codes of individual characters.
+* Character Sets::          The space of possible characters codes
+                                is divided into various character sets.
+* Chars and Bytes::         More information about multibyte encodings.
+* Splitting Characters::    Converting a character to its byte sequence.
+* Scanning Charsets::       Which character sets are used in a buffer?
+* Translation of Characters::   Translation tables are used for conversion.
+* Coding Systems::          Coding systems are conversions for saving files.
+* Input Methods::           Input methods allow users to enter various
+                                non-ASCII characters without special keyboards.
+* Locales::                 Interacting with the POSIX locale.
+
+
+File: elisp,  Node: Text Representations,  Next: Converting Representations,  Up: Non-ASCII Characters
+
+Text Representations
+====================
+
+   Emacs has two "text representations"--two ways to represent text in
+a string or buffer.  These are called "unibyte" and "multibyte".  Each
+string, and each buffer, uses one of these two representations.  For
+most purposes, you can ignore the issue of representations, because
+Emacs converts text between them as appropriate.  Occasionally in Lisp
+programming you will need to pay attention to the difference.
+
+   In unibyte representation, each character occupies one byte and
+therefore the possible character codes range from 0 to 255.  Codes 0
+through 127 are ASCII characters; the codes from 128 through 255 are
+used for one non-ASCII character set (you can choose which character
+set by setting the variable `nonascii-insert-offset').
+
+   In multibyte representation, a character may occupy more than one
+byte, and as a result, the full range of Emacs character codes can be
+stored.  The first byte of a multibyte character is always in the range
+128 through 159 (octal 0200 through 0237).  These values are called
+"leading codes".  The second and subsequent bytes of a multibyte
+character are always in the range 160 through 255 (octal 0240 through
+0377); these values are "trailing codes".
+
+   Some sequences of bytes are not valid in multibyte text: for example,
+a single isolated byte in the range 128 through 159 is not allowed.  But
+character codes 128 through 159 can appear in multibyte text,
+represented as two-byte sequences.  All the character codes 128 through
+255 are possible (though slightly abnormal) in multibyte text; they
+appear in multibyte buffers and strings when you do explicit encoding
+and decoding (*note Explicit Encoding::).
+
+   In a buffer, the buffer-local value of the variable
+`enable-multibyte-characters' specifies the representation used.  The
+representation for a string is determined and recorded in the string
+when the string is constructed.
+
+ - Variable: enable-multibyte-characters
+     This variable specifies the current buffer's text representation.
+     If it is non-`nil', the buffer contains multibyte text; otherwise,
+     it contains unibyte text.
+
+     You cannot set this variable directly; instead, use the function
+     `set-buffer-multibyte' to change a buffer's representation.
+
+ - Variable: default-enable-multibyte-characters
+     This variable's value is entirely equivalent to `(default-value
+     'enable-multibyte-characters)', and setting this variable changes
+     that default value.  Setting the local binding of
+     `enable-multibyte-characters' in a specific buffer is not allowed,
+     but changing the default value is supported, and it is a reasonable
+     thing to do, because it has no effect on existing buffers.
+
+     The `--unibyte' command line option does its job by setting the
+     default value to `nil' early in startup.
+
+ - Function: position-bytes position
+     Return the byte-position corresponding to buffer position POSITION
+     in the current buffer.
+
+ - Function: byte-to-position byte-position
+     Return the buffer position corresponding to byte-position
+     BYTE-POSITION in the current buffer.
+
+ - Function: multibyte-string-p string
+     Return `t' if STRING is a multibyte string.
+
+
+File: elisp,  Node: Converting Representations,  Next: Selecting a Representation,  Prev: Text Representations,  Up: Non-ASCII Characters
+
+Converting Text Representations
+===============================
+
+   Emacs can convert unibyte text to multibyte; it can also convert
+multibyte text to unibyte, though this conversion loses information.  In
+general these conversions happen when inserting text into a buffer, or
+when putting text from several strings together in one string.  You can
+also explicitly convert a string's contents to either representation.
+
+   Emacs chooses the representation for a string based on the text that
+it is constructed from.  The general rule is to convert unibyte text to
+multibyte text when combining it with other multibyte text, because the
+multibyte representation is more general and can hold whatever
+characters the unibyte text has.
+
+   When inserting text into a buffer, Emacs converts the text to the
+buffer's representation, as specified by `enable-multibyte-characters'
+in that buffer.  In particular, when you insert multibyte text into a
+unibyte buffer, Emacs converts the text to unibyte, even though this
+conversion cannot in general preserve all the characters that might be
+in the multibyte text.  The other natural alternative, to convert the
+buffer contents to multibyte, is not acceptable because the buffer's
+representation is a choice made by the user that cannot be overridden
+automatically.
+
+   Converting unibyte text to multibyte text leaves ASCII characters
+unchanged, and likewise character codes 128 through 159.  It converts
+the non-ASCII codes 160 through 255 by adding the value
+`nonascii-insert-offset' to each character code.  By setting this
+variable, you specify which character set the unibyte characters
+correspond to (*note Character Sets::).  For example, if
+`nonascii-insert-offset' is 2048, which is `(- (make-char
+'latin-iso8859-1) 128)', then the unibyte non-ASCII characters
+correspond to Latin 1.  If it is 2688, which is `(- (make-char
+'greek-iso8859-7) 128)', then they correspond to Greek letters.
+
+   Converting multibyte text to unibyte is simpler: it discards all but
+the low 8 bits of each character code.  If `nonascii-insert-offset' has
+a reasonable value, corresponding to the beginning of some character
+set, this conversion is the inverse of the other: converting unibyte
+text to multibyte and back to unibyte reproduces the original unibyte
+text.
+
+ - Variable: nonascii-insert-offset
+     This variable specifies the amount to add to a non-ASCII character
+     when converting unibyte text to multibyte.  It also applies when
+     `self-insert-command' inserts a character in the unibyte non-ASCII
+     range, 128 through 255.  However, the functions `insert' and
+     `insert-char' do not perform this conversion.
+
+     The right value to use to select character set CS is `(-
+     (make-char CS) 128)'.  If the value of `nonascii-insert-offset' is
+     zero, then conversion actually uses the value for the Latin 1
+     character set, rather than zero.
+
+ - Variable: nonascii-translation-table
+     This variable provides a more general alternative to
+     `nonascii-insert-offset'.  You can use it to specify independently
+     how to translate each code in the range of 128 through 255 into a
+     multibyte character.  The value should be a char-table, or `nil'.
+     If this is non-`nil', it overrides `nonascii-insert-offset'.
+
+ - Function: string-make-unibyte string
+     This function converts the text of STRING to unibyte
+     representation, if it isn't already, and returns the result.  If
+     STRING is a unibyte string, it is returned unchanged.  Multibyte
+     character codes are converted to unibyte by using just the low 8
+     bits.
+
+ - Function: string-make-multibyte string
+     This function converts the text of STRING to multibyte
+     representation, if it isn't already, and returns the result.  If
+     STRING is a multibyte string, it is returned unchanged.  The
+     function `unibyte-char-to-multibyte' is used to convert each
+     unibyte character to a multibyte character.
+
+
+File: elisp,  Node: Selecting a Representation,  Next: Character Codes,  Prev: Converting Representations,  Up: Non-ASCII Characters
+
+Selecting a Representation
+==========================
+
+   Sometimes it is useful to examine an existing buffer or string as
+multibyte when it was unibyte, or vice versa.
+
+ - Function: set-buffer-multibyte multibyte
+     Set the representation type of the current buffer.  If MULTIBYTE
+     is non-`nil', the buffer becomes multibyte.  If MULTIBYTE is
+     `nil', the buffer becomes unibyte.
+
+     This function leaves the buffer contents unchanged when viewed as a
+     sequence of bytes.  As a consequence, it can change the contents
+     viewed as characters; a sequence of two bytes which is treated as
+     one character in multibyte representation will count as two
+     characters in unibyte representation.  Character codes 128 through
+     159 are an exception.  They are represented by one byte in a
+     unibyte buffer, but when the buffer is set to multibyte, they are
+     converted to two-byte sequences, and vice versa.
+
+     This function sets `enable-multibyte-characters' to record which
+     representation is in use.  It also adjusts various data in the
+     buffer (including overlays, text properties and markers) so that
+     they cover the same text as they did before.
+
+     You cannot use `set-buffer-multibyte' on an indirect buffer,
+     because indirect buffers always inherit the representation of the
+     base buffer.
+
+ - Function: string-as-unibyte string
+     This function returns a string with the same bytes as STRING but
+     treating each byte as a character.  This means that the value may
+     have more characters than STRING has.
+
+     If STRING is already a unibyte string, then the value is STRING
+     itself.  Otherwise it is a newly created string, with no text
+     properties.  If STRING is multibyte, any characters it contains of
+     charset EIGHT-BIT-CONTROL or EIGHT-BIT-GRAPHIC are converted to
+     the corresponding single byte.
+
+ - Function: string-as-multibyte string
+     This function returns a string with the same bytes as STRING but
+     treating each multibyte sequence as one character.  This means
+     that the value may have fewer characters than STRING has.
+
+     If STRING is already a multibyte string, then the value is STRING
+     itself.  Otherwise it is a newly created string, with no text
+     properties.  If STRING is unibyte and contains any individual
+     8-bit bytes (i.e. not part of a multibyte form), they are
+     converted to the corresponding multibyte character of charset
+     EIGHT-BIT-CONTROL or EIGHT-BIT-GRAPHIC.
+
+
+File: elisp,  Node: Character Codes,  Next: Character Sets,  Prev: Selecting a Representation,  Up: Non-ASCII Characters
+
+Character Codes
+===============
+
+   The unibyte and multibyte text representations use different
+character codes.  The valid character codes for unibyte representation
+range from 0 to 255--the values that can fit in one byte.  The valid
+character codes for multibyte representation range from 0 to 524287,
+but not all values in that range are valid.  The values 128 through 255
+are not entirely proper in multibyte text, but they can occur if you do
+explicit encoding and decoding (*note Explicit Encoding::).  Some other
+character codes cannot occur at all in multibyte text.  Only the ASCII
+codes 0 through 127 are completely legitimate in both representations.
+
+ - Function: char-valid-p charcode &optional genericp
+     This returns `t' if CHARCODE is valid for either one of the two
+     text representations.
+
+          (char-valid-p 65)
+               => t
+          (char-valid-p 256)
+               => nil
+          (char-valid-p 2248)
+               => t
+
+     If the optional argument GENERICP is non-nil, this function
+     returns `t' if CHARCODE is a generic character (*note Splitting
+     Characters::).
+
+
+File: elisp,  Node: Character Sets,  Next: Chars and Bytes,  Prev: Character Codes,  Up: Non-ASCII Characters
+
+Character Sets
+==============
+
+   Emacs classifies characters into various "character sets", each of
+which has a name which is a symbol.  Each character belongs to one and
+only one character set.
+
+   In general, there is one character set for each distinct script.  For
+example, `latin-iso8859-1' is one character set, `greek-iso8859-7' is
+another, and `ascii' is another.  An Emacs character set can hold at
+most 9025 characters; therefore, in some cases, characters that would
+logically be grouped together are split into several character sets.
+For example, one set of Chinese characters, generally known as Big 5,
+is divided into two Emacs character sets, `chinese-big5-1' and
+`chinese-big5-2'.
+
+   ASCII characters are in character set `ascii'.  The non-ASCII
+characters 128 through 159 are in character set `eight-bit-control',
+and codes 160 through 255 are in character set `eight-bit-graphic'.
+
+ - Function: charsetp object
+     Returns `t' if OBJECT is a symbol that names a character set,
+     `nil' otherwise.
+
+ - Function: charset-list
+     This function returns a list of all defined character set names.
+
+ - Function: char-charset character
+     This function returns the name of the character set that CHARACTER
+     belongs to.
+
+ - Function: charset-plist charset
+     This function returns the charset property list of the character
+     set CHARSET.  Although CHARSET is a symbol, this is not the same
+     as the property list of that symbol.  Charset properties are used
+     for special purposes within Emacs; for example,
+     `preferred-coding-system' helps determine which coding system to
+     use to encode characters in a charset.
+

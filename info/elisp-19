@@ -1,0 +1,1091 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Recursive Editing,  Next: Disabling Commands,  Prev: Prefix Command Arguments,  Up: Command Loop
+
+Recursive Editing
+=================
+
+   The Emacs command loop is entered automatically when Emacs starts up.
+This top-level invocation of the command loop never exits; it keeps
+running as long as Emacs does.  Lisp programs can also invoke the
+command loop.  Since this makes more than one activation of the command
+loop, we call it "recursive editing".  A recursive editing level has
+the effect of suspending whatever command invoked it and permitting the
+user to do arbitrary editing before resuming that command.
+
+   The commands available during recursive editing are the same ones
+available in the top-level editing loop and defined in the keymaps.
+Only a few special commands exit the recursive editing level; the others
+return to the recursive editing level when they finish.  (The special
+commands for exiting are always available, but they do nothing when
+recursive editing is not in progress.)
+
+   All command loops, including recursive ones, set up all-purpose error
+handlers so that an error in a command run from the command loop will
+not exit the loop.
+
+   Minibuffer input is a special kind of recursive editing.  It has a
+few special wrinkles, such as enabling display of the minibuffer and the
+minibuffer window, but fewer than you might suppose.  Certain keys
+behave differently in the minibuffer, but that is only because of the
+minibuffer's local map; if you switch windows, you get the usual Emacs
+commands.
+
+   To invoke a recursive editing level, call the function
+`recursive-edit'.  This function contains the command loop; it also
+contains a call to `catch' with tag `exit', which makes it possible to
+exit the recursive editing level by throwing to `exit' (*note Catch and
+Throw::).  If you throw a value other than `t', then `recursive-edit'
+returns normally to the function that called it.  The command `C-M-c'
+(`exit-recursive-edit') does this.  Throwing a `t' value causes
+`recursive-edit' to quit, so that control returns to the command loop
+one level up.  This is called "aborting", and is done by `C-]'
+(`abort-recursive-edit').
+
+   Most applications should not use recursive editing, except as part of
+using the minibuffer.  Usually it is more convenient for the user if you
+change the major mode of the current buffer temporarily to a special
+major mode, which should have a command to go back to the previous mode.
+(The `e' command in Rmail uses this technique.)  Or, if you wish to
+give the user different text to edit "recursively", create and select a
+new buffer in a special mode.  In this mode, define a command to
+complete the processing and go back to the previous buffer.  (The `m'
+command in Rmail does this.)
+
+   Recursive edits are useful in debugging.  You can insert a call to
+`debug' into a function definition as a sort of breakpoint, so that you
+can look around when the function gets there.  `debug' invokes a
+recursive edit but also provides the other features of the debugger.
+
+   Recursive editing levels are also used when you type `C-r' in
+`query-replace' or use `C-x q' (`kbd-macro-query').
+
+ - Function: recursive-edit
+     This function invokes the editor command loop.  It is called
+     automatically by the initialization of Emacs, to let the user begin
+     editing.  When called from a Lisp program, it enters a recursive
+     editing level.
+
+     In the following example, the function `simple-rec' first advances
+     point one word, then enters a recursive edit, printing out a
+     message in the echo area.  The user can then do any editing
+     desired, and then type `C-M-c' to exit and continue executing
+     `simple-rec'.
+
+          (defun simple-rec ()
+            (forward-word 1)
+            (message "Recursive edit in progress")
+            (recursive-edit)
+            (forward-word 1))
+               => simple-rec
+          (simple-rec)
+               => nil
+
+ - Command: exit-recursive-edit
+     This function exits from the innermost recursive edit (including
+     minibuffer input).  Its definition is effectively `(throw 'exit
+     nil)'.
+
+ - Command: abort-recursive-edit
+     This function aborts the command that requested the innermost
+     recursive edit (including minibuffer input), by signaling `quit'
+     after exiting the recursive edit.  Its definition is effectively
+     `(throw 'exit t)'.  *Note Quitting::.
+
+ - Command: top-level
+     This function exits all recursive editing levels; it does not
+     return a value, as it jumps completely out of any computation
+     directly back to the main command loop.
+
+ - Function: recursion-depth
+     This function returns the current depth of recursive edits.  When
+     no recursive edit is active, it returns 0.
+
+
+File: elisp,  Node: Disabling Commands,  Next: Command History,  Prev: Recursive Editing,  Up: Command Loop
+
+Disabling Commands
+==================
+
+   "Disabling a command" marks the command as requiring user
+confirmation before it can be executed.  Disabling is used for commands
+which might be confusing to beginning users, to prevent them from using
+the commands by accident.
+
+   The low-level mechanism for disabling a command is to put a
+non-`nil' `disabled' property on the Lisp symbol for the command.
+These properties are normally set up by the user's init file (*note
+Init File::) with Lisp expressions such as this:
+
+     (put 'upcase-region 'disabled t)
+
+For a few commands, these properties are present by default (you can
+remove them in your init file if you wish).
+
+   If the value of the `disabled' property is a string, the message
+saying the command is disabled includes that string.  For example:
+
+     (put 'delete-region 'disabled
+          "Text deleted this way cannot be yanked back!\n")
+
+   *Note Disabling: (emacs)Disabling, for the details on what happens
+when a disabled command is invoked interactively.  Disabling a command
+has no effect on calling it as a function from Lisp programs.
+
+ - Command: enable-command command
+     Allow COMMAND to be executed without special confirmation from now
+     on, and (if the user confirms) alter the user's init file (*note
+     Init File::) so that this will apply to future sessions.
+
+ - Command: disable-command command
+     Require special confirmation to execute COMMAND from now on, and
+     (if the user confirms) alter the user's init file so that this
+     will apply to future sessions.
+
+ - Variable: disabled-command-hook
+     When the user invokes a disabled command interactively, this
+     normal hook is run instead of the disabled command.  The hook
+     functions can use `this-command-keys' to determine what the user
+     typed to run the command, and thus find the command itself.  *Note
+     Hooks::.
+
+     By default, `disabled-command-hook' contains a function that asks
+     the user whether to proceed.
+
+
+File: elisp,  Node: Command History,  Next: Keyboard Macros,  Prev: Disabling Commands,  Up: Command Loop
+
+Command History
+===============
+
+   The command loop keeps a history of the complex commands that have
+been executed, to make it convenient to repeat these commands.  A
+"complex command" is one for which the interactive argument reading
+uses the minibuffer.  This includes any `M-x' command, any `M-:'
+command, and any command whose `interactive' specification reads an
+argument from the minibuffer.  Explicit use of the minibuffer during
+the execution of the command itself does not cause the command to be
+considered complex.
+
+ - Variable: command-history
+     This variable's value is a list of recent complex commands, each
+     represented as a form to evaluate.  It continues to accumulate all
+     complex commands for the duration of the editing session, but when
+     it reaches the maximum size (specified by the variable
+     `history-length'), the oldest elements are deleted as new ones are
+     added.
+
+          command-history
+          => ((switch-to-buffer "chistory.texi")
+              (describe-key "^X^[")
+              (visit-tags-table "~/emacs/src/")
+              (find-tag "repeat-complex-command"))
+
+   This history list is actually a special case of minibuffer history
+(*note Minibuffer History::), with one special twist: the elements are
+expressions rather than strings.
+
+   There are a number of commands devoted to the editing and recall of
+previous commands.  The commands `repeat-complex-command', and
+`list-command-history' are described in the user manual (*note
+Repetition: (emacs)Repetition.).  Within the minibuffer, the usual
+minibuffer history commands are available.
+
+
+File: elisp,  Node: Keyboard Macros,  Prev: Command History,  Up: Command Loop
+
+Keyboard Macros
+===============
+
+   A "keyboard macro" is a canned sequence of input events that can be
+considered a command and made the definition of a key.  The Lisp
+representation of a keyboard macro is a string or vector containing the
+events.  Don't confuse keyboard macros with Lisp macros (*note
+Macros::).
+
+ - Function: execute-kbd-macro kbdmacro &optional count
+     This function executes KBDMACRO as a sequence of events.  If
+     KBDMACRO is a string or vector, then the events in it are executed
+     exactly as if they had been input by the user.  The sequence is
+     _not_ expected to be a single key sequence; normally a keyboard
+     macro definition consists of several key sequences concatenated.
+
+     If KBDMACRO is a symbol, then its function definition is used in
+     place of KBDMACRO.  If that is another symbol, this process
+     repeats.  Eventually the result should be a string or vector.  If
+     the result is not a symbol, string, or vector, an error is
+     signaled.
+
+     The argument COUNT is a repeat count; KBDMACRO is executed that
+     many times.  If COUNT is omitted or `nil', KBDMACRO is executed
+     once.  If it is 0, KBDMACRO is executed over and over until it
+     encounters an error or a failing search.
+
+     *Note Reading One Event::, for an example of using
+     `execute-kbd-macro'.
+
+ - Variable: executing-macro
+     This variable contains the string or vector that defines the
+     keyboard macro that is currently executing.  It is `nil' if no
+     macro is currently executing.  A command can test this variable so
+     as to behave differently when run from an executing macro.  Do not
+     set this variable yourself.
+
+ - Variable: defining-kbd-macro
+     This variable indicates whether a keyboard macro is being defined.
+     A command can test this variable so as to behave differently
+     while a macro is being defined.  The commands `start-kbd-macro' and
+     `end-kbd-macro' set this variable--do not set it yourself.
+
+     The variable is always local to the current terminal and cannot be
+     buffer-local.  *Note Multiple Displays::.
+
+ - Variable: last-kbd-macro
+     This variable is the definition of the most recently defined
+     keyboard macro.  Its value is a string or vector, or `nil'.
+
+     The variable is always local to the current terminal and cannot be
+     buffer-local.  *Note Multiple Displays::.
+
+ - Variable: kbd-macro-termination-hook
+     This normal hook (*note Standard Hooks::) is run when a keyboard
+     macro terminates, regardless of what caused it to terminate
+     (reaching the macro end or an error which ended the macro
+     prematurely).
+
+
+File: elisp,  Node: Keymaps,  Next: Modes,  Prev: Command Loop,  Up: Top
+
+Keymaps
+*******
+
+   The bindings between input events and commands are recorded in data
+structures called "keymaps".  Each binding in a keymap associates (or
+"binds") an individual event type either to another keymap or to a
+command.  When an event type is bound to a keymap, that keymap is used
+to look up the next input event; this continues until a command is
+found.  The whole process is called "key lookup".
+
+* Menu:
+
+* Keymap Terminology::        	Definitions of terms pertaining to keymaps.
+* Format of Keymaps::		What a keymap looks like as a Lisp object.
+* Creating Keymaps:: 		Functions to create and copy keymaps.
+* Inheritance and Keymaps::	How one keymap can inherit the bindings
+				   of another keymap.
+* Prefix Keys::                 Defining a key with a keymap as its definition.
+* Active Keymaps::	        Each buffer has a local keymap
+                                   to override the standard (global) bindings.
+				   A minor mode can also override them.
+* Key Lookup::                  How extracting elements from keymaps works.
+* Functions for Key Lookup::    How to request key lookup.
+* Changing Key Bindings::       Redefining a key in a keymap.
+* Key Binding Commands::        Interactive interfaces for redefining keys.
+* Scanning Keymaps::            Looking through all keymaps, for printing help.
+* Menu Keymaps::		Defining a menu as a keymap.
+
+
+File: elisp,  Node: Keymap Terminology,  Next: Format of Keymaps,  Up: Keymaps
+
+Keymap Terminology
+==================
+
+   A "keymap" is a table mapping event types to definitions (which can
+be any Lisp objects, though only certain types are meaningful for
+execution by the command loop).  Given an event (or an event type) and a
+keymap, Emacs can get the event's definition.  Events include
+characters, function keys, and mouse actions (*note Input Events::).
+
+   A sequence of input events that form a unit is called a "key
+sequence", or "key" for short.  A sequence of one event is always a key
+sequence, and so are some multi-event sequences.
+
+   A keymap determines a binding or definition for any key sequence.  If
+the key sequence is a single event, its binding is the definition of the
+event in the keymap.  The binding of a key sequence of more than one
+event is found by an iterative process: the binding of the first event
+is found, and must be a keymap; then the second event's binding is found
+in that keymap, and so on until all the events in the key sequence are
+used up.
+
+   If the binding of a key sequence is a keymap, we call the key
+sequence a "prefix key".  Otherwise, we call it a "complete key"
+(because no more events can be added to it).  If the binding is `nil',
+we call the key "undefined".  Examples of prefix keys are `C-c', `C-x',
+and `C-x 4'.  Examples of defined complete keys are `X', <RET>, and
+`C-x 4 C-f'.  Examples of undefined complete keys are `C-x C-g', and
+`C-c 3'.  *Note Prefix Keys::, for more details.
+
+   The rule for finding the binding of a key sequence assumes that the
+intermediate bindings (found for the events before the last) are all
+keymaps; if this is not so, the sequence of events does not form a
+unit--it is not really one key sequence.  In other words, removing one
+or more events from the end of any valid key sequence must always yield
+a prefix key.  For example, `C-f C-n' is not a key sequence; `C-f' is
+not a prefix key, so a longer sequence starting with `C-f' cannot be a
+key sequence.
+
+   The set of possible multi-event key sequences depends on the bindings
+for prefix keys; therefore, it can be different for different keymaps,
+and can change when bindings are changed.  However, a one-event sequence
+is always a key sequence, because it does not depend on any prefix keys
+for its well-formedness.
+
+   At any time, several primary keymaps are "active"--that is, in use
+for finding key bindings.  These are the "global map", which is shared
+by all buffers; the "local keymap", which is usually associated with a
+specific major mode; and zero or more "minor mode keymaps", which
+belong to currently enabled minor modes.  (Not all minor modes have
+keymaps.)  The local keymap bindings shadow (i.e., take precedence
+over) the corresponding global bindings.  The minor mode keymaps shadow
+both local and global keymaps.  *Note Active Keymaps::, for details.
+
+
+File: elisp,  Node: Format of Keymaps,  Next: Creating Keymaps,  Prev: Keymap Terminology,  Up: Keymaps
+
+Format of Keymaps
+=================
+
+   A keymap is a list whose CAR is the symbol `keymap'.  The remaining
+elements of the list define the key bindings of the keymap.  Use the
+function `keymapp' (see below) to test whether an object is a keymap.
+
+   Several kinds of elements may appear in a keymap, after the symbol
+`keymap' that begins it:
+
+`(TYPE . BINDING)'
+     This specifies one binding, for events of type TYPE.  Each
+     ordinary binding applies to events of a particular "event type",
+     which is always a character or a symbol.  *Note Classifying
+     Events::.
+
+`(t . BINDING)'
+     This specifies a "default key binding"; any event not bound by
+     other elements of the keymap is given BINDING as its binding.
+     Default bindings allow a keymap to bind all possible event types
+     without having to enumerate all of them.  A keymap that has a
+     default binding completely masks any lower-precedence keymap.
+
+`VECTOR'
+     If an element of a keymap is a vector, the vector counts as
+     bindings for all the ASCII characters, codes 0 through 127; vector
+     element N is the binding for the character with code N.  This is a
+     compact way to record lots of bindings.  A keymap with such a
+     vector is called a "full keymap".  Other keymaps are called "sparse
+     keymaps".
+
+     When a keymap contains a vector, it always defines a binding for
+     each ASCII character, even if the vector contains `nil' for that
+     character.  Such a binding of `nil' overrides any default key
+     binding in the keymap, for ASCII characters.  However, default
+     bindings are still meaningful for events other than ASCII
+     characters.  A binding of `nil' does _not_ override
+     lower-precedence keymaps; thus, if the local map gives a binding of
+     `nil', Emacs uses the binding from the global map.
+
+`STRING'
+     Aside from bindings, a keymap can also have a string as an element.
+     This is called the "overall prompt string" and makes it possible to
+     use the keymap as a menu.  *Note Defining Menus::.
+
+   Keymaps do not directly record bindings for the meta characters.
+Instead, meta characters are regarded for purposes of key lookup as
+sequences of two characters, the first of which is <ESC> (or whatever
+is currently the value of `meta-prefix-char').  Thus, the key `M-a' is
+internally represented as `<ESC> a', and its global binding is found at
+the slot for `a' in `esc-map' (*note Prefix Keys::).
+
+   This conversion applies only to characters, not to function keys or
+other input events; thus, `M-<end>' has nothing to do with `<ESC>
+<end>'.
+
+   Here as an example is the local keymap for Lisp mode, a sparse
+keymap.  It defines bindings for <DEL> and <TAB>, plus `C-c C-l',
+`M-C-q', and `M-C-x'.
+
+     lisp-mode-map
+     =>
+     (keymap
+      ;; <TAB>
+      (9 . lisp-indent-line)
+      ;; <DEL>
+      (127 . backward-delete-char-untabify)
+      (3 keymap
+         ;; C-c C-l
+         (12 . run-lisp))
+      (27 keymap
+          ;; `M-C-q', treated as `<ESC> C-q'
+          (17 . indent-sexp)
+          ;; `M-C-x', treated as `<ESC> C-x'
+          (24 . lisp-send-defun)))
+
+ - Function: keymapp object
+     This function returns `t' if OBJECT is a keymap, `nil' otherwise.
+     More precisely, this function tests for a list whose CAR is
+     `keymap'.
+
+          (keymapp '(keymap))
+              => t
+          (keymapp (current-global-map))
+              => t
+
+
+File: elisp,  Node: Creating Keymaps,  Next: Inheritance and Keymaps,  Prev: Format of Keymaps,  Up: Keymaps
+
+Creating Keymaps
+================
+
+   Here we describe the functions for creating keymaps.
+
+ - Function: make-keymap &optional prompt
+     This function creates and returns a new full keymap.  That keymap
+     contains a char-table (*note Char-Tables::) with 384 slots: the
+     first 128 slots are for defining all the ASCII characters, the
+     next 128 slots are for 8-bit European characters, and each one of
+     the final 128 slots is for one character set of non-ASCII
+     characters supported by Emacs.  The new keymap initially binds all
+     these characters to `nil', and does not bind any other kind of
+     event.
+
+          (make-keymap)
+              => (keymap [nil nil nil ... nil nil])
+
+     If you specify PROMPT, that becomes the overall prompt string for
+     the keymap.  The prompt string should be provided for menu keymaps
+     (*note Defining Menus::).
+
+ - Function: make-sparse-keymap &optional prompt
+     This function creates and returns a new sparse keymap with no
+     entries.  The new keymap does not contain a char-table, unlike
+     `make-keymap', and does not bind any events.  The argument PROMPT
+     specifies a prompt string, as in `make-keymap'.
+
+          (make-sparse-keymap)
+              => (keymap)
+
+ - Function: copy-keymap keymap
+     This function returns a copy of KEYMAP.  Any keymaps that appear
+     directly as bindings in KEYMAP are also copied recursively, and so
+     on to any number of levels.  However, recursive copying does not
+     take place when the definition of a character is a symbol whose
+     function definition is a keymap; the same symbol appears in the
+     new copy.
+
+          (setq map (copy-keymap (current-local-map)))
+          => (keymap
+               ;; (This implements meta characters.)
+               (27 keymap
+                   (83 . center-paragraph)
+                   (115 . center-line))
+               (9 . tab-to-tab-stop))
+          
+          (eq map (current-local-map))
+              => nil
+          (equal map (current-local-map))
+              => t
+
+
+File: elisp,  Node: Inheritance and Keymaps,  Next: Prefix Keys,  Prev: Creating Keymaps,  Up: Keymaps
+
+Inheritance and Keymaps
+=======================
+
+   A keymap can inherit the bindings of another keymap, which we call
+the "parent keymap".  Such a keymap looks like this:
+
+     (keymap BINDINGS... . PARENT-KEYMAP)
+
+The effect is that this keymap inherits all the bindings of
+PARENT-KEYMAP, whatever they may be at the time a key is looked up, but
+can add to them or override them with BINDINGS.
+
+   If you change the bindings in PARENT-KEYMAP using `define-key' or
+other key-binding functions, these changes are visible in the
+inheriting keymap unless shadowed by BINDINGS.  The converse is not
+true: if you use `define-key' to change the inheriting keymap, that
+affects BINDINGS, but has no effect on PARENT-KEYMAP.
+
+   The proper way to construct a keymap with a parent is to use
+`set-keymap-parent'; if you have code that directly constructs a keymap
+with a parent, please convert the program to use `set-keymap-parent'
+instead.
+
+ - Function: keymap-parent keymap
+     This returns the parent keymap of KEYMAP.  If KEYMAP has no
+     parent, `keymap-parent' returns `nil'.
+
+ - Function: set-keymap-parent keymap parent
+     This sets the parent keymap of KEYMAP to PARENT, and returns
+     PARENT.  If PARENT is `nil', this function gives KEYMAP no parent
+     at all.
+
+     If KEYMAP has submaps (bindings for prefix keys), they too receive
+     new parent keymaps that reflect what PARENT specifies for those
+     prefix keys.
+
+   Here is an example showing how to make a keymap that inherits from
+`text-mode-map':
+
+     (let ((map (make-sparse-keymap)))
+       (set-keymap-parent map text-mode-map)
+       map)
+
+
+File: elisp,  Node: Prefix Keys,  Next: Active Keymaps,  Prev: Inheritance and Keymaps,  Up: Keymaps
+
+Prefix Keys
+===========
+
+   A "prefix key" is a key sequence whose binding is a keymap.  The
+keymap defines what to do with key sequences that extend the prefix key.
+For example, `C-x' is a prefix key, and it uses a keymap that is also
+stored in the variable `ctl-x-map'.  This keymap defines bindings for
+key sequences starting with `C-x'.
+
+   Some of the standard Emacs prefix keys use keymaps that are also
+found in Lisp variables:
+
+   * `esc-map' is the global keymap for the <ESC> prefix key.  Thus,
+     the global definitions of all meta characters are actually found
+     here.  This map is also the function definition of `ESC-prefix'.
+
+   * `help-map' is the global keymap for the `C-h' prefix key.
+
+   * `mode-specific-map' is the global keymap for the prefix key `C-c'.
+     This map is actually global, not mode-specific, but its name
+     provides useful information about `C-c' in the output of `C-h b'
+     (`display-bindings'), since the main use of this prefix key is for
+     mode-specific bindings.
+
+   * `ctl-x-map' is the global keymap used for the `C-x' prefix key.
+     This map is found via the function cell of the symbol
+     `Control-X-prefix'.
+
+   * `mule-keymap' is the global keymap used for the `C-x <RET>' prefix
+     key.
+
+   * `ctl-x-4-map' is the global keymap used for the `C-x 4' prefix key.
+
+   * `ctl-x-5-map' is the global keymap used for the `C-x 5' prefix key.
+
+   * `2C-mode-map' is the global keymap used for the `C-x 6' prefix key.
+
+   * `vc-prefix-map' is the global keymap used for the `C-x v' prefix
+     key.
+
+   * `facemenu-keymap' is the global keymap used for the `M-g' prefix
+     key.
+
+   * The other Emacs prefix keys are `C-x @', `C-x a i', `C-x <ESC>'
+     and `<ESC> <ESC>'.  They use keymaps that have no special names.
+
+   The keymap binding of a prefix key is used for looking up the event
+that follows the prefix key.  (It may instead be a symbol whose function
+definition is a keymap.  The effect is the same, but the symbol serves
+as a name for the prefix key.)  Thus, the binding of `C-x' is the
+symbol `Control-X-prefix', whose function cell holds the keymap for
+`C-x' commands.  (The same keymap is also the value of `ctl-x-map'.)
+
+   Prefix key definitions can appear in any active keymap.  The
+definitions of `C-c', `C-x', `C-h' and <ESC> as prefix keys appear in
+the global map, so these prefix keys are always available.  Major and
+minor modes can redefine a key as a prefix by putting a prefix key
+definition for it in the local map or the minor mode's map.  *Note
+Active Keymaps::.
+
+   If a key is defined as a prefix in more than one active map, then its
+various definitions are in effect merged: the commands defined in the
+minor mode keymaps come first, followed by those in the local map's
+prefix definition, and then by those from the global map.
+
+   In the following example, we make `C-p' a prefix key in the local
+keymap, in such a way that `C-p' is identical to `C-x'.  Then the
+binding for `C-p C-f' is the function `find-file', just like `C-x C-f'.
+The key sequence `C-p 6' is not found in any active keymap.
+
+     (use-local-map (make-sparse-keymap))
+         => nil
+     (local-set-key "\C-p" ctl-x-map)
+         => nil
+     (key-binding "\C-p\C-f")
+         => find-file
+     
+     (key-binding "\C-p6")
+         => nil
+
+ - Function: define-prefix-command symbol &optional mapvar prompt
+     This function prepares SYMBOL for use as a prefix key's binding:
+     it creates a sparse keymap and stores it as SYMBOL's function
+     definition.  Subsequently binding a key sequence to SYMBOL will
+     make that key sequence into a prefix key.  The return value is
+     `symbol'.
+
+     This function also sets SYMBOL as a variable, with the keymap as
+     its value.  But if MAPVAR is non-`nil', it sets MAPVAR as a
+     variable instead.
+
+     If PROMPT is non-`nil', that becomes the overall prompt string for
+     the keymap.  The prompt string should be given for menu keymaps
+     (*note Defining Menus::).
+
+
+File: elisp,  Node: Active Keymaps,  Next: Key Lookup,  Prev: Prefix Keys,  Up: Keymaps
+
+Active Keymaps
+==============
+
+   Emacs normally contains many keymaps; at any given time, just a few
+of them are "active" in that they participate in the interpretation of
+user input.  These are the global keymap, the current buffer's local
+keymap, and the keymaps of any enabled minor modes.
+
+   The "global keymap" holds the bindings of keys that are defined
+regardless of the current buffer, such as `C-f'.  The variable
+`global-map' holds this keymap, which is always active.
+
+   Each buffer may have another keymap, its "local keymap", which may
+contain new or overriding definitions for keys.  The current buffer's
+local keymap is always active except when `overriding-local-map'
+overrides it.  Text properties can specify an alternative local map for
+certain parts of the buffer; see *Note Special Properties::.
+
+   Each minor mode can have a keymap; if it does, the keymap is active
+when the minor mode is enabled.
+
+   The variable `overriding-local-map', if non-`nil', specifies another
+local keymap that overrides the buffer's local map and all the minor
+mode keymaps.
+
+   All the active keymaps are used together to determine what command to
+execute when a key is entered.  Emacs searches these maps one by one, in
+order of decreasing precedence, until it finds a binding in one of the
+maps.  The procedure for searching a single keymap is called "key
+lookup"; see *Note Key Lookup::.
+
+   Normally, Emacs first searches for the key in the minor mode maps, in
+the order specified by `minor-mode-map-alist'; if they do not supply a
+binding for the key, Emacs searches the local map; if that too has no
+binding, Emacs then searches the global map.  However, if
+`overriding-local-map' is non-`nil', Emacs searches that map first,
+before the global map.
+
+   Since every buffer that uses the same major mode normally uses the
+same local keymap, you can think of the keymap as local to the mode.  A
+change to the local keymap of a buffer (using `local-set-key', for
+example) is seen also in the other buffers that share that keymap.
+
+   The local keymaps that are used for Lisp mode and some other major
+modes exist even if they have not yet been used.  These local maps are
+the values of variables such as `lisp-mode-map'.  For most major modes,
+which are less frequently used, the local keymap is constructed only
+when the mode is used for the first time in a session.
+
+   The minibuffer has local keymaps, too; they contain various
+completion and exit commands.  *Note Intro to Minibuffers::.
+
+   Emacs has other keymaps that are used in a different way--translating
+events within `read-key-sequence'.  *Note Translating Input::.
+
+   *Note Standard Keymaps::, for a list of standard keymaps.
+
+ - Variable: global-map
+     This variable contains the default global keymap that maps Emacs
+     keyboard input to commands.  The global keymap is normally this
+     keymap.  The default global keymap is a full keymap that binds
+     `self-insert-command' to all of the printing characters.
+
+     It is normal practice to change the bindings in the global map,
+     but you should not assign this variable any value other than the
+     keymap it starts out with.
+
+ - Function: current-global-map
+     This function returns the current global keymap.  This is the same
+     as the value of `global-map' unless you change one or the other.
+
+          (current-global-map)
+          => (keymap [set-mark-command beginning-of-line ...
+                      delete-backward-char])
+
+ - Function: current-local-map
+     This function returns the current buffer's local keymap, or `nil'
+     if it has none.  In the following example, the keymap for the
+     `*scratch*' buffer (using Lisp Interaction mode) is a sparse keymap
+     in which the entry for <ESC>, ASCII code 27, is another sparse
+     keymap.
+
+          (current-local-map)
+          => (keymap
+              (10 . eval-print-last-sexp)
+              (9 . lisp-indent-line)
+              (127 . backward-delete-char-untabify)
+              (27 keymap
+                  (24 . eval-defun)
+                  (17 . indent-sexp)))
+
+ - Function: current-minor-mode-maps
+     This function returns a list of the keymaps of currently enabled
+     minor modes.
+
+ - Function: use-global-map keymap
+     This function makes KEYMAP the new current global keymap.  It
+     returns `nil'.
+
+     It is very unusual to change the global keymap.
+
+ - Function: use-local-map keymap
+     This function makes KEYMAP the new local keymap of the current
+     buffer.  If KEYMAP is `nil', then the buffer has no local keymap.
+     `use-local-map' returns `nil'.  Most major mode commands use this
+     function.
+
+ - Variable: minor-mode-map-alist
+     This variable is an alist describing keymaps that may or may not be
+     active according to the values of certain variables.  Its elements
+     look like this:
+
+          (VARIABLE . KEYMAP)
+
+     The keymap KEYMAP is active whenever VARIABLE has a non-`nil'
+     value.  Typically VARIABLE is the variable that enables or
+     disables a minor mode.  *Note Keymaps and Minor Modes::.
+
+     Note that elements of `minor-mode-map-alist' do not have the same
+     structure as elements of `minor-mode-alist'.  The map must be the
+     CDR of the element; a list with the map as the second element will
+     not do.  The CDR can be either a keymap (a list) or a symbol whose
+     function definition is a keymap.
+
+     When more than one minor mode keymap is active, their order of
+     priority is the order of `minor-mode-map-alist'.  But you should
+     design minor modes so that they don't interfere with each other.
+     If you do this properly, the order will not matter.
+
+     See *Note Keymaps and Minor Modes::, for more information about
+     minor modes.  See also `minor-mode-key-binding' (*note Functions
+     for Key Lookup::).
+
+ - Variable: minor-mode-overriding-map-alist
+     This variable allows major modes to override the key bindings for
+     particular minor modes.  The elements of this alist look like the
+     elements of `minor-mode-map-alist': `(VARIABLE . KEYMAP)'.
+
+     If a variable appears as an element of
+     `minor-mode-overriding-map-alist', the map specified by that
+     element totally replaces any map specified for the same variable in
+     `minor-mode-map-alist'.
+
+     `minor-mode-overriding-map-alist' is automatically buffer-local in
+     all buffers.
+
+ - Variable: overriding-local-map
+     If non-`nil', this variable holds a keymap to use instead of the
+     buffer's local keymap and instead of all the minor mode keymaps.
+     This keymap, if any, overrides all other maps that would have been
+     active, except for the current global map.
+
+ - Variable: overriding-terminal-local-map
+     If non-`nil', this variable holds a keymap to use instead of
+     `overriding-local-map', the buffer's local keymap and all the minor
+     mode keymaps.
+
+     This variable is always local to the current terminal and cannot be
+     buffer-local.  *Note Multiple Displays::.  It is used to implement
+     incremental search mode.
+
+ - Variable: overriding-local-map-menu-flag
+     If this variable is non-`nil', the value of `overriding-local-map'
+     or `overriding-terminal-local-map' can affect the display of the
+     menu bar.  The default value is `nil', so those map variables have
+     no effect on the menu bar.
+
+     Note that these two map variables do affect the execution of key
+     sequences entered using the menu bar, even if they do not affect
+     the menu bar display.  So if a menu bar key sequence comes in, you
+     should clear the variables before looking up and executing that
+     key sequence.  Modes that use the variables would typically do
+     this anyway; normally they respond to events that they do not
+     handle by "unreading" them and exiting.
+
+ - Variable: special-event-map
+     This variable holds a keymap for special events.  If an event type
+     has a binding in this keymap, then it is special, and the binding
+     for the event is run directly by `read-event'.  *Note Special
+     Events::.
+
+
+File: elisp,  Node: Key Lookup,  Next: Functions for Key Lookup,  Prev: Active Keymaps,  Up: Keymaps
+
+Key Lookup
+==========
+
+   "Key lookup" is the process of finding the binding of a key sequence
+from a given keymap.  Actual execution of the binding is not part of
+key lookup.
+
+   Key lookup uses just the event type of each event in the key
+sequence; the rest of the event is ignored.  In fact, a key sequence
+used for key lookup may designate mouse events with just their types
+(symbols) instead of with entire mouse events (lists).  *Note Input
+Events::.  Such a "key-sequence" is insufficient for `command-execute'
+to run, but it is sufficient for looking up or rebinding a key.
+
+   When the key sequence consists of multiple events, key lookup
+processes the events sequentially: the binding of the first event is
+found, and must be a keymap; then the second event's binding is found in
+that keymap, and so on until all the events in the key sequence are used
+up.  (The binding thus found for the last event may or may not be a
+keymap.)  Thus, the process of key lookup is defined in terms of a
+simpler process for looking up a single event in a keymap.  How that is
+done depends on the type of object associated with the event in that
+keymap.
+
+   Let's use the term "keymap entry" to describe the value found by
+looking up an event type in a keymap.  (This doesn't include the item
+string and other extra elements in menu key bindings, because
+`lookup-key' and other key lookup functions don't include them in the
+returned value.)  While any Lisp object may be stored in a keymap as a
+keymap entry, not all make sense for key lookup.  Here is a table of
+the meaningful kinds of keymap entries:
+
+`nil'
+     `nil' means that the events used so far in the lookup form an
+     undefined key.  When a keymap fails to mention an event type at
+     all, and has no default binding, that is equivalent to a binding
+     of `nil' for that event type.
+
+COMMAND
+     The events used so far in the lookup form a complete key, and
+     COMMAND is its binding.  *Note What Is a Function::.
+
+ARRAY
+     The array (either a string or a vector) is a keyboard macro.  The
+     events used so far in the lookup form a complete key, and the
+     array is its binding.  See *Note Keyboard Macros::, for more
+     information.
+
+KEYMAP
+     The events used so far in the lookup form a prefix key.  The next
+     event of the key sequence is looked up in KEYMAP.
+
+LIST
+     The meaning of a list depends on the types of the elements of the
+     list.
+
+        * If the CAR of LIST is the symbol `keymap', then the list is a
+          keymap, and is treated as a keymap (see above).
+
+        * If the CAR of LIST is `lambda', then the list is a lambda
+          expression.  This is presumed to be a command, and is treated
+          as such (see above).
+
+        * If the CAR of LIST is a keymap and the CDR is an event type,
+          then this is an "indirect entry":
+
+               (OTHERMAP . OTHERTYPE)
+
+          When key lookup encounters an indirect entry, it looks up
+          instead the binding of OTHERTYPE in OTHERMAP and uses that.
+
+          This feature permits you to define one key as an alias for
+          another key.  For example, an entry whose CAR is the keymap
+          called `esc-map' and whose CDR is 32 (the code for <SPC>)
+          means, "Use the global binding of `Meta-<SPC>', whatever that
+          may be."
+
+SYMBOL
+     The function definition of SYMBOL is used in place of SYMBOL.  If
+     that too is a symbol, then this process is repeated, any number of
+     times.  Ultimately this should lead to an object that is a keymap,
+     a command, or a keyboard macro.  A list is allowed if it is a
+     keymap or a command, but indirect entries are not understood when
+     found via symbols.
+
+     Note that keymaps and keyboard macros (strings and vectors) are not
+     valid functions, so a symbol with a keymap, string, or vector as
+     its function definition is invalid as a function.  It is, however,
+     valid as a key binding.  If the definition is a keyboard macro,
+     then the symbol is also valid as an argument to `command-execute'
+     (*note Interactive Call::).
+
+     The symbol `undefined' is worth special mention: it means to treat
+     the key as undefined.  Strictly speaking, the key is defined, and
+     its binding is the command `undefined'; but that command does the
+     same thing that is done automatically for an undefined key: it
+     rings the bell (by calling `ding') but does not signal an error.
+
+     `undefined' is used in local keymaps to override a global key
+     binding and make the key "undefined" locally.  A local binding of
+     `nil' would fail to do this because it would not override the
+     global binding.
+
+ANYTHING ELSE
+     If any other type of object is found, the events used so far in the
+     lookup form a complete key, and the object is its binding, but the
+     binding is not executable as a command.
+
+   In short, a keymap entry may be a keymap, a command, a keyboard
+macro, a symbol that leads to one of them, or an indirection or `nil'.
+Here is an example of a sparse keymap with two characters bound to
+commands and one bound to another keymap.  This map is the normal value
+of `emacs-lisp-mode-map'.  Note that 9 is the code for <TAB>, 127 for
+<DEL>, 27 for <ESC>, 17 for `C-q' and 24 for `C-x'.
+
+     (keymap (9 . lisp-indent-line)
+             (127 . backward-delete-char-untabify)
+             (27 keymap (17 . indent-sexp) (24 . eval-defun)))
+
+
+File: elisp,  Node: Functions for Key Lookup,  Next: Changing Key Bindings,  Prev: Key Lookup,  Up: Keymaps
+
+Functions for Key Lookup
+========================
+
+   Here are the functions and variables pertaining to key lookup.
+
+ - Function: lookup-key keymap key &optional accept-defaults
+     This function returns the definition of KEY in KEYMAP.  All the
+     other functions described in this chapter that look up keys use
+     `lookup-key'.  Here are examples:
+
+          (lookup-key (current-global-map) "\C-x\C-f")
+              => find-file
+          (lookup-key (current-global-map) "\C-x\C-f12345")
+              => 2
+
+     If the string or vector KEY is not a valid key sequence according
+     to the prefix keys specified in KEYMAP, it must be "too long" and
+     have extra events at the end that do not fit into a single key
+     sequence.  Then the value is a number, the number of events at the
+     front of KEY that compose a complete key.
+
+     If ACCEPT-DEFAULTS is non-`nil', then `lookup-key' considers
+     default bindings as well as bindings for the specific events in
+     KEY.  Otherwise, `lookup-key' reports only bindings for the
+     specific sequence KEY, ignoring default bindings except when you
+     explicitly ask about them.  (To do this, supply `t' as an element
+     of KEY; see *Note Format of Keymaps::.)
+
+     If KEY contains a meta character (not a function key), that
+     character is implicitly replaced by a two-character sequence: the
+     value of `meta-prefix-char', followed by the corresponding non-meta
+     character.  Thus, the first example below is handled by conversion
+     into the second example.
+
+          (lookup-key (current-global-map) "\M-f")
+              => forward-word
+          (lookup-key (current-global-map) "\ef")
+              => forward-word
+
+     Unlike `read-key-sequence', this function does not modify the
+     specified events in ways that discard information (*note Key
+     Sequence Input::).  In particular, it does not convert letters to
+     lower case and it does not change drag events to clicks.
+
+ - Command: undefined
+     Used in keymaps to undefine keys.  It calls `ding', but does not
+     cause an error.
+
+ - Function: key-binding key &optional accept-defaults
+     This function returns the binding for KEY in the current keymaps,
+     trying all the active keymaps.  The result is `nil' if KEY is
+     undefined in the keymaps.
+
+     The argument ACCEPT-DEFAULTS controls checking for default
+     bindings, as in `lookup-key' (above).
+
+     An error is signaled if KEY is not a string or a vector.
+
+          (key-binding "\C-x\C-f")
+              => find-file
+
+ - Function: local-key-binding key &optional accept-defaults
+     This function returns the binding for KEY in the current local
+     keymap, or `nil' if it is undefined there.
+
+     The argument ACCEPT-DEFAULTS controls checking for default
+     bindings, as in `lookup-key' (above).
+
+ - Function: global-key-binding key &optional accept-defaults
+     This function returns the binding for command KEY in the current
+     global keymap, or `nil' if it is undefined there.
+
+     The argument ACCEPT-DEFAULTS controls checking for default
+     bindings, as in `lookup-key' (above).
+
+ - Function: minor-mode-key-binding key &optional accept-defaults
+     This function returns a list of all the active minor mode bindings
+     of KEY.  More precisely, it returns an alist of pairs `(MODENAME .
+     BINDING)', where MODENAME is the variable that enables the minor
+     mode, and BINDING is KEY's binding in that mode.  If KEY has no
+     minor-mode bindings, the value is `nil'.
+
+     If the first binding found is not a prefix definition (a keymap or
+     a symbol defined as a keymap), all subsequent bindings from other
+     minor modes are omitted, since they would be completely shadowed.
+     Similarly, the list omits non-prefix bindings that follow prefix
+     bindings.
+
+     The argument ACCEPT-DEFAULTS controls checking for default
+     bindings, as in `lookup-key' (above).
+
+ - Variable: meta-prefix-char
+     This variable is the meta-prefix character code.  It is used when
+     translating a meta character to a two-character sequence so it can
+     be looked up in a keymap.  For useful results, the value should be
+     a prefix event (*note Prefix Keys::).  The default value is 27,
+     which is the ASCII code for <ESC>.
+
+     As long as the value of `meta-prefix-char' remains 27, key lookup
+     translates `M-b' into `<ESC> b', which is normally defined as the
+     `backward-word' command.  However, if you were to set
+     `meta-prefix-char' to 24, the code for `C-x', then Emacs will
+     translate `M-b' into `C-x b', whose standard binding is the
+     `switch-to-buffer' command.  (Don't actually do this!)  Here is an
+     illustration of what would happen:
+
+          meta-prefix-char                    ; The default value.
+               => 27
+          (key-binding "\M-b")
+               => backward-word
+          ?\C-x                               ; The print representation
+               => 24                          ;   of a character.
+          (setq meta-prefix-char 24)
+               => 24
+          (key-binding "\M-b")
+               => switch-to-buffer            ; Now, typing `M-b' is
+                                              ;   like typing `C-x b'.
+          
+          (setq meta-prefix-char 27)          ; Avoid confusion!
+               => 27                          ; Restore the default value!
+
+     This translation of one event into two happens only for
+     characters, not for other kinds of input events.  Thus, `M-<F1>',
+     a function key, is not converted into `<ESC> <F1>'.
+

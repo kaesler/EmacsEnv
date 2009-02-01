@@ -1,0 +1,10 @@
+This is the source code for the X interface to the OO-Browser.
+Mark Stern wrote the original version of the program as a tree browser, for a
+class in 1990, while at Brown University.
+
+Bob Weiner adapted the program for use as the X OO-Browser.  He
+and Torgeir Veimo maintain the current version.
+
+Send comments and issues to the mail list, <oo-browser@hub.ucsb.edu>.
+
+The program is freely redistributable.

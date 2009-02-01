@@ -1,0 +1,17 @@
+;; How to preserve modification times ?
+;; Keep multiple versions ?
+
+(defvar mirror-root-dir
+  "//durif/pub/backup")
+
+(defun mirror-file (file)
+  (interactive)
+  )
+
+(defun mirror-dired-marked-files ()
+  (interactive)
+  )
+
+(defun mirror-tree (root)
+  )
+

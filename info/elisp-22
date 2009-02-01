@@ -1,0 +1,1193 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Mode Line Variables,  Next: %-Constructs,  Prev: Mode Line Data,  Up: Mode Line Format
+
+Variables Used in the Mode Line
+-------------------------------
+
+   This section describes variables incorporated by the standard value
+of `mode-line-format' into the text of the mode line.  There is nothing
+inherently special about these variables; any other variables could
+have the same effects on the mode line if `mode-line-format' were
+changed to use them.
+
+ - Variable: mode-line-mule-info
+     This variable holds the value of the mode-line construct that
+     displays information about the language environment, buffer coding
+     system, and current input method.  *Note Non-ASCII Characters::.
+
+ - Variable: mode-line-modified
+     This variable holds the value of the mode-line construct that
+     displays whether the current buffer is modified.
+
+     The default value of `mode-line-modified' is `("%1*%1+")'.  This
+     means that the mode line displays `**' if the buffer is modified,
+     `--' if the buffer is not modified, `%%' if the buffer is read
+     only, and `%*' if the buffer is read only and modified.
+
+     Changing this variable does not force an update of the mode line.
+
+ - Variable: mode-line-frame-identification
+     This variable identifies the current frame.  The default value is
+     `" "' if you are using a window system which can show multiple
+     frames, or `"-%F "' on an ordinary terminal which shows only one
+     frame at a time.
+
+ - Variable: mode-line-buffer-identification
+     This variable identifies the buffer being displayed in the window.
+     Its default value is `("%12b")', which displays the buffer name,
+     padded with spaces to at least 12 columns.
+
+ - Variable: global-mode-string
+     This variable holds a mode line spec that appears in the mode line
+     by default, just after the buffer name.  The command `display-time'
+     sets `global-mode-string' to refer to the variable
+     `display-time-string', which holds a string containing the time and
+     load information.
+
+     The `%M' construct substitutes the value of `global-mode-string',
+     but that is obsolete, since the variable is included in the mode
+     line from `mode-line-format'.
+
+ - Variable: mode-name
+     This buffer-local variable holds the "pretty" name of the current
+     buffer's major mode.  Each major mode should set this variable so
+     that the mode name will appear in the mode line.
+
+ - Variable: minor-mode-alist
+     This variable holds an association list whose elements specify how
+     the mode line should indicate that a minor mode is active.  Each
+     element of the `minor-mode-alist' should be a two-element list:
+
+          (MINOR-MODE-VARIABLE MODE-LINE-STRING)
+
+     More generally, MODE-LINE-STRING can be any mode line spec.  It
+     appears in the mode line when the value of MINOR-MODE-VARIABLE is
+     non-`nil', and not otherwise.  These strings should begin with
+     spaces so that they don't run together.  Conventionally, the
+     MINOR-MODE-VARIABLE for a specific mode is set to a non-`nil'
+     value when that minor mode is activated.
+
+     The default value of `minor-mode-alist' is:
+
+          minor-mode-alist
+          => ((vc-mode vc-mode)
+              (abbrev-mode " Abbrev")
+              (overwrite-mode overwrite-mode)
+              (auto-fill-function " Fill")
+              (defining-kbd-macro " Def")
+              (isearch-mode isearch-mode))
+
+     `minor-mode-alist' itself is not buffer-local.  Each variable
+     mentioned in the alist should be buffer-local if its minor mode
+     can be enabled separately in each buffer.
+
+ - Variable: mode-line-process
+     This buffer-local variable contains the mode line information on
+     process status in modes used for communicating with subprocesses.
+     It is displayed immediately following the major mode name, with no
+     intervening space.  For example, its value in the `*shell*' buffer
+     is `(":%s")', which allows the shell to display its status along
+     with the major mode as: `(Shell:run)'.  Normally this variable is
+     `nil'.
+
+   Some variables are used by `minor-mode-alist' to display a string
+for various minor modes when enabled.  This is a typical example:
+
+ - Variable: vc-mode
+     The variable `vc-mode', buffer-local in each buffer, records
+     whether the buffer's visited file is maintained with version
+     control, and, if so, which kind.  Its value is a string that
+     appears in the mode line, or `nil' for no version control.
+
+   The variable `default-mode-line-format' is where `mode-line-format'
+usually gets its value:
+
+ - Variable: default-mode-line-format
+     This variable holds the default `mode-line-format' for buffers
+     that do not override it.  This is the same as `(default-value
+     'mode-line-format)'.
+
+     The default value of `default-mode-line-format' is this list:
+
+          ("-"
+           mode-line-mule-info
+           mode-line-modified
+           mode-line-frame-identification
+           mode-line-buffer-identification
+           "   "
+           global-mode-string
+           "   %[("
+           ;; `mode-line-mode-name' is a function
+           ;; that copies the mode name and adds text
+           ;; properties to make it mouse-sensitive.
+           (:eval (mode-line-mode-name))
+           mode-line-process
+           minor-mode-alist
+           "%n"
+           ")%]--"
+           (which-func-mode ("" which-func-format "--"))
+           (line-number-mode "L%l--")
+           (column-number-mode "C%c--")
+           (-3 . "%p")
+           "-%-")
+
+
+File: elisp,  Node: %-Constructs,  Next: Properties in Mode,  Prev: Mode Line Variables,  Up: Mode Line Format
+
+`%'-Constructs in the Mode Line
+-------------------------------
+
+   The following table lists the recognized `%'-constructs and what
+they mean.  In any construct except `%%', you can add a decimal integer
+after the `%' to specify how many characters to display.
+
+`%b'
+     The current buffer name, obtained with the `buffer-name' function.
+     *Note Buffer Names::.
+
+`%c'
+     The current column number of point.
+
+`%f'
+     The visited file name, obtained with the `buffer-file-name'
+     function.  *Note Buffer File Name::.
+
+`%F'
+     The title (only on a window system) or the name of the selected
+     frame.  *Note Window Frame Parameters::.
+
+`%l'
+     The current line number of point, counting within the accessible
+     portion of the buffer.
+
+`%n'
+     `Narrow' when narrowing is in effect; nothing otherwise (see
+     `narrow-to-region' in *Note Narrowing::).
+
+`%p'
+     The percentage of the buffer text above the *top* of window, or
+     `Top', `Bottom' or `All'.  Note that the default mode-line
+     specification truncates this to three characters.
+
+`%P'
+     The percentage of the buffer text that is above the *bottom* of
+     the window (which includes the text visible in the window, as well
+     as the text above the top), plus `Top' if the top of the buffer is
+     visible on screen; or `Bottom' or `All'.
+
+`%s'
+     The status of the subprocess belonging to the current buffer,
+     obtained with `process-status'.  *Note Process Information::.
+
+`%t'
+     Whether the visited file is a text file or a binary file.  This is
+     a meaningful distinction only on certain operating systems (*note
+     MS-DOS File Types::).
+
+`%*'
+     `%' if the buffer is read only (see `buffer-read-only');
+     `*' if the buffer is modified (see `buffer-modified-p');
+     `-' otherwise.  *Note Buffer Modification::.
+
+`%+'
+     `*' if the buffer is modified (see `buffer-modified-p');
+     `%' if the buffer is read only (see `buffer-read-only');
+     `-' otherwise.  This differs from `%*' only for a modified
+     read-only buffer.  *Note Buffer Modification::.
+
+`%&'
+     `*' if the buffer is modified, and `-' otherwise.
+
+`%['
+     An indication of the depth of recursive editing levels (not
+     counting minibuffer levels): one `[' for each editing level.
+     *Note Recursive Editing::.
+
+`%]'
+     One `]' for each recursive editing level (not counting minibuffer
+     levels).
+
+`%-'
+     Dashes sufficient to fill the remainder of the mode line.
+
+`%%'
+     The character `%'--this is how to include a literal `%' in a
+     string in which `%'-constructs are allowed.
+
+   The following two `%'-constructs are still supported, but they are
+obsolete, since you can get the same results with the variables
+`mode-name' and `global-mode-string'.
+
+`%m'
+     The value of `mode-name'.
+
+`%M'
+     The value of `global-mode-string'.  Currently, only `display-time'
+     modifies the value of `global-mode-string'.
+
+
+File: elisp,  Node: Properties in Mode,  Next: Header Lines,  Prev: %-Constructs,  Up: Mode Line Format
+
+Properties in the Mode Line
+---------------------------
+
+   Starting in Emacs 21, certain text properties are meaningful in the
+mode line.  The `face' property affects the appearance of text; the
+`help-echo' property associate help strings with the text, and
+`local-map' can make the text mouse-sensitive.
+
+   There are three ways to specify text properties for text in the mode
+line:
+
+  1. Put a string with the `local-map' property directly into the
+     mode-line data structure.
+
+  2. Put a `local-map' property on a mode-line %-construct such as
+     `%12b'; then the expansion of the %-construct will have that same
+     text property.
+
+  3. Use a list containing `:eval FORM' in the mode-line data
+     structure, and make FORM evaluate to a string that has a
+     `local-map' property.
+
+   You use the `local-map' property to specify a keymap.  Like any
+keymap, it can bind character keys and function keys; but that has no
+effect, since it is impossible to move point into the mode line.  This
+keymap can only take real effect for mouse clicks.
+
+
+File: elisp,  Node: Header Lines,  Prev: Properties in Mode,  Up: Mode Line Format
+
+Window Header Lines
+-------------------
+
+   Starting in Emacs 21, a window can have a "header line" at the top,
+just as it can have a mode line at the bottom.  The header line feature
+works just like the mode line feature, except that it's controlled by
+different variables.
+
+ - Variable: header-line-format
+     This variable, local in every buffer, specifies how to display the
+     header line, for windows displaying the buffer.  The format of the
+     value is the same as for `mode-line-format' (*note Mode Line
+     Data::).
+
+ - Variable: default-header-line-format
+     This variable holds the default `header-line-format' for buffers
+     that do not override it.  This is the same as `(default-value
+     'header-line-format)'.
+
+     It is normally `nil', so that ordinary buffers have no header line.
+
+
+File: elisp,  Node: Imenu,  Next: Font Lock Mode,  Prev: Mode Line Format,  Up: Modes
+
+Imenu
+=====
+
+   "Imenu" is a feature that lets users select a definition or section
+in the buffer, from a menu which lists all of them, to go directly to
+that location in the buffer.  Imenu works by constructing a buffer
+index which lists the names and buffer positions of the definitions, or
+other named portions of the buffer; then the user can choose one of
+them and move point to it.  This section explains how to customize how
+Imenu finds the definitions or buffer portions for a particular major
+mode.
+
+   The usual and simplest way is to set the variable
+`imenu-generic-expression':
+
+ - Variable: imenu-generic-expression
+     This variable, if non-`nil', specifies regular expressions for
+     finding definitions for Imenu.  In the simplest case, elements
+     should look like this:
+
+          (MENU-TITLE REGEXP SUBEXP)
+
+     Here, if MENU-TITLE is non-`nil', it says that the matches for
+     this element should go in a submenu of the buffer index;
+     MENU-TITLE itself specifies the name for the submenu.  If
+     MENU-TITLE is `nil', the matches for this element go directly in
+     the top level of the buffer index.
+
+     The second item in the list, REGEXP, is a regular expression
+     (*note Regular Expressions::); anything in the buffer that it
+     matches is considered a definition, something to mention in the
+     buffer index.  The third item, SUBEXP, indicates which
+     subexpression in REGEXP matches the definition's name.
+
+     An element can also look like this:
+
+          (MENU-TITLE REGEXP INDEX FUNCTION ARGUMENTS...)
+
+     Each match for this element creates a special index item which, if
+     selected by the user, calls FUNCTION with arguments consisting of
+     the item name, the buffer position, and ARGUMENTS.
+
+     For Emacs Lisp mode, PATTERN could look like this:
+
+          ((nil "^\\s-*(def\\(un\\|subst\\|macro\\|advice\\)\
+          \\s-+\\([-A-Za-z0-9+]+\\)" 2)
+           ("*Vars*" "^\\s-*(def\\(var\\|const\\)\
+          \\s-+\\([-A-Za-z0-9+]+\\)" 2)
+           ("*Types*"
+            "^\\s-*\
+          (def\\(type\\|struct\\|class\\|ine-condition\\)\
+          \\s-+\\([-A-Za-z0-9+]+\\)" 2))
+
+     Setting this variable makes it buffer-local in the current buffer.
+
+ - Variable: imenu-case-fold-search
+     This variable controls whether matching against
+     IMENU-GENERIC-EXPRESSION is case-sensitive: `t', the default,
+     means matching should ignore case.
+
+     Setting this variable makes it buffer-local in the current buffer.
+
+ - Variable: imenu-syntax-alist
+     This variable is an alist of syntax table modifiers to use while
+     processing `imenu-generic-expression', to override the syntax table
+     of the current buffer.  Each element should have this form:
+
+          (CHARACTERS . SYNTAX-DESCRIPTION)
+
+     The CAR, CHARACTERS, can be either a character or a string.  The
+     element says to give that character or characters the syntax
+     specified by SYNTAX-DESCRIPTION, which is passed to
+     `modify-syntax-entry' (*note Syntax Table Functions::).
+
+     This feature is typically used to give word syntax to characters
+     which normally have symbol syntax, and thus to simplify
+     `imenu-generic-expression' and speed up matching.  For example,
+     Fortran mode uses it this way:
+
+            (setq imenu-syntax-alist '(("_$" . "w")))
+
+     The `imenu-generic-expression' patterns can then use `\\sw+'
+     instead of `\\(\\sw\\|\\s_\\)+'.  Note that this technique may be
+     inconvenient when the mode needs to limit the initial character of
+     a name to a smaller set of characters than are allowed in the rest
+     of a name.
+
+     Setting this variable makes it buffer-local in the current buffer.
+
+   Another way to customize Imenu for a major mode is to set the
+variables `imenu-prev-index-position-function' and
+`imenu-extract-index-name-function':
+
+ - Variable: imenu-prev-index-position-function
+     If this variable is non-`nil', its value should be a function that
+     finds the next "definition" to put in the buffer index, scanning
+     backward in the buffer from point.  It should return `nil' if it
+     doesn't find another "definition" before point.  Otherwise it
+     shuould leave point at the place it finds a "definition," and
+     return any non-`nil' value.
+
+     Setting this variable makes it buffer-local in the current buffer.
+
+ - Variable: imenu-extract-index-name-function
+     If this variable is non-`nil', its value should be a function to
+     return the name for a definition, assuming point is in that
+     definition as the `imenu-prev-index-position-function' function
+     would leave it.
+
+     Setting this variable makes it buffer-local in the current buffer.
+
+   The last way to customize Imenu for a major mode is to set the
+variable `imenu-create-index-function':
+
+ - Variable: imenu-create-index-function
+     This variable specifies the function to use for creating a buffer
+     index.  The function should take no arguments, and return an index
+     for the current buffer.  It is called within `save-excursion', so
+     where it leaves point makes no difference.
+
+     The default value is a function that uses
+     `imenu-generic-expression' to produce the index alist.  If you
+     specify a different function, then `imenu-generic-expression' is
+     not used.
+
+     Setting this variable makes it buffer-local in the current buffer.
+
+ - Variable: imenu-index-alist
+     This variable holds the index alist for the current buffer.
+     Setting it makes it buffer-local in the current buffer.
+
+     Simple elements in the alist look like `(INDEX-NAME .
+     INDEX-POSITION)'.  Selecting a simple element has the effect of
+     moving to position INDEX-POSITION in the buffer.
+
+     Special elements look like `(INDEX-NAME POSITION FUNCTION
+     ARGUMENTS...)'.  Selecting a special element performs
+
+          (funcall FUNCTION INDEX-NAME POSITION ARGUMENTS...)
+
+     A nested sub-alist element looks like `(INDEX-NAME SUB-ALIST)'.
+
+
+File: elisp,  Node: Font Lock Mode,  Next: Hooks,  Prev: Imenu,  Up: Modes
+
+Font Lock Mode
+==============
+
+   "Font Lock mode" is a feature that automatically attaches `face'
+properties to certain parts of the buffer based on their syntactic
+role.  How it parses the buffer depends on the major mode; most major
+modes define syntactic criteria for which faces to use in which
+contexts.  This section explains how to customize Font Lock for a
+particular major mode.
+
+   Font Lock mode finds text to highlight in two ways: through syntactic
+parsing based on the syntax table, and through searching (usually for
+regular expressions).  Syntactic fontification happens first; it finds
+comments and string constants, and highlights them using
+`font-lock-comment-face' and `font-lock-string-face' (*note Faces for
+Font Lock::).  Search-based fontification follows.
+
+* Menu:
+
+* Font Lock Basics::
+* Search-based Fontification::
+* Other Font Lock Variables::
+* Levels of Font Lock::
+* Faces for Font Lock::
+* Syntactic Font Lock::
+
+
+File: elisp,  Node: Font Lock Basics,  Next: Search-based Fontification,  Up: Font Lock Mode
+
+Font Lock Basics
+----------------
+
+   There are several variables that control how Font Lock mode
+highlights text.  But major modes should not set any of these variables
+directly.  Instead, they should set `font-lock-defaults' as a
+buffer-local variable.  The value assigned to this variable is used, if
+and when Font Lock mode is enabled, to set all the other variables.
+
+ - Variable: font-lock-defaults
+     This variable is set by major modes, as a buffer-local variable, to
+     specify how to fontify text in that mode.  The value should look
+     like this:
+
+          (KEYWORDS KEYWORDS-ONLY CASE-FOLD
+           SYNTAX-ALIST SYNTAX-BEGIN OTHER-VARS...)
+
+     The first element, KEYWORDS, indirectly specifies the value of
+     `font-lock-keywords'.  It can be a symbol, a variable whose value
+     is the list to use for `font-lock-keywords'.  It can also be a
+     list of several such symbols, one for each possible level of
+     fontification.  The first symbol specifies how to do level 1
+     fontification, the second symbol how to do level 2, and so on.
+
+     The second element, KEYWORDS-ONLY, specifies the value of the
+     variable `font-lock-keywords-only'.  If this is non-`nil',
+     syntactic fontification (of strings and comments) is not performed.
+
+     The third element, CASE-FOLD, specifies the value of
+     `font-lock-case-fold-search'.  If it is non-`nil', Font Lock mode
+     ignores case when searching as directed by `font-lock-keywords'.
+
+     If the fourth element, SYNTAX-ALIST, is non-`nil', it should be a
+     list of cons cells of the form `(CHAR-OR-STRING . STRING)'.  These
+     are used to set up a syntax table for fontification (*note Syntax
+     Table Functions::).  The resulting syntax table is stored in
+     `font-lock-syntax-table'.
+
+     The fifth element, SYNTAX-BEGIN, specifies the value of
+     `font-lock-beginning-of-syntax-function' (see below).
+
+     All the remaining elements (if any) are collectively called
+     OTHER-VARS.  Each of these elements should have the form
+     `(VARIABLE . VALUE)'--which means, make VARIABLE buffer-local and
+     then set it to VALUE.  You can use these OTHER-VARS to set other
+     variables that affect fontification, aside from those you can
+     control with the first five elements.
+
+
+File: elisp,  Node: Search-based Fontification,  Next: Other Font Lock Variables,  Prev: Font Lock Basics,  Up: Font Lock Mode
+
+Search-based Fontification
+--------------------------
+
+   The most important variable for customizing Font Lock mode is
+`font-lock-keywords'.  It specifies the search criteria for
+search-based fontification.
+
+ - Variable: font-lock-keywords
+     This variable's value is a list of the keywords to highlight.  Be
+     careful when composing regular expressions for this list; a poorly
+     written pattern can dramatically slow things down!
+
+   Each element of `font-lock-keywords' specifies how to find certain
+cases of text, and how to highlight those cases.  Font Lock mode
+processes the elements of `font-lock-keywords' one by one, and for each
+element, it finds and handles all matches.  Ordinarily, once part of
+the text has been fontified already, this cannot be overridden by a
+subsequent match in the same text; but you can specify different
+behavior using the OVERRIDE element of a HIGHLIGHTER.
+
+   Each element of `font-lock-keywords' should have one of these forms:
+
+`REGEXP'
+     Highlight all matches for REGEXP using `font-lock-keyword-face'.
+     For example,
+
+          ;; Highlight discrete occurrences of `foo'
+          ;; using `font-lock-keyword-face'.
+          "\\<foo\\>"
+
+     The function `regexp-opt' (*note Syntax of Regexps::) is useful for
+     calculating optimal regular expressions to match a number of
+     different keywords.
+
+`FUNCTION'
+     Find text by calling FUNCTION, and highlight the matches it finds
+     using `font-lock-keyword-face'.
+
+     When FUNCTION is called, it receives one argument, the limit of
+     the search.  It should return non-`nil' if it succeeds, and set the
+     match data to describe the match that was found.
+
+`(MATCHER . MATCH)'
+     In this kind of element, MATCHER is either a regular expression or
+     a function, as described above.  The CDR, MATCH, specifies which
+     subexpression of MATCHER should be highlighted (instead of the
+     entire text that MATCHER matched).
+
+          ;; Highlight the `bar' in each occurrence of `fubar',
+          ;; using `font-lock-keyword-face'.
+          ("fu\\(bar\\)" . 1)
+
+     If you use `regexp-opt' to produce the regular expression MATCHER,
+     then you can use `regexp-opt-depth' (*note Syntax of Regexps::) to
+     calculate the value for MATCH.
+
+`(MATCHER . FACENAME)'
+     In this kind of element, FACENAME is an expression whose value
+     specifies the face name to use for highlighting.
+
+          ;; Highlight occurrences of `fubar',
+          ;; using the face which is the value of `fubar-face'.
+          ("fubar" . fubar-face)
+
+`(MATCHER . HIGHLIGHTER)'
+     In this kind of element, HIGHLIGHTER is a list which specifies how
+     to highlight matches found by MATCHER.  It has the form
+
+          (SUBEXP FACENAME OVERRIDE LAXMATCH)
+
+     The CAR, SUBEXP, is an integer specifying which subexpression of
+     the match to fontify (0 means the entire matching text).  The
+     second subelement, FACENAME, specifies the face, as described
+     above.
+
+     The last two values in HIGHLIGHTER, OVERRIDE and LAXMATCH, are
+     flags.  If OVERRIDE is `t', this element can override existing
+     fontification made by previous elements of `font-lock-keywords'.
+     If it is `keep', then each character is fontified if it has not
+     been fontified already by some other element.  If it is `prepend',
+     the face FACENAME is added to the beginning of the `face'
+     property.  If it is `append', the face FACENAME is added to the
+     end of the `face' property.
+
+     If LAXMATCH is non-`nil', it means there should be no error if
+     there is no subexpression numbered SUBEXP in MATCHER.  Obviously,
+     fontification of the subexpression numbered SUBEXP will not occur.
+     However, fontification of other subexpressions (and other
+     regexps) will continue.  If LAXMATCH is `nil', and the specified
+     subexpression is missing, then an error is signalled which
+     terminates search-based fontification.
+
+     Here are some examples of elements of this kind, and what they do:
+
+          ;; Highlight occurrences of either `foo' or `bar',
+          ;; using `foo-bar-face', even if they have already been highlighted.
+          ;; `foo-bar-face' should be a variable whose value is a face.
+          ("foo\\|bar" 0 foo-bar-face t)
+          
+          ;; Highlight the first subexpression within each occurrence
+          ;; that the function `fubar-match' finds,
+          ;; using the face which is the value of `fubar-face'.
+          (fubar-match 1 fubar-face)
+
+`(MATCHER HIGHLIGHTERS...)'
+     This sort of element specifies several HIGHLIGHTER lists for a
+     single MATCHER.  In order for this to be useful, each HIGHLIGHTER
+     should have a different value of SUBEXP; that is, each one should
+     apply to a different subexpression of MATCHER.
+
+`(eval . FORM)'
+     Here FORM is an expression to be evaluated the first time this
+     value of `font-lock-keywords' is used in a buffer.  Its value
+     should have one of the forms described in this table.
+
+   *Warning:* Do not design an element of `font-lock-keywords' to match
+text which spans lines; this does not work reliably.  While
+`font-lock-fontify-buffer' handles multi-line patterns correctly,
+updating when you edit the buffer does not, since it considers text one
+line at a time.
+
+
+File: elisp,  Node: Other Font Lock Variables,  Next: Levels of Font Lock,  Prev: Search-based Fontification,  Up: Font Lock Mode
+
+Other Font Lock Variables
+-------------------------
+
+   This section describes additional variables that a major mode can
+set by means of `font-lock-defaults'.
+
+ - Variable: font-lock-keywords-only
+     Non-`nil' means Font Lock should not fontify comments or strings
+     syntactically; it should only fontify based on
+     `font-lock-keywords'.
+
+ - Variable: font-lock-keywords-case-fold-search
+     Non-`nil' means that regular expression matching for the sake of
+     `font-lock-keywords' should be case-insensitive.
+
+ - Variable: font-lock-syntax-table
+     This variable specifies the syntax table to use for fontification
+     of comments and strings.
+
+ - Variable: font-lock-beginning-of-syntax-function
+     If this variable is non-`nil', it should be a function to move
+     point back to a position that is syntactically at "top level" and
+     outside of strings or comments.  Font Lock uses this when necessary
+     to get the right results for syntactic fontification.
+
+     This function is called with no arguments.  It should leave point
+     at the beginning of any enclosing syntactic block.  Typical values
+     are `beginning-of-line' (i.e., the start of the line is known to be
+     outside a syntactic block), or `beginning-of-defun' for programming
+     modes or `backward-paragraph' for textual modes (i.e., the
+     mode-dependent function is known to move outside a syntactic
+     block).
+
+     If the value is `nil', the beginning of the buffer is used as a
+     position outside of a syntactic block.  This cannot be wrong, but
+     it can be slow.
+
+ - Variable: font-lock-mark-block-function
+     If this variable is non-`nil', it should be a function that is
+     called with no arguments, to choose an enclosing range of text for
+     refontification for the command `M-g M-g'
+     (`font-lock-fontify-block').
+
+     The function should report its choice by placing the region around
+     it.  A good choice is a range of text large enough to give proper
+     results, but not too large so that refontification becomes slow.
+     Typical values are `mark-defun' for programming modes or
+     `mark-paragraph' for textual modes.
+
+
+File: elisp,  Node: Levels of Font Lock,  Next: Faces for Font Lock,  Prev: Other Font Lock Variables,  Up: Font Lock Mode
+
+Levels of Font Lock
+-------------------
+
+   Many major modes offer three different levels of fontification.  You
+can define multiple levels by using a list of symbols for KEYWORDS in
+`font-lock-defaults'.  Each symbol specifies one level of
+fontification; it is up to the user to choose one of these levels.  The
+chosen level's symbol value is used to initialize `font-lock-keywords'.
+
+   Here are the conventions for how to define the levels of
+fontification:
+
+   * Level 1: highlight function declarations, file directives (such as
+     include or import directives), strings and comments.  The idea is
+     speed, so only the most important and top-level components are
+     fontified.
+
+   * Level 2: in addition to level 1, highlight all language keywords,
+     including type names that act like keywords, as well as named
+     constant values.  The idea is that all keywords (either syntactic
+     or semantic) should be fontified appropriately.
+
+   * Level 3: in addition to level 2, highlight the symbols being
+     defined in function and variable declarations, and all builtin
+     function names, wherever they appear.
+
+
+File: elisp,  Node: Faces for Font Lock,  Next: Syntactic Font Lock,  Prev: Levels of Font Lock,  Up: Font Lock Mode
+
+Faces for Font Lock
+-------------------
+
+   You can make Font Lock mode use any face, but several faces are
+defined specifically for Font Lock mode.  Each of these symbols is both
+a face name, and a variable whose default value is the symbol itself.
+Thus, the default value of `font-lock-comment-face' is
+`font-lock-comment-face'.  This means you can write
+`font-lock-comment-face' in a context such as `font-lock-keywords'
+where a face-name-valued expression is used.
+
+`font-lock-comment-face'
+     Used (typically) for comments.
+
+`font-lock-string-face'
+     Used (typically) for string constants.
+
+`font-lock-keyword-face'
+     Used (typically) for keywords--names that have special syntactic
+     significance, like `for' and `if' in C.
+
+`font-lock-builtin-face'
+     Used (typically) for built-in function names.
+
+`font-lock-function-name-face'
+     Used (typically) for the name of a function being defined or
+     declared, in a function definition or declaration.
+
+`font-lock-variable-name-face'
+     Used (typically) for the name of a variable being defined or
+     declared, in a variable definition or declaration.
+
+`font-lock-type-face'
+     Used (typically) for names of user-defined data types, where they
+     are defined and where they are used.
+
+`font-lock-constant-face'
+     Used (typically) for constant names.
+
+`font-lock-warning-face'
+     Used (typically) for constructs that are peculiar, or that greatly
+     change the meaning of other text.  For example, this is used for
+     `;;;###autoload' cookies in Emacs Lisp, and for `#error'
+     directives in C.
+
+
+File: elisp,  Node: Syntactic Font Lock,  Prev: Faces for Font Lock,  Up: Font Lock Mode
+
+Syntactic Font Lock
+-------------------
+
+   Font Lock mode can be used to update `syntax-table' properties
+automatically.  This is useful in languages for which a single syntax
+table by itself is not sufficient.
+
+ - Variable: font-lock-syntactic-keywords
+     This variable enables and controls syntactic Font Lock.  Its value
+     should be a list of elements of this form:
+
+          (MATCHER SUBEXP SYNTAX OVERRIDE LAXMATCH)
+
+     The parts of this element have the same meanings as in the
+     corresponding sort of element of `font-lock-keywords',
+
+          (MATCHER SUBEXP FACENAME OVERRIDE LAXMATCH)
+
+     However, instead of specifying the value FACENAME to use for the
+     `face' property, it specifies the value SYNTAX to use for the
+     `syntax-table' property.  Here, SYNTAX can be a variable whose
+     value is a syntax table, a syntax entry of the form `(SYNTAX-CODE
+     . MATCHING-CHAR)', or an expression whose value is one of those
+     two types.
+
+
+File: elisp,  Node: Hooks,  Prev: Font Lock Mode,  Up: Modes
+
+Hooks
+=====
+
+   A "hook" is a variable where you can store a function or functions
+to be called on a particular occasion by an existing program.  Emacs
+provides hooks for the sake of customization.  Most often, hooks are set
+up in the init file (*note Init File::), but Lisp programs can set them
+also.  *Note Standard Hooks::, for a list of standard hook variables.
+
+   Most of the hooks in Emacs are "normal hooks".  These variables
+contain lists of functions to be called with no arguments.  When the
+hook name ends in `-hook', that tells you it is normal.  We try to make
+all hooks normal, as much as possible, so that you can use them in a
+uniform way.
+
+   Every major mode function is supposed to run a normal hook called the
+"mode hook" as the last step of initialization.  This makes it easy for
+a user to customize the behavior of the mode, by overriding the
+buffer-local variable assignments already made by the mode.  But hooks
+are used in other contexts too.  For example, the hook `suspend-hook'
+runs just before Emacs suspends itself (*note Suspending Emacs::).
+
+   The recommended way to add a hook function to a normal hook is by
+calling `add-hook' (see below).  The hook functions may be any of the
+valid kinds of functions that `funcall' accepts (*note What Is a
+Function::).  Most normal hook variables are initially void; `add-hook'
+knows how to deal with this.
+
+   If the hook variable's name does not end with `-hook', that
+indicates it is probably an "abnormal hook".  Then you should look at
+its documentation to see how to use the hook properly.
+
+   If the variable's name ends in `-functions' or `-hooks', then the
+value is a list of functions, but it is abnormal in that either these
+functions are called with arguments or their values are used in some
+way.  You can use `add-hook' to add a function to the list, but you
+must take care in writing the function.  (A few of these variables are
+actually normal hooks which were named before we established the
+convention of using `-hook' for them.)
+
+   If the variable's name ends in `-function', then its value is just a
+single function, not a list of functions.
+
+   Here's an example that uses a mode hook to turn on Auto Fill mode
+when in Lisp Interaction mode:
+
+     (add-hook 'lisp-interaction-mode-hook 'turn-on-auto-fill)
+
+   At the appropriate time, Emacs uses the `run-hooks' function to run
+particular hooks.  This function calls the hook functions that have
+been added with `add-hook'.
+
+ - Function: run-hooks &rest hookvars
+     This function takes one or more hook variable names as arguments,
+     and runs each hook in turn.  Each argument should be a symbol that
+     is a hook variable.  These arguments are processed in the order
+     specified.
+
+     If a hook variable has a non-`nil' value, that value may be a
+     function or a list of functions.  If the value is a function
+     (either a lambda expression or a symbol with a function
+     definition), it is called.  If it is a list, the elements are
+     called, in order.  The hook functions are called with no
+     arguments.  Nowadays, storing a single function in the hook
+     variable is semi-obsolete; you should always use a list of
+     functions.
+
+     For example, here's how `emacs-lisp-mode' runs its mode hook:
+
+          (run-hooks 'emacs-lisp-mode-hook)
+
+ - Function: run-hook-with-args hook &rest args
+     This function is the way to run an abnormal hook which passes
+     arguments to the hook functions.  It calls each of the hook
+     functions, passing each of them the arguments ARGS.
+
+ - Function: run-hook-with-args-until-failure hook &rest args
+     This function is the way to run an abnormal hook which passes
+     arguments to the hook functions, and stops as soon as any hook
+     function fails.  It calls each of the hook functions, passing each
+     of them the arguments ARGS, until some hook function returns
+     `nil'.  Then it stops, and returns `nil' if some hook function
+     returned `nil'.  Otherwise it returns a non-`nil' value.
+
+ - Function: run-hook-with-args-until-success hook &rest args
+     This function is the way to run an abnormal hook which passes
+     arguments to the hook functions, and stops as soon as any hook
+     function succeeds.  It calls each of the hook functions, passing
+     each of them the arguments ARGS, until some hook function returns
+     non-`nil'.  Then it stops, and returns whatever was returned by
+     the last hook function that was called.
+
+ - Function: add-hook hook function &optional append local
+     This function is the handy way to add function FUNCTION to hook
+     variable HOOK.  The argument FUNCTION may be any valid Lisp
+     function with the proper number of arguments.  For example,
+
+          (add-hook 'text-mode-hook 'my-text-hook-function)
+
+     adds `my-text-hook-function' to the hook called `text-mode-hook'.
+
+     You can use `add-hook' for abnormal hooks as well as for normal
+     hooks.
+
+     It is best to design your hook functions so that the order in
+     which they are executed does not matter.  Any dependence on the
+     order is "asking for trouble."  However, the order is predictable:
+     normally, FUNCTION goes at the front of the hook list, so it will
+     be executed first (barring another `add-hook' call).  If the
+     optional argument APPEND is non-`nil', the new hook function goes
+     at the end of the hook list and will be executed last.
+
+     If LOCAL is non-`nil', that says to make the new hook function
+     buffer-local in the current buffer and automatically calls
+     `make-local-hook' to make the hook itself buffer-local.
+
+ - Function: remove-hook hook function &optional local
+     This function removes FUNCTION from the hook variable HOOK.
+
+     If LOCAL is non-`nil', that says to remove FUNCTION from the
+     buffer-local hook list instead of from the global hook list.  If
+     the hook variable itself is not buffer-local, then the value of
+     LOCAL makes no difference.
+
+ - Function: make-local-hook hook
+     This function makes the hook variable `hook' buffer-local in the
+     current buffer.  When a hook variable is buffer-local, it can have
+     buffer-local and global hook functions, and `run-hooks' runs all of
+     them.
+
+     This function works by adding `t' as an element of the buffer-local
+     value.  That serves as a flag to use the hook functions listed in
+     the default value of the hook variable, as well as those listed in
+     the buffer-local value.  Since `run-hooks' understands this flag,
+     `make-local-hook' works with all normal hooks.  It works for only
+     some non-normal hooks--those whose callers have been updated to
+     understand this meaning of `t'.
+
+     Do not use `make-local-variable' directly for hook variables; it is
+     not sufficient.
+
+
+File: elisp,  Node: Documentation,  Next: Files,  Prev: Modes,  Up: Top
+
+Documentation
+*************
+
+   GNU Emacs Lisp has convenient on-line help facilities, most of which
+derive their information from the documentation strings associated with
+functions and variables.  This chapter describes how to write good
+documentation strings for your Lisp programs, as well as how to write
+programs to access documentation.
+
+   Note that the documentation strings for Emacs are not the same thing
+as the Emacs manual.  Manuals have their own source files, written in
+the Texinfo language; documentation strings are specified in the
+definitions of the functions and variables they apply to.  A collection
+of documentation strings is not sufficient as a manual because a good
+manual is not organized in that fashion; it is organized in terms of
+topics of discussion.
+
+* Menu:
+
+* Documentation Basics::      Good style for doc strings.
+                                Where to put them.  How Emacs stores them.
+* Accessing Documentation::   How Lisp programs can access doc strings.
+* Keys in Documentation::     Substituting current key bindings.
+* Describing Characters::     Making printable descriptions of
+                                non-printing characters and key sequences.
+* Help Functions::            Subroutines used by Emacs help facilities.
+
+
+File: elisp,  Node: Documentation Basics,  Next: Accessing Documentation,  Up: Documentation
+
+Documentation Basics
+====================
+
+   A documentation string is written using the Lisp syntax for strings,
+with double-quote characters surrounding the text of the string.  This
+is because it really is a Lisp string object.  The string serves as
+documentation when it is written in the proper place in the definition
+of a function or variable.  In a function definition, the documentation
+string follows the argument list.  In a variable definition, the
+documentation string follows the initial value of the variable.
+
+   When you write a documentation string, make the first line a complete
+sentence (or two complete sentences) since some commands, such as
+`apropos', show only the first line of a multi-line documentation
+string.  Also, you should not indent the second line of a documentation
+string, if it has one, because that looks odd when you use `C-h f'
+(`describe-function') or `C-h v' (`describe-variable') to view the
+documentation string.  *Note Documentation Tips::.
+
+   Documentation strings can contain several special substrings, which
+stand for key bindings to be looked up in the current keymaps when the
+documentation is displayed.  This allows documentation strings to refer
+to the keys for related commands and be accurate even when a user
+rearranges the key bindings.  (*Note Accessing Documentation::.)
+
+   In Emacs Lisp, a documentation string is accessible through the
+function or variable that it describes:
+
+   * The documentation for a function is stored in the function
+     definition itself (*note Lambda Expressions::).  The function
+     `documentation' knows how to extract it.
+
+   * The documentation for a variable is stored in the variable's
+     property list under the property name `variable-documentation'.
+     The function `documentation-property' knows how to retrieve it.
+
+   To save space, the documentation for preloaded functions and
+variables (including primitive functions and autoloaded functions) is
+stored in the file `emacs/etc/DOC-VERSION'--not inside Emacs.  The
+documentation strings for functions and variables loaded during the
+Emacs session from byte-compiled files are stored in those files (*note
+Docs and Compilation::).
+
+   The data structure inside Emacs has an integer offset into the file,
+or a list containing a file name and an integer, in place of the
+documentation string.  The functions `documentation' and
+`documentation-property' use that information to fetch the
+documentation string from the appropriate file; this is transparent to
+the user.
+
+   For information on the uses of documentation strings, see *Note
+Help: (emacs)Help.
+
+   The `emacs/lib-src' directory contains two utilities that you can
+use to print nice-looking hardcopy for the file
+`emacs/etc/DOC-VERSION'.  These are `sorted-doc' and `digest-doc'.
+
+
+File: elisp,  Node: Accessing Documentation,  Next: Keys in Documentation,  Prev: Documentation Basics,  Up: Documentation
+
+Access to Documentation Strings
+===============================
+
+ - Function: documentation-property symbol property &optional verbatim
+     This function returns the documentation string that is recorded in
+     SYMBOL's property list under property PROPERTY.  It retrieves the
+     text from a file if the value calls for that.  If the property
+     value isn't `nil', isn't a string, and doesn't refer to text in a
+     file, then it is evaluated to obtain a string.
+
+     Finally, `documentation-property' passes the string through
+     `substitute-command-keys' to substitute actual key bindings,
+     unless VERBATIM is non-`nil'.
+
+          (documentation-property 'command-line-processed
+             'variable-documentation)
+               => "Non-nil once command line has been processed"
+          (symbol-plist 'command-line-processed)
+               => (variable-documentation 188902)
+
+ - Function: documentation function &optional verbatim
+     This function returns the documentation string of FUNCTION.
+
+     If FUNCTION is a symbol, this function first looks for the
+     `function-documentation' property of that symbol; if that has a
+     non-`nil' value, the documentation comes from that value (if the
+     value is not a string, it is evaluated).  If FUNCTION is not a
+     symbol, or if it has no `function-documentation' property, then
+     `documentation' extracts the documentation string from the actual
+     function definition, reading it from a file if called for.
+
+     Finally, unless VERBATIM is non-`nil', it calls
+     `substitute-command-keys' so as to return a value containing the
+     actual (current) key bindings.
+
+     The function `documentation' signals a `void-function' error if
+     FUNCTION has no function definition.  However, it is OK if the
+     function definition has no documentation string.  In that case,
+     `documentation' returns `nil'.
+
+   Here is an example of using the two functions, `documentation' and
+`documentation-property', to display the documentation strings for
+several symbols in a `*Help*' buffer.
+
+     (defun describe-symbols (pattern)
+       "Describe the Emacs Lisp symbols matching PATTERN.
+     All symbols that have PATTERN in their name are described
+     in the `*Help*' buffer."
+       (interactive "sDescribe symbols matching: ")
+       (let ((describe-func
+              (function
+               (lambda (s)
+                 ;; Print description of symbol.
+                 (if (fboundp s)             ; It is a function.
+                     (princ
+                      (format "%s\t%s\n%s\n\n" s
+                        (if (commandp s)
+                            (let ((keys (where-is-internal s)))
+                              (if keys
+                                  (concat
+                                   "Keys: "
+                                   (mapconcat 'key-description
+                                              keys " "))
+                                "Keys: none"))
+                          "Function")
+                        (or (documentation s)
+                            "not documented"))))
+     
+                 (if (boundp s)              ; It is a variable.
+                     (princ
+                      (format "%s\t%s\n%s\n\n" s
+                        (if (user-variable-p s)
+                            "Option " "Variable")
+                        (or (documentation-property
+                              s 'variable-documentation)
+                            "not documented")))))))
+             sym-list)
+     
+         ;; Build a list of symbols that match pattern.
+         (mapatoms (function
+                    (lambda (sym)
+                      (if (string-match pattern (symbol-name sym))
+                          (setq sym-list (cons sym sym-list))))))
+     
+         ;; Display the data.
+         (with-output-to-temp-buffer "*Help*"
+           (mapcar describe-func (sort sym-list 'string<))
+           (print-help-return-message))))
+
+   The `describe-symbols' function works like `apropos', but provides
+more information.
+
+     (describe-symbols "goal")
+     
+     ---------- Buffer: *Help* ----------
+     goal-column     Option
+     *Semipermanent goal column for vertical motion, as set by ...
+     
+     set-goal-column Keys: C-x C-n
+     Set the current horizontal position as a goal for C-n and C-p.
+     Those commands will move to this position in the line moved to
+     rather than trying to keep the same horizontal position.
+     With a non-nil argument, clears out the goal column
+     so that C-n and C-p resume vertical motion.
+     The goal column is stored in the variable `goal-column'.
+     
+     temporary-goal-column   Variable
+     Current goal column for vertical motion.
+     It is the column where point was
+     at the start of current run of vertical motion commands.
+     When the `track-eol' feature is doing its job, the value is 9999.
+     ---------- Buffer: *Help* ----------
+
+   The asterisk `*' as the first character of a variable's doc string,
+as shown above for the `goal-column' variable, means that it is a user
+option; see the description of `defvar' in *Note Defining Variables::.
+
+ - Function: Snarf-documentation filename
+     This function is used only during Emacs initialization, just before
+     the runnable Emacs is dumped.  It finds the file offsets of the
+     documentation strings stored in the file FILENAME, and records
+     them in the in-core function definitions and variable property
+     lists in place of the actual strings.  *Note Building Emacs::.
+
+     Emacs reads the file FILENAME from the `emacs/etc' directory.
+     When the dumped Emacs is later executed, the same file will be
+     looked for in the directory `doc-directory'.  Usually FILENAME is
+     `"DOC-VERSION"'.
+
+ - Variable: doc-directory
+     This variable holds the name of the directory which should contain
+     the file `"DOC-VERSION"' that contains documentation strings for
+     built-in and preloaded functions and variables.
+
+     In most cases, this is the same as `data-directory'.  They may be
+     different when you run Emacs from the directory where you built it,
+     without actually installing it.  See `data-directory' in *Note
+     Help Functions::.
+
+     In older Emacs versions, `exec-directory' was used for this.
+

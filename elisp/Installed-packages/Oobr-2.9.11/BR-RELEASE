@@ -1,0 +1,355 @@
+#
+# SUMMARY:      What's new in this version of the OO-Browser?
+#
+# AUTHOR:       Bob Weiner
+#
+# ORIG-DATE:    15-Oct-90
+# LAST-MOD:     25-Oct-95 at 05:08:14 by Bob Weiner
+#
+# Copyright (C) 1990-1995  Free Software Foundation, Inc.
+# See the file BR-COPY for license information.
+#
+# This file is part of the OO-Browser.
+
+---------------------------------------------------------------------------
+			       VERSION 2.9.11
+
+* Added man/br-design.texi to document the design rationale of the
+  OO-Browser.
+
+* Java: The OO-Browser now works on code with the new Java exception syntax:
+      public Connection(String host, int port)
+	throws UnknownHostException, InputOutputException {}
+
+* Fixed mouse key initialization bug.
+
+* C: Fixed bug in displaying structure or enum definitions.
+
+* Emacs 19: Fixed bug that caused OO-Browser menubar menu not to appear.
+
+* BR-README: Rewrote Installation / Configuration section.
+
+---------------------------------------------------------------------------
+			       VERSION 2.9.10
+
+* {M-x br-report-bug RET} bound to {C-c C-b} in OO-Browser listing buffers
+  can be used to send mail to the OO-Browser discussion list.
+
+* A number of significant bug fixes, including errors triggered when scanning
+  source directories and encountering an unreadable file.  See "ChangeLog".
+
+* .icc and .I C++ inline definition file suffixes are now supported.
+
+* Any time an Environment is built interactively, you are queried whether or
+  not to build it in the background.
+
+* If you try to load an Environment which has not yet been built and you
+  decide not to build it, then the load is aborted rather than prompting you
+  for another Environment to load.
+
+---------------------------------------------------------------------------
+			       VERSION 2.9.9
+
+* Standard OO-Browser invocation command renamed to 'oo-browser' for clarity.
+  'oobr' still exists for backward compatibility.  Invocation is now much
+  simpler and cleaner.  You are always prompted for the Environment to
+  browse, but if you hit {RET} immediately or if you give a prefix argument
+  to the command, then you jump right into browsing the previous Environment.
+  This eliminates the problem new users had in not knowing how to switch
+  Environments.  See "(oo-browser.info)Loading Environments".
+
+* {q} to quit from the OO-Browser now always puts the browser buffers at the
+  bottom of the buffer list, as it should.
+
+* Subdirectories whose names are a single character long now are scanned
+  properly.
+
+* br-skip-dir-regexps and br-file-dir-regexp are now documented in the
+  manual, see "(oo-browser.info)Customization".
+
+---------------------------------------------------------------------------
+			       VERSION 2.9.8
+
+* Improved tree-x/Makefile support for building under UNIX System V.
+
+* Fixed bugs in Java Environment building.
+
+* Added Java Specifics section to the OO-Browser manual.
+---------------------------------------------------------------------------
+			  VERSIONS 2.9.6 and 2.9.7
+
+* Added support for browsing Java code, a language developed by Sun
+  Microsystems, in popular use for new World-Wide Web applications.
+
+* A number of bug fixes.
+---------------------------------------------------------------------------
+			  VERSIONS 2.9.4 and 2.9.5
+
+* Eiffel: Added some new Eiffel V3 keywords.
+
+* Added information on the new oo-browser mailing list in the "BR-README"
+  file.  Also added menu items to subscribe to / unsubscribe from the list
+  and to send mail to it.
+
+* CLOS: Changed language name to Lisp, since the browser is useful on
+  non-CLOS Lisp too.
+
+---------------------------------------------------------------------------
+				VERSION 2.9.3
+
+* Environment files now contain the version of the OO-Browser which was used
+  to build them.  If the Environment file format is obsolete, the OO-Browser
+  will automatically prompt you to rebuild it whenever you load it.
+
+* {C-c C-s} now properly saves Environment features, when the Environment is
+  renamed.
+
+* The browser user interface will now display within a frame even if you have
+  set the unsplittable frame property.
+
+* Eiffel: Fixed bug that prevented display of a feature from its listing
+   entry when using {f}.
+---------------------------------------------------------------------------
+				VERSION 2.9.2
+
+* Added pulldown and popup menu support for Emacs 19.
+
+* 'make install' now installs OO-Browser documentation in an Emacs tree.
+
+---------------------------------------------------------------------------
+				VERSION 2.9.1
+
+* C++/C/Objective-C:
+
+         NOTE:  You must rebuild any Objective-C Environments that you have
+                built with earlier versions of the browser.  If you want the
+                new C default classes described below to appear in C++
+                Environments, you must rebuild them, too.
+
+         The OO-Browser now supports browsing the following C constructs
+         within C++ and Objective-C Environments via default classes:
+
+         DEFAULT CLASS    C CONSTRUCT
+         --------------------------------------
+         [constant]       #define constant
+         [enumeration]    enum {}
+         [function]       non-member function()
+         [macro]          #define macro()
+         [structure]      struct {}
+         [type]           typedef {}
+         [union]          union {}
+
+         You may now define a C++ Environment which contains only C code.
+         The above default classes are the only ones that will appear in such
+         Environments.
+
+* C++: Added recognition of keywords, `mutable' and `explicit', newly added
+       to standard C++.
+
+* Removed key binding of br-toggle-keep-viewed since this is little used and
+  reused its key, {V}, for br-view-friend, which views the definition of a
+  C++ friend declaration.  This was mistakenly formerly bound to {M-v} which
+  conflicted with a basic scrolling command.
+
+* C++: Recognition of new array operators, 'operator new [] ()' and 'operator
+       delete [] ()'.
+
+* The X OO-Browser can now be built on systems without the usleep system call
+  (see oobr/tree-x/Makefile).
+
+* {M-e}, br-env-stats, now shows the names of any classes which are defined
+  multiple times within the Environment, to help you eliminate duplicates.
+  It also shows a list of undefined classes, those which are referenced,
+  e.g. as parents of another class, but not defined within the Environment.
+
+---------------------------------------------------------------------------
+				 VERSION 2.9
+
+* C++: See the C++ Specifics section of the OO-Browser manual for user
+       documentation on all of these changes.
+
+* C++: friend declarations now appear in class feature listings, prefixed by
+       '% '.  {V} views the definition of a friend.
+
+* C++: pure virtual functions now appear in listings as '> func' instead of
+      'func = 0'.  Object creation and deletion functions appear as '+ func'
+      instead of '- func'.
+
+* C++: Overloading of operator[] and operator() is now supported.
+
+* C++: Greatly speeded up feature listings by caching feature names.
+
+* C++: Expanded variety of complex declarations/definitions that the browser
+       recognizes. 
+
+* Eiffel: Added full feature browsing as in other languages along with Eiffel
+          V3 support.
+
+---------------------------------------------------------------------------
+				VERSION 2.8.6
+
+* Added KEYWORDS: header to all *.el files, so the Emacs finder
+  program, {C-h p}, can now include them in its indices for lookup.
+
+* C++: Added support for browsing pure virtual function interfaces declared
+  within classes.  Given a pure virtual function named, f, it appears as, f =
+  0, in a browser listing buffer to distinguish it from a member definition.
+
+* C++: Improved scanning of a broader range of C++ definitions.
+
+* {C-u F} now works properly.  It shows the signatures/tags of all features
+  in the current listing buffer.
+
+* CLOS: Added proper support for &keywords in argument lists.
+
+* CLOS: All methods which do not contain any specialized parameters (those
+  of a specific type) are considered members of the root CLOS class 't'. 
+
+---------------------------------------------------------------------------
+				VERSION 2.8.5
+
+* Documented InfoDock/XEmacs menus in the manual.
+
+* Improved Makefile support for adding custom load-path entries.
+
+* Emacs 19 versions now run site-start.el when batch compiling files.
+
+---------------------------------------------------------------------------
+				VERSION 2.8.4
+
+* Added autoload comments so that autoloaded OO-Browser commands are
+  automatically picked up under V19.
+
+* The default display of class features/elements, bound to {f}, now includes
+  all inherited features.  Use {M-0 f} to turn off display of inherited
+  features.
+
+* Under XEmacs when mouse support is available, there is an OO-Browser
+  pulldown menu and the same menu as a popup, bound to the right mouse button
+  when in a browser listing buffer.
+
+* Instantiation of templates is handled well now, especially when a parent
+  class is a template instantiation.
+
+* Action Key press on a C++ class feature declaration now properly jumps to
+  the definition.
+
+---------------------------------------------------------------------------
+			  VERSIONS 2.8.2 and 2.8.3
+
+* New version of the X OO-Browser with more reliable display updates after a
+  node is collapsed and a color X resource file.
+
+* Support for C++ template class and method browsing.
+
+* Under C++, non-class functions are now found and added to the default
+  [function] class for easy browsing.  This includes both C and C++ functions.
+
+* Br-unique, {u}, and br-order, {o}, now work on all entry types, not just
+  classes.
+
+* New command, br-match-entries, bound to {M}.  Permits filtering of the set
+  of entries in a listing buffer.  Under Emacs 19, you can still browse
+  entries after filtering them.  Emacs 18 doesn't permit this since each
+  entry name is not necessarily unique.
+
+* Many bug fixes and many fewer invalid method tag matches under C++.
+
+* Much faster compilation of the OO-Browser Emacs Lisp source code since all
+  files are compiled with one invocation of Emacs, rather than one per file.
+
+* Environment builds may now be done in the background.  (You are prompted
+  for whether to build in the background, each time you build an
+  Environment.  When the build finishes, you are asked if you would like to
+  browse the built Environment.)
+
+* Eiffel 3 inheritance clause support.
+
+---------------------------------------------------------------------------
+				VERSION 2.8.1
+
+* Much faster C++ feature lookups.  You *must* rebuild any C++ Environments
+  built with earlier versions of the OO-Browser before trying to browse
+  features within the Environment.  Load such an Environment and use {C-c
+  C-e} to rebuild it.
+
+* XEmacs 19.12 mouse support.
+
+
+---------------------------------------------------------------------------
+				 VERSION 2.8
+
+* Command and Key Binding Improvements
+
+  ** Action Key press on an OO-Browser environment file named OOBR or
+     OOBR-FTR, automatically determines the language of the Environment and
+     loads it for browsing.
+
+  ** Common Lisp and Emacs Lisp element browsing support added.  Standard
+     language element types are added as default classes to Environment, so
+     one can browse functions, variables, methods and more.  See
+     "(oo-browser.info)CLOS Specifics" for details.
+
+  ** The feature listing command, br-routines, previously bound to {r}, has
+     been renamed br-features and bound to {f}.  {f} used to run br-find; use
+     {C-u e} (br-edit-entry) for that command instead.  This makes the
+     bindings of {f} and {F}, which lists feature signatures, more uniform.
+     {r} still works for backwards compatibility in this release.
+
+  ** {f} if applied to a single class for which there are no feature
+     definitions within the Environment, displays the associated class
+     definition so that you may browse its feature declarations.  This
+     improves browsing in Environments where you have only interface
+     specifications, e.g. *.h files, but no source code.
+
+  ** Fixed {I}, br-implementors command.  Also, now an Action Key press on
+     an implementor class shows the implemented element.
+
+  ** {C} lists class categories.  Presently only supported under Objective-C.
+     {v} or {e} views or edits the class category definition.
+     {I} shows the classes which implement a category.
+     The [category] default class displays all Environment categories as its
+     features.  {v} or {e} then displays the associated category definition.
+
+  ** {P} lists class protocols.   Presently only supported under Objective-C.
+     {v} or {e} views or edits the class definition which directly conforms
+     to the protocol.
+     {I} shows the classes which implement a protocol.
+     The [protocol] default class displays all Environment protocols as its
+     features.  {v} or {e} then displays the associated protocol definition.
+
+
+* Graphical Browser Improvements
+
+  ** Motif version of the X OO-Browser interface redone using the Athena
+     toolkit, so that only free X libraries are required.  Thanks to Torgeir
+     Veimo for this conversion work.
+
+
+* Many bug fixes.
+
+  ** The browser will no longer scan SCCS revision subdirectories by default.
+
+  ** Better support for the wide variety of C++ coding styles and file naming
+     conventions.
+
+
+* User Manual Improvements
+
+  ** Reorganized and renamed sections for clarity.
+
+  ** New sections:
+
+     ***  "(oo-browser.info)Browsing Categories"
+     ***  "(oo-browser.info)Browsing Elements"
+     ***  "(oo-browser.info)Browsing Implementors"
+     ***  "(oo-browser.info)Browsing Protocols"
+
+  ** Expanded glossary in user manual.
+
+
+* Installation Improvements
+
+  ** Improved Makefile to support all common Emacs versions.
+
+  ** More detailed installation notes in "BR-README". 

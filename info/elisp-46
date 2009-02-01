@@ -1,0 +1,1083 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Window Internals,  Next: Process Internals,  Prev: Buffer Internals,  Up: Object Internals
+
+Window Internals
+----------------
+
+   Windows have the following accessible fields:
+
+`frame'
+     The frame that this window is on.
+
+`mini_p'
+     Non-`nil' if this window is a minibuffer window.
+
+`parent'
+     Internally, Emacs arranges windows in a tree; each group of
+     siblings has a parent window whose area includes all the siblings.
+     This field points to a window's parent.
+
+     Parent windows do not display buffers, and play little role in
+     display except to shape their child windows.  Emacs Lisp programs
+     usually have no access to the parent windows; they operate on the
+     windows at the leaves of the tree, which actually display buffers.
+
+     The following four fields also describe the window tree structure.
+
+`hchild'
+     In a window subdivided horizontally by child windows, the leftmost
+     child.  Otherwise, `nil'.
+
+`vchild'
+     In a window subdivided vertically by child windows, the topmost
+     child.  Otherwise, `nil'.
+
+`next'
+     The next sibling of this window.  It is `nil' in a window that is
+     the rightmost or bottommost of a group of siblings.
+
+`prev'
+     The previous sibling of this window.  It is `nil' in a window that
+     is the leftmost or topmost of a group of siblings.
+
+`left'
+     This is the left-hand edge of the window, measured in columns.
+     (The leftmost column on the screen is column 0.)
+
+`top'
+     This is the top edge of the window, measured in lines.  (The top
+     line on the screen is line 0.)
+
+`height'
+     The height of the window, measured in lines.
+
+`width'
+     The width of the window, measured in columns.  This width includes
+     the scroll bar and fringes, and/or the separator line on the right
+     of the window (if any).
+
+`buffer'
+     The buffer that the window is displaying.  This may change often
+     during the life of the window.
+
+`start'
+     The position in the buffer that is the first character to be
+     displayed in the window.
+
+`pointm'
+     This is the value of point in the current buffer when this window
+     is selected; when it is not selected, it retains its previous
+     value.
+
+`force_start'
+     If this flag is non-`nil', it says that the window has been
+     scrolled explicitly by the Lisp program.  This affects what the
+     next redisplay does if point is off the screen: instead of
+     scrolling the window to show the text around point, it moves point
+     to a location that is on the screen.
+
+`frozen_window_start_p'
+     This field is set temporarily to 1 to indicate to redisplay that
+     `start' of this window should not be changed, even if point gets
+     invisible.
+
+`start_at_line_beg'
+     Non-`nil' means current value of `start' was the beginning of a
+     line when it was chosen.
+
+`too_small_ok'
+     Non-`nil' means don't delete this window for becoming "too small".
+
+`height_fixed_p'
+     This field is temporarily set to 1 to fix the height of the
+     selected window when the echo area is resized.
+
+`use_time'
+     This is the last time that the window was selected.  The function
+     `get-lru-window' uses this field.
+
+`sequence_number'
+     A unique number assigned to this window when it was created.
+
+`last_modified'
+     The `modiff' field of the window's buffer, as of the last time a
+     redisplay completed in this window.
+
+`last_overlay_modified'
+     The `overlay_modiff' field of the window's buffer, as of the last
+     time a redisplay completed in this window.
+
+`last_point'
+     The buffer's value of point, as of the last time a redisplay
+     completed in this window.
+
+`last_had_star'
+     A non-`nil' value means the window's buffer was "modified" when the
+     window was last updated.
+
+`vertical_scroll_bar'
+     This window's vertical scroll bar.
+
+`left_margin_width'
+     The width of the left margin in this window, or `nil' not to
+     specify it (in which case the buffer's value of `left-margin-width'
+     is used.
+
+`right_margin_width'
+     Likewise for the right margin.
+
+`window_end_pos'
+     This is computed as `z' minus the buffer position of the last glyph
+     in the current matrix of the window.  The value is only valid if
+     `window_end_valid' is not `nil'.
+
+`window_end_bytepos'
+     The byte position corresponding to `window_end_pos'.
+
+`window_end_vpos'
+     The window-relative vertical position of the line containing
+     `window_end_pos'.
+
+`window_end_valid'
+     This field is set to a non-`nil' value if `window_end_pos' is truly
+     valid.  This is `nil' if nontrivial redisplay is preempted since
+     in that case the display that `window_end_pos' was computed for
+     did not get onto the screen.
+
+`redisplay_end_trigger'
+     If redisplay in this window goes beyond this buffer position, it
+     runs run the `redisplay-end-trigger-hook'.
+
+`cursor'
+     A structure describing where the cursor is in this window.
+
+`last_cursor'
+     The value of `cursor' as of the last redisplay that finished.
+
+`phys_cursor'
+     A structure describing where the cursor of this window physically
+     is.
+
+`phys_cursor_type'
+     The type of cursor that was last displayed on this window.
+
+`phys_cursor_on_p'
+     This field is non-zero if the cursor is physically on.
+
+`cursor_off_p'
+     Non-zero means the cursor in this window is logically on.
+
+`last_cursor_off_p'
+     This field contains the value of `cursor_off_p' as of the time of
+     the last redisplay.
+
+`must_be_updated_p'
+     This is set to 1 during redisplay when this window must be updated.
+
+`hscroll'
+     This is the number of columns that the display in the window is
+     scrolled horizontally to the left.  Normally, this is 0.
+
+`vscroll'
+     Vertical scroll amount, in pixels.  Normally, this is 0.
+
+`dedicated'
+     Non-`nil' if this window is dedicated to its buffer.
+
+`display_table'
+     The window's display table, or `nil' if none is specified for it.
+
+`update_mode_line'
+     Non-`nil' means this window's mode line needs to be updated.
+
+`base_line_number'
+     The line number of a certain position in the buffer, or `nil'.
+     This is used for displaying the line number of point in the mode
+     line.
+
+`base_line_pos'
+     The position in the buffer for which the line number is known, or
+     `nil' meaning none is known.
+
+`region_showing'
+     If the region (or part of it) is highlighted in this window, this
+     field holds the mark position that made one end of that region.
+     Otherwise, this field is `nil'.
+
+`column_number_displayed'
+     The column number currently displayed in this window's mode line,
+     or `nil' if column numbers are not being displayed.
+
+`current_matrix'
+     A glyph matrix describing the current display of this window.
+
+`desired_matrix'
+     A glyph matrix describing the desired display of this window.
+
+
+File: elisp,  Node: Process Internals,  Prev: Window Internals,  Up: Object Internals
+
+Process Internals
+-----------------
+
+   The fields of a process are:
+
+`name'
+     A string, the name of the process.
+
+`command'
+     A list containing the command arguments that were used to start
+     this process.
+
+`filter'
+     A function used to accept output from the process instead of a
+     buffer, or `nil'.
+
+`sentinel'
+     A function called whenever the process receives a signal, or `nil'.
+
+`buffer'
+     The associated buffer of the process.
+
+`pid'
+     An integer, the Unix process ID.
+
+`childp'
+     A flag, non-`nil' if this is really a child process.  It is `nil'
+     for a network connection.
+
+`mark'
+     A marker indicating the position of the end of the last output
+     from this process inserted into the buffer.  This is often but not
+     always the end of the buffer.
+
+`kill_without_query'
+     If this is non-`nil', killing Emacs while this process is still
+     running does not ask for confirmation about killing the process.
+
+`raw_status_low'
+`raw_status_high'
+     These two fields record 16 bits each of the process status
+     returned by the `wait' system call.
+
+`status'
+     The process status, as `process-status' should return it.
+
+`tick'
+`update_tick'
+     If these two fields are not equal, a change in the status of the
+     process needs to be reported, either by running the sentinel or by
+     inserting a message in the process buffer.
+
+`pty_flag'
+     Non-`nil' if communication with the subprocess uses a PTY; `nil'
+     if it uses a pipe.
+
+`infd'
+     The file descriptor for input from the process.
+
+`outfd'
+     The file descriptor for output to the process.
+
+`subtty'
+     The file descriptor for the terminal that the subprocess is using.
+     (On some systems, there is no need to record this, so the value is
+     `nil'.)
+
+`tty_name'
+     The name of the terminal that the subprocess is using, or `nil' if
+     it is using pipes.
+
+`decode_coding_system'
+     Coding-system for decoding the input from this process.
+
+`decoding_buf'
+     A working buffer for decoding.
+
+`decoding_carryover'
+     Size of carryover in decoding.
+
+`encode_coding_system'
+     Coding-system for encoding the output to this process.
+
+`encoding_buf'
+     A working buffer for enecoding.
+
+`encoding_carryover'
+     Size of carryover in encoding.
+
+`inherit_coding_system_flag'
+     Flag to set `coding-system' of the process buffer from the coding
+     system used to decode process output.
+
+
+File: elisp,  Node: Standard Errors,  Next: Standard Buffer-Local Variables,  Prev: GNU Emacs Internals,  Up: Top
+
+Standard Errors
+***************
+
+   Here is the complete list of the error symbols in standard Emacs,
+grouped by concept.  The list includes each symbol's message (on the
+`error-message' property of the symbol) and a cross reference to a
+description of how the error can occur.
+
+   Each error symbol has an `error-conditions' property that is a list
+of symbols.  Normally this list includes the error symbol itself and
+the symbol `error'.  Occasionally it includes additional symbols, which
+are intermediate classifications, narrower than `error' but broader
+than a single error symbol.  For example, all the errors in accessing
+files have the condition `file-error'.  If we do not say here that a
+certain error symbol has additional error conditions, that means it has
+none.
+
+   As a special exception, the error symbol `quit' does not have the
+condition `error', because quitting is not considered an error.
+
+   *Note Errors::, for an explanation of how errors are generated and
+handled.
+
+`SYMBOL'
+     STRING; REFERENCE.
+
+`error'
+     `"error"'
+     *Note Errors::.
+
+`quit'
+     `"Quit"'
+     *Note Quitting::.
+
+`args-out-of-range'
+     `"Args out of range"'
+     *Note Sequences Arrays Vectors::.
+
+`arith-error'
+     `"Arithmetic error"'
+     See `/' and `%' in *Note Numbers::.
+
+`beginning-of-buffer'
+     `"Beginning of buffer"'
+     *Note Motion::.
+
+`buffer-read-only'
+     `"Buffer is read-only"'
+     *Note Read Only Buffers::.
+
+`coding-system-error'
+     `"Invalid coding system"'
+     *Note Coding Systems::.
+
+`cyclic-function-indirection'
+     `"Symbol's chain of function indirections\
+     contains a loop"'
+     *Note Function Indirection::.
+
+`end-of-buffer'
+     `"End of buffer"'
+     *Note Motion::.
+
+`end-of-file'
+     `"End of file during parsing"'
+     Note that this is not a subcategory of `file-error', because it
+     pertains to the Lisp reader, not to file I/O.  *Note Input
+     Functions::.
+
+`file-already-exists'
+     This is a subcategory of `file-error'.
+     *Note Writing to Files::.
+
+`file-date-error'
+     This is a subcategory of `file-error'.  It occurs when `copy-file'
+     tries and fails to set the last-modification time of the output
+     file.  *Note Changing Files::.
+
+`file-error'
+     This error and its subcategories do not have error-strings,
+     because the error message is constructed from the data items alone
+     when the error condition `file-error' is present.
+     *Note Files::.
+
+`file-locked'
+     This is a subcategory of `file-error'.
+     *Note File Locks::.
+
+`file-supersession'
+     This is a subcategory of `file-error'.
+     *Note Modification Time::.
+
+`ftp-error'
+     This is a subcategory of `file-error', which results from problems
+     in accessing a remote file using ftp.
+     *Note Remote Files: (emacs)Remote Files.
+
+`invalid-function'
+     `"Invalid function"'
+     *Note Classifying Lists::.
+
+`invalid-read-syntax'
+     `"Invalid read syntax"'
+     *Note Input Functions::.
+
+`invalid-regexp'
+     `"Invalid regexp"'
+     *Note Regular Expressions::.
+
+`mark-inactive'
+     `"Mark inactive"'
+     *Note The Mark::.
+
+`no-catch'
+     `"No catch for tag"'
+     *Note Catch and Throw::.
+
+`scan-error'
+     `"Scan error"'
+     This happens when certain syntax-parsing functions find invalid
+     syntax or mismatched parentheses.
+     *Note List Motion::, and *Note Parsing Expressions::.
+
+`search-failed'
+     `"Search failed"'
+     *Note Searching and Matching::.
+
+`setting-constant'
+     `"Attempt to set a constant symbol"'
+     The values of the symbols `nil' and `t', and any symbols that
+     start with `:', may not be changed.
+     *Note Variables that Never Change: Constant Variables.
+
+`text-read-only'
+     `"Text is read-only"'
+     *Note Special Properties::.
+
+`undefined-color'
+     `"Undefined color"'
+     *Note Color Names::.
+
+`void-function'
+     `"Symbol's function definition is void"'
+     *Note Function Cells::.
+
+`void-variable'
+     `"Symbol's value as variable is void"'
+     *Note Accessing Variables::.
+
+`wrong-number-of-arguments'
+     `"Wrong number of arguments"'
+     *Note Classifying Lists::.
+
+`wrong-type-argument'
+     `"Wrong type argument"'
+     *Note Type Predicates::.
+
+   These kinds of error, which are classified as special cases of
+`arith-error', can occur on certain systems for invalid use of
+mathematical functions.
+
+`domain-error'
+     `"Arithmetic domain error"'
+     *Note Math Functions::.
+
+`overflow-error'
+     `"Arithmetic overflow error"'
+     *Note Math Functions::.
+
+`range-error'
+     `"Arithmetic range error"'
+     *Note Math Functions::.
+
+`singularity-error'
+     `"Arithmetic singularity error"'
+     *Note Math Functions::.
+
+`underflow-error'
+     `"Arithmetic underflow error"'
+     *Note Math Functions::.
+
+
+File: elisp,  Node: Standard Buffer-Local Variables,  Next: Standard Keymaps,  Prev: Standard Errors,  Up: Top
+
+Buffer-Local Variables
+**********************
+
+   The table below lists the general-purpose Emacs variables that
+automatically become buffer-local in each buffer.  Most become
+buffer-local only when set; a few of them are always local in every
+buffer.  Many Lisp packages define such variables for their internal
+use, but we don't try to list them all here.
+
+`abbrev-mode'
+     *Note Abbrevs::.
+
+`auto-fill-function'
+     *Note Auto Filling::.
+
+`buffer-auto-save-file-name'
+     *Note Auto-Saving::.
+
+`buffer-backed-up'
+     *Note Backup Files::.
+
+`buffer-display-count'
+     *Note Displaying Buffers::.
+
+`buffer-display-table'
+     *Note Display Tables::.
+
+`buffer-file-coding-system'
+     *Note Encoding and I/O::.
+
+`buffer-file-format'
+     *Note Format Conversion::.
+
+`buffer-file-name'
+     *Note Buffer File Name::.
+
+`buffer-file-number'
+     *Note Buffer File Name::.
+
+`buffer-file-truename'
+     *Note Buffer File Name::.
+
+`buffer-file-type'
+     *Note MS-DOS File Types::.
+
+`buffer-invisibility-spec'
+     *Note Invisible Text::.
+
+`buffer-offer-save'
+     *Note Saving Buffers::.
+
+`buffer-read-only'
+     *Note Read Only Buffers::.
+
+`buffer-saved-size'
+     *Note Point::.
+
+`buffer-undo-list'
+     *Note Undo::.
+
+`cache-long-line-scans'
+     *Note Text Lines::.
+
+`case-fold-search'
+     *Note Searching and Case::.
+
+`ctl-arrow'
+     *Note Usual Display::.
+
+`comment-column'
+     *Note Comments: (emacs)Comments.
+
+`default-directory'
+     *Note System Environment::.
+
+`defun-prompt-regexp'
+     *Note List Motion::.
+
+`enable-multibyte-characters'
+     *Note Non-ASCII Characters::.
+
+`fill-column'
+     *Note Auto Filling::.
+
+`goal-column'
+     *Note Moving Point: (emacs)Moving Point.
+
+`header-line-format'
+     *Note Mode Line Data::.
+
+`indicate-empty-lines'
+     *Note Usual Display::.
+
+`left-margin'
+     *Note Indentation::.
+
+`left-margin-width'
+     *Note Display Margins::.
+
+`local-abbrev-table'
+     *Note Abbrevs::.
+
+`local-write-file-hooks'
+     *Note Saving Buffers::.
+
+`major-mode'
+     *Note Mode Help::.
+
+`mark-active'
+     *Note The Mark::.
+
+`mark-ring'
+     *Note The Mark::.
+
+`minor-modes'
+     *Note Minor Modes::.
+
+`mode-line-buffer-identification'
+     *Note Mode Line Variables::.
+
+`mode-line-format'
+     *Note Mode Line Data::.
+
+`mode-line-modified'
+     *Note Mode Line Variables::.
+
+`mode-line-process'
+     *Note Mode Line Variables::.
+
+`mode-name'
+     *Note Mode Line Variables::.
+
+`overwrite-mode'
+     *Note Insertion::.
+
+`paragraph-separate'
+     *Note Standard Regexps::.
+
+`paragraph-start'
+     *Note Standard Regexps::.
+
+`point-before-scroll'
+     Used for communication between mouse commands and scroll-bar
+     commands.
+
+`require-final-newline'
+     *Note Insertion::.
+
+`right-margin-width'
+     *Note Display Margins::.
+
+`scroll-down-aggressively'
+     *Note Textual Scrolling::.
+
+`scroll-up-aggressively'
+     *Note Textual Scrolling::.
+
+`selective-display'
+     *Note Selective Display::.
+
+`selective-display-ellipses'
+     *Note Selective Display::.
+
+`tab-width'
+     *Note Usual Display::.
+
+`truncate-lines'
+     *Note Truncation::.
+
+`vc-mode'
+     *Note Mode Line Variables::.
+
+
+File: elisp,  Node: Standard Keymaps,  Next: Standard Hooks,  Prev: Standard Buffer-Local Variables,  Up: Top
+
+Standard Keymaps
+****************
+
+   The following symbols are used as the names for various keymaps.
+Some of these exist when Emacs is first started, others are loaded only
+when their respective mode is used.  This is not an exhaustive list.
+
+   Almost all of these maps are used as local maps.  Indeed, of the
+modes that presently exist, only Vip mode and Terminal mode ever change
+the global keymap.
+
+`Buffer-menu-mode-map'
+     A full keymap used by Buffer Menu mode.
+
+`c-mode-map'
+     A sparse keymap used by C mode.
+
+`command-history-map'
+     A full keymap used by Command History mode.
+
+`ctl-x-4-map'
+     A sparse keymap for subcommands of the prefix `C-x 4'.
+
+`ctl-x-5-map'
+     A sparse keymap for subcommands of the prefix `C-x 5'.
+
+`ctl-x-map'
+     A full keymap for `C-x' commands.
+
+`debugger-mode-map'
+     A full keymap used by Debugger mode.
+
+`dired-mode-map'
+     A full keymap for `dired-mode' buffers.
+
+`edit-abbrevs-map'
+     A sparse keymap used in `edit-abbrevs'.
+
+`edit-tab-stops-map'
+     A sparse keymap used in `edit-tab-stops'.
+
+`electric-buffer-menu-mode-map'
+     A full keymap used by Electric Buffer Menu mode.
+
+`electric-history-map'
+     A full keymap used by Electric Command History mode.
+
+`emacs-lisp-mode-map'
+     A sparse keymap used by Emacs Lisp mode.
+
+`facemenu-menu'
+     The sparse keymap that displays the Text Properties menu.
+
+`facemenu-background-menu'
+     The sparse keymap that displays the Background Color submenu of
+     the Text Properties menu.
+
+`facemenu-face-menu'
+     The sparse keymap that displays the Face submenu of the Text
+     Properties menu.
+
+`facemenu-foreground-menu'
+     The sparse keymap that displays the Foreground Color submenu of
+     the Text Properties menu.
+
+`facemenu-indentation-menu'
+     The sparse keymap that displays the Indentation submenu of the Text
+     Properties menu.
+
+`facemenu-justification-menu'
+     The sparse keymap that displays the Justification submenu of the
+     Text Properties menu.
+
+`facemenu-special-menu'
+     The sparse keymap that displays the Special Props submenu of the
+     Text Properties menu.
+
+`function-key-map'
+     The keymap for translating keypad and function keys.
+     If there are none, then it contains an empty sparse keymap.  *Note
+     Translating Input::.
+
+`fundamental-mode-map'
+     The sparse keymap for Fundamental mode.
+     It is empty and should not be changed.
+
+`Helper-help-map'
+     A full keymap used by the help utility package.
+     It has the same keymap in its value cell and in its function cell.
+
+`Info-edit-map'
+     A sparse keymap used by the `e' command of Info.
+
+`Info-mode-map'
+     A sparse keymap containing Info commands.
+
+`isearch-mode-map'
+     A keymap that defines the characters you can type within
+     incremental search.
+
+`key-translation-map'
+     A keymap for translating keys.  This one overrides ordinary key
+     bindings, unlike `function-key-map'.  *Note Translating Input::.
+
+`lisp-interaction-mode-map'
+     A sparse keymap used by Lisp Interaction mode.
+
+`lisp-mode-map'
+     A sparse keymap used by Lisp mode.
+
+`menu-bar-edit-menu'
+     The keymap which displays the Edit menu in the menu bar.
+
+`menu-bar-files-menu'
+     The keymap which displays the Files menu in the menu bar.
+
+`menu-bar-help-menu'
+     The keymap which displays the Help menu in the menu bar.
+
+`menu-bar-mule-menu'
+     The keymap which displays the Mule menu in the menu bar.
+
+`menu-bar-search-menu'
+     The keymap which displays the Search menu in the menu bar.
+
+`menu-bar-tools-menu'
+     The keymap which displays the Tools menu in the menu bar.
+
+`mode-specific-map'
+     The keymap for characters following `C-c'.  Note, this is in the
+     global map.  This map is not actually mode specific: its name was
+     chosen to be informative for the user in `C-h b'
+     (`display-bindings'), where it describes the main use of the `C-c'
+     prefix key.
+
+`occur-mode-map'
+     A sparse keymap used by Occur mode.
+
+`query-replace-map'
+     A sparse keymap used for responses in `query-replace' and related
+     commands; also for `y-or-n-p' and `map-y-or-n-p'.  The functions
+     that use this map do not support prefix keys; they look up one
+     event at a time.
+
+`text-mode-map'
+     A sparse keymap used by Text mode.
+
+`view-mode-map'
+     A full keymap used by View mode.
+
+
+File: elisp,  Node: Standard Hooks,  Next: Index,  Prev: Standard Keymaps,  Up: Top
+
+Standard Hooks
+**************
+
+   The following is a list of hook variables that let you provide
+functions to be called from within Emacs on suitable occasions.
+
+   Most of these variables have names ending with `-hook'.  They are
+"normal hooks", run by means of `run-hooks'.  The value of such a hook
+is a list of functions; the functions are called with no arguments and
+their values are completely ignored.  The recommended way to put a new
+function on such a hook is to call `add-hook'.  *Note Hooks::, for more
+information about using hooks.
+
+   The variables whose names end in `-hooks' or `-functions' are
+usually "abnormal hooks"; their values are lists of functions, but
+these functions are called in a special way (they are passed arguments,
+or their values are used).  A few of these variables are actually normal
+hooks which were named before we established the convention that normal
+hooks' names should end in `-hook'.
+
+   The variables whose names end in `-function' have single functions
+as their values.  (In older Emacs versions, some of these variables had
+names ending in `-hook' even though they were not normal hooks;
+however, we have renamed all of those.)
+
+`activate-mark-hook'
+
+`after-change-functions'
+
+`after-init-hook'
+
+`after-insert-file-functions'
+
+`after-make-frame-functions'
+
+`after-revert-hook'
+
+`after-save-hook'
+
+`apropos-mode-hook'
+
+`auto-fill-function'
+
+`auto-save-hook'
+
+`before-change-functions'
+
+`before-init-hook'
+
+`before-make-frame-hook'
+
+`before-revert-hook'
+
+`blink-paren-function'
+
+`buffer-access-fontify-functions'
+
+`c-mode-hook'
+
+`calendar-load-hook'
+
+`change-major-mode-hook'
+
+`command-history-hook'
+
+`command-line-functions'
+
+`comment-indent-function'
+
+`deactivate-mark-hook'
+
+`diary-display-hook'
+
+`diary-hook'
+
+`dired-mode-hook'
+
+`disabled-command-hook'
+
+`echo-area-clear-hook'
+
+`edit-picture-hook'
+
+`electric-buffer-menu-mode-hook'
+
+`electric-command-history-hook'
+
+`electric-help-mode-hook'
+
+`emacs-lisp-mode-hook'
+
+`find-file-hooks'
+
+`find-file-not-found-hooks'
+
+`first-change-hook'
+
+`fortran-comment-hook'
+
+`fortran-mode-hook'
+
+`indent-mim-hook'
+
+`initial-calendar-window-hook'
+
+`kbd-macro-termination-hook'
+
+`kill-buffer-hook'
+
+`kill-buffer-query-functions'
+
+`kill-emacs-hook'
+
+`kill-emacs-query-functions'
+
+`LaTeX-mode-hook'
+
+`ledit-mode-hook'
+
+`lisp-indent-function'
+
+`lisp-interaction-mode-hook'
+
+`lisp-mode-hook'
+
+`list-diary-entries-hook'
+
+`local-write-file-hooks'
+
+`mail-mode-hook'
+
+`mail-setup-hook'
+
+`mark-diary-entries-hook'
+
+`medit-mode-hook'
+
+`menu-bar-update-hook'
+
+`minibuffer-setup-hook'
+
+`minibuffer-exit-hook'
+
+`mouse-position-function'
+
+`news-mode-hook'
+
+`news-reply-mode-hook'
+
+`news-setup-hook'
+
+`nongregorian-diary-listing-hook'
+
+`nongregorian-diary-marking-hook'
+
+`nroff-mode-hook'
+
+`outline-mode-hook'
+
+`plain-TeX-mode-hook'
+
+`post-command-hook'
+
+`pre-abbrev-expand-hook'
+
+`pre-command-hook'
+
+`print-diary-entries-hook'
+
+`prolog-mode-hook'
+
+`protect-innocence-hook'
+
+`redisplay-end-trigger-functions'
+
+`rmail-edit-mode-hook'
+
+`rmail-mode-hook'
+
+`rmail-summary-mode-hook'
+
+`scheme-indent-hook'
+
+`scheme-mode-hook'
+
+`scribe-mode-hook'
+
+`shell-mode-hook'
+
+`shell-set-directory-error-hook'
+
+`suspend-hook'
+
+`suspend-resume-hook'
+
+`temp-buffer-show-function'
+
+`term-setup-hook'
+
+`terminal-mode-hook'
+
+`terminal-mode-break-hook'
+
+`TeX-mode-hook'
+
+`text-mode-hook'
+
+`today-visible-calendar-hook'
+
+`today-invisible-calendar-hook'
+
+`vi-mode-hook'
+
+`view-hook'
+
+`window-configuration-change-hook'
+
+`window-scroll-functions'
+
+`window-setup-hook'
+
+`window-size-change-functions'
+
+`write-contents-hooks'
+
+`write-file-hooks'
+
+`write-region-annotate-functions'

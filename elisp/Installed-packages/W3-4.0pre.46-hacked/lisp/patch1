@@ -1,0 +1,12 @@
+--- w3-4.0pre.46-orig/lisp/w3-display.el	Sun Nov 14 22:00:12 1999
++++ w3-4.0pre.46-new/lisp/w3-display.el	Thu Dec 14 14:59:15 2000
+@@ -181,7 +181,8 @@
+ 		(dispatch-event (next-command-event)))
+ 	    (error nil))))
+      (t
+-      (if (and (not (sit-for 0)) (input-pending-p))
++      ;; modified for GNU Emacs 21 by bob@rattlesnake.com on 2000 Dec 14
++      (if  (and (not (sit-for 0)) nil)
+ 	  (condition-case ()
+ 	      (progn
+ 		(setq w3-pause-keystroke

@@ -1,0 +1,86 @@
+This is mailcrypt.info, produced by makeinfo version 4.2 from
+./mailcrypt.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Mailcrypt: (mailcrypt).  An Emacs/PGP interface.
+END-INFO-DIR-ENTRY
+
+   This documentation describes Mailcrypt version 3.5.7.  This
+documentation was last updated on August 29, 1998.
+
+   Copyright 1995 Patrick J. LoPresti Copyright 1998 Leonard R. Budney
+Copyright 2001 Brian Warner
+
+   The Mailcrypt program and this manual are published as free software.
+You may redistribute and/or modify them under the terms of the GNU
+General Public License as published by the Free Software Foundation;
+either version 2, or (at your option) any later version.
+
+   Mailcrypt is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+along with GNU Emacs; see the file COPYING.  If not, write to the Free
+Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+Indirect:
+mailcrypt.info-1: 1115
+mailcrypt.info-2: 49565
+
+Tag Table:
+(Indirect)
+Node: Top1115
+Node: Introduction5173
+Node: Prerequisites5926
+Node: Installation7030
+Node: Hooking into Rmail8648
+Node: Hooking into VM9191
+Node: Hooking into MH-E9631
+Node: Hooking into Gnus9965
+Node: Hooking into Mew10362
+Node: Command Overview11027
+Node: General Use12202
+Node: Encrypting14629
+Node: Signing17415
+Node: Inserting Keys18758
+Node: Decrypting19736
+Node: Verifying21230
+Node: Snarfing Keys21822
+Node: Remailer Support22166
+Node: Remailer Introduction23175
+Node: Remailer Quick Start25697
+Node: Remailer Chains27053
+Node: Response Blocks30734
+Node: Pseudonyms32510
+Node: Remailing Posts34250
+Node: Mixmaster Support35508
+Node: Remailer Security38186
+Node: Verifiable Pseudonyms40263
+Node: Remailer Tips41756
+Node: Passphrase Cache44388
+Node: Key Fetching46066
+Node: Keyring Fetch48511
+Node: Finger Fetch49286
+Node: HTTP Fetch49565
+Node: GnuPG Fetch52320
+Node: Miscellaneous Configuration53152
+Node: Alternate Keyring53861
+Node: Comment Field54706
+Node: Mode Line55435
+Node: Key Bindings56021
+Node: Nonstandard Paths56990
+Node: Tips58787
+Node: Limitations60027
+Node: References61377
+Node: Online Resources61907
+Node: Key Servers64417
+Node: Mailing List66095
+Node: Politics66703
+Node: Credits68115
+Node: Index69060
+
+End Tag Table

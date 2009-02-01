@@ -1,0 +1,152 @@
+                   Design notes for a fileset mode
+                   ===============================
+              [Time-stamp: <1999-11-23 13:46:44 esler> ]
+
+
+{{{ Intro
+
+    Use as a prototype to perform functions for the CR browser and
+    also for ClearCase Mode. A Major Mode, with the ability to add a
+    CCase Minor Mode.
+
+    Suffix: ".fls"
+
+}}}
+
+{{{ GUI
+
+    Display:
+      -like a list box
+      -optional tree display using widgets
+       -permit tree-pruning
+    Menubar and context menu.
+
+}}}
+
+{{{ Operations in mode
+
+  - construct
+
+  - select single
+  - select multiple
+  - invert selection
+
+  - apply predicate - keep
+  - apply predicate - delete
+  - apply thunk
+  - apply transform
+  - apply set-transform
+  - apply binary
+
+  - Others:
+    - identify/remove duplicate inodes (hardlinked)
+    - multiple selection and remove
+    - insert one/range
+    - delete one/range
+
+}}}
+
+{{{ Constructors:
+
+  - directory contents
+  - directory tree
+  - list of filenames
+  - file of file names (.fls file)
+  - stream/process/pipe of filenames
+  - CR
+  - version tree
+
+}}}
+
+{{{ Predicates (path -> bool)
+
+  - grep contents
+  - on name
+  - on size
+  - on tree-residency
+  - ftype
+  - mtype
+  - ClearCase properties
+    - element_type
+  - on extension
+  - user-defined
+    - computed by shell-command
+    - computed by elisp-function
+
+}}}
+
+{{{ Thunks (file -> nil)
+
+  - grep
+  - global-replace
+  - global-query-replace
+  - ediff wth predecessor
+  - ediff with branch base
+  - user-defined
+    - computed by shell-command
+    - computed by elisp-function
+
+}}}
+
+{{{ Transforms (file -> set-of-file)
+
+  - absolutise/relativise
+  - resolve all links
+  - add sub-components
+    - dir contents
+    - DO's deps
+    - DO's sub-dos
+    - DO's objects
+  - replace with sub-components
+    - dir contents
+    - DO's deps
+    - DO's sub-dos
+    - DO''s objects
+  - user-defined
+    - computed by shell-command
+    - computed by elisp-function
+
+}}}
+
+{{{ Set-thunks (set-of-file -> nil)
+
+    - delete selected
+    - apply file-think to selected
+    
+}}} 
+
+{{{ Set-transforms (set-of-file -> set-of-file)
+
+  - sort
+    - name
+    - size
+    - age
+    - owner
+    - extension
+    - ftype
+    - mtype
+    - computed by process
+    - computed by elisp-function
+  - remove duplicates
+  - find duplicates
+  - user-defined
+    - computed by shell-command
+    - computed by elisp-function
+
+}}}
+
+{{{ Binaries: (set-of-file x set-of-file -> set-of-file)
+
+  - union with other
+  - intersect with other
+  - difference
+  - user-defined
+    - computed by shell-command
+    - computed by elisp-function
+
+}}}
+    
+
+;; Local variables:
+;; folded-file: t
+;; End:

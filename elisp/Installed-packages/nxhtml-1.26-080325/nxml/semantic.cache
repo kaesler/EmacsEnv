@@ -1,0 +1,16 @@
+;; Object nxml/
+;; SEMANTICDB Tags save file
+(semanticdb-project-database-file "nxml/"
+  :tables (list 
+   (semanticdb-table "autostart.el"
+    :major-mode 'emacs-lisp-mode
+    :tags '(("message" code nil nil [1279 1327]) ("unless" code nil nil [1451 1568]) ("unless" code nil nil [1570 2500]))
+    :file "autostart.el"
+    :pointmax 2600
+    :unmatched-syntax 'nil
+    )
+   )
+  :file "semantic.cache"
+  :semantic-tag-version "2.0pre4"
+  :semanticdb-version "2.0pre4"
+  )

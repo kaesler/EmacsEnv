@@ -1,0 +1,1275 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Killing Emacs,  Next: Suspending Emacs,  Up: Getting Out
+
+Killing Emacs
+-------------
+
+   Killing Emacs means ending the execution of the Emacs process.  The
+parent process normally resumes control.  The low-level primitive for
+killing Emacs is `kill-emacs'.
+
+ - Function: kill-emacs &optional exit-data
+     This function exits the Emacs process and kills it.
+
+     If EXIT-DATA is an integer, then it is used as the exit status of
+     the Emacs process.  (This is useful primarily in batch operation;
+     see *Note Batch Mode::.)
+
+     If EXIT-DATA is a string, its contents are stuffed into the
+     terminal input buffer so that the shell (or whatever program next
+     reads input) can read them.
+
+   All the information in the Emacs process, aside from files that have
+been saved, is lost when the Emacs process is killed.  Because killing
+Emacs inadvertently can lose a lot of work, Emacs queries for
+confirmation before actually terminating if you have buffers that need
+saving or subprocesses that are running.  This is done in the function
+`save-buffers-kill-emacs'.
+
+ - Variable: kill-emacs-query-functions
+     After asking the standard questions, `save-buffers-kill-emacs'
+     calls the functions in the list `kill-emacs-query-functions', in
+     order of appearance, with no arguments.  These functions can ask
+     for additional confirmation from the user.  If any of them returns
+     `nil', Emacs is not killed.
+
+ - Variable: kill-emacs-hook
+     This variable is a normal hook; once `save-buffers-kill-emacs' is
+     finished with all file saving and confirmation, it runs the
+     functions in this hook.
+
+
+File: elisp,  Node: Suspending Emacs,  Prev: Killing Emacs,  Up: Getting Out
+
+Suspending Emacs
+----------------
+
+   "Suspending Emacs" means stopping Emacs temporarily and returning
+control to its superior process, which is usually the shell.  This
+allows you to resume editing later in the same Emacs process, with the
+same buffers, the same kill ring, the same undo history, and so on.  To
+resume Emacs, use the appropriate command in the parent shell--most
+likely `fg'.
+
+   Some operating systems do not support suspension of jobs; on these
+systems, "suspension" actually creates a new shell temporarily as a
+subprocess of Emacs.  Then you would exit the shell to return to Emacs.
+
+   Suspension is not useful with window systems, because the Emacs job
+may not have a parent that can resume it again, and in any case you can
+give input to some other job such as a shell merely by moving to a
+different window.  Therefore, suspending is not allowed when Emacs is
+using a window system (X or MS Windows).
+
+ - Function: suspend-emacs string
+     This function stops Emacs and returns control to the superior
+     process.  If and when the superior process resumes Emacs,
+     `suspend-emacs' returns `nil' to its caller in Lisp.
+
+     If STRING is non-`nil', its characters are sent to be read as
+     terminal input by Emacs's superior shell.  The characters in
+     STRING are not echoed by the superior shell; only the results
+     appear.
+
+     Before suspending, `suspend-emacs' runs the normal hook
+     `suspend-hook'.
+
+     After the user resumes Emacs, `suspend-emacs' runs the normal hook
+     `suspend-resume-hook'.  *Note Hooks::.
+
+     The next redisplay after resumption will redraw the entire screen,
+     unless the variable `no-redraw-on-reenter' is non-`nil' (*note
+     Refresh Screen::).
+
+     In the following example, note that `pwd' is not echoed after
+     Emacs is suspended.  But it is read and executed by the shell.
+
+          (suspend-emacs)
+               => nil
+          
+          (add-hook 'suspend-hook
+                    (function (lambda ()
+                                (or (y-or-n-p
+                                      "Really suspend? ")
+                                    (error "Suspend cancelled")))))
+               => (lambda nil
+                    (or (y-or-n-p "Really suspend? ")
+                        (error "Suspend cancelled")))
+          (add-hook 'suspend-resume-hook
+                    (function (lambda () (message "Resumed!"))))
+               => (lambda nil (message "Resumed!"))
+          (suspend-emacs "pwd")
+               => nil
+          ---------- Buffer: Minibuffer ----------
+          Really suspend? y
+          ---------- Buffer: Minibuffer ----------
+          
+          ---------- Parent Shell ----------
+          lewis@slug[23] % /user/lewis/manual
+          lewis@slug[24] % fg
+          
+          ---------- Echo Area ----------
+          Resumed!
+
+ - Variable: suspend-hook
+     This variable is a normal hook that Emacs runs before suspending.
+
+ - Variable: suspend-resume-hook
+     This variable is a normal hook that Emacs runs on resuming after a
+     suspension.
+
+
+File: elisp,  Node: System Environment,  Next: User Identification,  Prev: Getting Out,  Up: System Interface
+
+Operating System Environment
+============================
+
+   Emacs provides access to variables in the operating system
+environment through various functions.  These variables include the
+name of the system, the user's UID, and so on.
+
+ - Variable: system-configuration
+     This variable holds the GNU configuration name for the
+     hardware/software configuration of your system, as a string.  The
+     convenient way to test parts of this string is with `string-match'.
+
+ - Variable: system-type
+     The value of this variable is a symbol indicating the type of
+     operating system Emacs is operating on.  Here is a table of the
+     possible values:
+
+    `alpha-vms'
+          VMS on the Alpha.
+
+    `aix-v3'
+          AIX.
+
+    `berkeley-unix'
+          Berkeley BSD.
+
+    `dgux'
+          Data General DGUX operating system.
+
+    `gnu'
+          the GNU system (using the GNU kernel, which consists of the
+          HURD and Mach).
+
+    `gnu/linux'
+          A GNU/Linux system--that is, a variant GNU system, using the
+          Linux kernel.  (These systems are the ones people often call
+          "Linux," but actually Linux is just the kernel, not the whole
+          system.)
+
+    `hpux'
+          Hewlett-Packard HPUX operating system.
+
+    `irix'
+          Silicon Graphics Irix system.
+
+    `ms-dos'
+          Microsoft MS-DOS "operating system."  Emacs compiled with
+          DJGPP for MS-DOS binds `system-type' to `ms-dos' even when
+          you run it on MS-Windows.
+
+    `next-mach'
+          NeXT Mach-based system.
+
+    `rtu'
+          Masscomp RTU, UCB universe.
+
+    `unisoft-unix'
+          UniSoft UniPlus.
+
+    `usg-unix-v'
+          AT&T System V.
+
+    `vax-vms'
+          VAX VMS.
+
+    `windows-nt'
+          Microsoft windows NT.  The same executable supports Windows
+          9X, but the value of `system-type' is `windows-nt' in either
+          case.
+
+    `xenix'
+          SCO Xenix 386.
+
+     We do not wish to add new symbols to make finer distinctions
+     unless it is absolutely necessary!  In fact, we hope to eliminate
+     some of these alternatives in the future.  We recommend using
+     `system-configuration' to distinguish between different operating
+     systems.
+
+ - Function: system-name
+     This function returns the name of the machine you are running on.
+          (system-name)
+               => "www.gnu.org"
+
+   The symbol `system-name' is a variable as well as a function.  In
+fact, the function returns whatever value the variable `system-name'
+currently holds.  Thus, you can set the variable `system-name' in case
+Emacs is confused about the name of your system.  The variable is also
+useful for constructing frame titles (*note Frame Titles::).
+
+ - Variable: mail-host-address
+     If this variable is non-`nil', it is used instead of `system-name'
+     for purposes of generating email addresses.  For example, it is
+     used when constructing the default value of `user-mail-address'.
+     *Note User Identification::.  (Since this is done when Emacs
+     starts up, the value actually used is the one saved when Emacs was
+     dumped.  *Note Building Emacs::.)
+
+ - Command: getenv var
+     This function returns the value of the environment variable VAR,
+     as a string.  Within Emacs, the environment variable values are
+     kept in the Lisp variable `process-environment'.
+
+          (getenv "USER")
+               => "lewis"
+          
+          lewis@slug[10] % printenv
+          PATH=.:/user/lewis/bin:/usr/bin:/usr/local/bin
+          USER=lewis
+          TERM=ibmapa16
+          SHELL=/bin/csh
+          HOME=/user/lewis
+
+ - Command: setenv variable value
+     This command sets the value of the environment variable named
+     VARIABLE to VALUE.  Both arguments should be strings.  This
+     function works by modifying `process-environment'; binding that
+     variable with `let' is also reasonable practice.
+
+ - Variable: process-environment
+     This variable is a list of strings, each describing one environment
+     variable.  The functions `getenv' and `setenv' work by means of
+     this variable.
+
+          process-environment
+          => ("l=/usr/stanford/lib/gnuemacs/lisp"
+              "PATH=.:/user/lewis/bin:/usr/class:/nfsusr/local/bin"
+              "USER=lewis"
+              "TERM=ibmapa16"
+              "SHELL=/bin/csh"
+              "HOME=/user/lewis")
+
+ - Variable: path-separator
+     This variable holds a string which says which character separates
+     directories in a search path (as found in an environment
+     variable).  Its value is `":"' for Unix and GNU systems, and `";"'
+     for MS-DOS and MS-Windows.
+
+ - Function: parse-colon-path path
+     This function takes a search path string such as would be the
+     value of the `PATH' environment variable, and splits it at the
+     separators, returning a list of directory names.  `nil' in this
+     list stands for "use the current directory."  Although the
+     function's name says "colon," it actually uses the value of
+     `path-separator'.
+
+          (parse-colon-path ":/foo:/bar")
+               => (nil "/foo/" "/bar/")
+
+ - Variable: invocation-name
+     This variable holds the program name under which Emacs was
+     invoked.  The value is a string, and does not include a directory
+     name.
+
+ - Variable: invocation-directory
+     This variable holds the directory from which the Emacs executable
+     was invoked, or perhaps `nil' if that directory cannot be
+     determined.
+
+ - Variable: installation-directory
+     If non-`nil', this is a directory within which to look for the
+     `lib-src' and `etc' subdirectories.  This is non-`nil' when Emacs
+     can't find those directories in their standard installed
+     locations, but can find them in a directory related somehow to the
+     one containing the Emacs executable.
+
+ - Function: load-average &optional use-float
+     This function returns the current 1-minute, 5-minute, and
+     15-minute load averages, in a list.
+
+     By default, the values are integers that are 100 times the system
+     load averages, which indicate the average number of processes
+     trying to run.  If USE-FLOAT is non-`nil', then they are returned
+     as floating point numbers and without multiplying by 100.
+
+          (load-average)
+               => (169 48 36)
+          (load-average t)
+               => (1.69 0.48 0.36)
+          
+          lewis@rocky[5] % uptime
+           11:55am  up 1 day, 19:37,  3 users,
+           load average: 1.69, 0.48, 0.36
+
+ - Function: emacs-pid
+     This function returns the process ID of the Emacs process.
+
+ - Variable: tty-erase-char
+     This variable holds the erase character that was selected in the
+     system's terminal driver, before Emacs was started.
+
+ - Function: setprv privilege-name &optional setp getprv
+     This function sets or resets a VMS privilege.  (It does not exist
+     on other systems.)  The first argument is the privilege name, as a
+     string.  The second argument, SETP, is `t' or `nil', indicating
+     whether the privilege is to be turned on or off.  Its default is
+     `nil'.  The function returns `t' if successful, `nil' otherwise.
+
+     If the third argument, GETPRV, is non-`nil', `setprv' does not
+     change the privilege, but returns `t' or `nil' indicating whether
+     the privilege is currently enabled.
+
+
+File: elisp,  Node: User Identification,  Next: Time of Day,  Prev: System Environment,  Up: System Interface
+
+User Identification
+===================
+
+ - Variable: init-file-user
+     This variable says which user's init files should be used by
+     Emacs--or `nil' if none.  The value reflects command-line options
+     such as `-q' or `-u USER'.
+
+     Lisp packages that load files of customizations, or any other sort
+     of user profile, should obey this variable in deciding where to
+     find it.  They should load the profile of the user name found in
+     this variable.  If `init-file-user' is `nil', meaning that the `-q'
+     option was used, then Lisp packages should not load any
+     customization files or user profile.
+
+ - Variable: user-mail-address
+     This holds the nominal email address of the user who is using
+     Emacs.  Emacs normally sets this variable to a default value after
+     reading your init files, but not if you have already set it.  So
+     you can set the variable to some other value in your init file if
+     you do not want to use the default value.
+
+ - Function: user-login-name &optional uid
+     If you don't specify UID, this function returns the name under
+     which the user is logged in.  If the environment variable `LOGNAME'
+     is set, that value is used.  Otherwise, if the environment variable
+     `USER' is set, that value is used.  Otherwise, the value is based
+     on the effective UID, not the real UID.
+
+     If you specify UID, the value is the user name that corresponds to
+     UID (which should be an integer).
+
+          (user-login-name)
+               => "lewis"
+
+ - Function: user-real-login-name
+     This function returns the user name corresponding to Emacs's real
+     UID.  This ignores the effective UID and ignores the environment
+     variables `LOGNAME' and `USER'.
+
+ - Function: user-full-name &optional uid
+     This function returns the full name of the logged-in user--or the
+     value of the environment variable `NAME', if that is set.
+
+          (user-full-name)
+               => "Bil Lewis"
+
+     If the Emacs job's user-id does not correspond to any known user
+     (and provided `NAME' is not set), the value is `"unknown"'.
+
+     If UID is non-`nil', then it should be an integer (a user-id) or a
+     string (a login name).  Then `user-full-name' returns the full
+     name corresponding to that user-id or login name.  If you specify a
+     user-id or login name that isn't defined, it returns `nil'.
+
+   The symbols `user-login-name', `user-real-login-name' and
+`user-full-name' are variables as well as functions.  The functions
+return the same values that the variables hold.  These variables allow
+you to "fake out" Emacs by telling the functions what to return.  The
+variables are also useful for constructing frame titles (*note Frame
+Titles::).
+
+ - Function: user-real-uid
+     This function returns the real UID of the user.
+
+          (user-real-uid)
+               => 19
+
+ - Function: user-uid
+     This function returns the effective UID of the user.
+
+
+File: elisp,  Node: Time of Day,  Next: Time Conversion,  Prev: User Identification,  Up: System Interface
+
+Time of Day
+===========
+
+   This section explains how to determine the current time and the time
+zone.
+
+ - Function: current-time-string &optional time-value
+     This function returns the current time and date as a human-readable
+     string.  The format of the string is unvarying; the number of
+     characters used for each part is always the same, so you can
+     reliably use `substring' to extract pieces of it.  It is wise to
+     count the characters from the beginning of the string rather than
+     from the end, as additional information may some day be added at
+     the end.
+
+     The argument TIME-VALUE, if given, specifies a time to format
+     instead of the current time.  The argument should be a list whose
+     first two elements are integers.  Thus, you can use times obtained
+     from `current-time' (see below) and from `file-attributes' (*note
+     File Attributes::).
+
+          (current-time-string)
+               => "Wed Oct 14 22:21:05 1987"
+
+ - Function: current-time
+     This function returns the system's time value as a list of three
+     integers: `(HIGH LOW MICROSEC)'.  The integers HIGH and LOW
+     combine to give the number of seconds since 0:00 January 1, 1970
+     (local time), which is HIGH * 2**16 + LOW.
+
+     The third element, MICROSEC, gives the microseconds since the
+     start of the current second (or 0 for systems that return time with
+     the resolution of only one second).
+
+     The first two elements can be compared with file time values such
+     as you get with the function `file-attributes'.  *Note File
+     Attributes::.
+
+ - Function: current-time-zone &optional time-value
+     This function returns a list describing the time zone that the
+     user is in.
+
+     The value has the form `(OFFSET NAME)'.  Here OFFSET is an integer
+     giving the number of seconds ahead of UTC (east of Greenwich).  A
+     negative value means west of Greenwich.  The second element, NAME,
+     is a string giving the name of the time zone.  Both elements
+     change when daylight savings time begins or ends; if the user has
+     specified a time zone that does not use a seasonal time
+     adjustment, then the value is constant through time.
+
+     If the operating system doesn't supply all the information
+     necessary to compute the value, both elements of the list are
+     `nil'.
+
+     The argument TIME-VALUE, if given, specifies a time to analyze
+     instead of the current time.  The argument should be a cons cell
+     containing two integers, or a list whose first two elements are
+     integers.  Thus, you can use times obtained from `current-time'
+     (see above) and from `file-attributes' (*note File Attributes::).
+
+ - Function: float-time &optional time-value
+     This function returns the current time as a floating-point number
+     of seconds since the epoch.  The argument TIME-VALUE, if given,
+     specifies a time to convert instead of the current time.  The
+     argument should have the same form as for `current-time-string'
+     (see above), and it also accepts the output of `current-time' and
+     `file-attributes'.
+
+     _Warning_: Since the result is floating point, it may not be
+     exact.  Do not use this function if precise time stamps are
+     required.
+
+
+File: elisp,  Node: Time Conversion,  Next: Timers,  Prev: Time of Day,  Up: System Interface
+
+Time Conversion
+===============
+
+   These functions convert time values (lists of two or three integers)
+to strings or to calendrical information.  There is also a function to
+convert calendrical information to a time value.  You can get time
+values from the functions `current-time' (*note Time of Day::) and
+`file-attributes' (*note File Attributes::).
+
+   Many operating systems are limited to time values that contain 32
+bits of information; these systems typically handle only the times from
+1901-12-13 20:45:52 UTC through 2038-01-19 03:14:07 UTC.  However, some
+operating systems have larger time values, and can represent times far
+in the past or future.
+
+   Time conversion functions always use the Gregorian calendar, even for
+dates before the Gregorian calendar was introduced.  Year numbers count
+the number of years since the year 1 B.C., and do not skip zero as
+traditional Gregorian years do; for example, the year number -37
+represents the Gregorian year 38 B.C.
+
+ - Function: format-time-string format-string &optional time universal
+     This function converts TIME (or the current time, if TIME is
+     omitted) to a string according to FORMAT-STRING.  The argument
+     FORMAT-STRING may contain `%'-sequences which say to substitute
+     parts of the time.  Here is a table of what the `%'-sequences mean:
+
+    `%a'
+          This stands for the abbreviated name of the day of week.
+
+    `%A'
+          This stands for the full name of the day of week.
+
+    `%b'
+          This stands for the abbreviated name of the month.
+
+    `%B'
+          This stands for the full name of the month.
+
+    `%c'
+          This is a synonym for `%x %X'.
+
+    `%C'
+          This has a locale-specific meaning.  In the default locale
+          (named C), it is equivalent to `%A, %B %e, %Y'.
+
+    `%d'
+          This stands for the day of month, zero-padded.
+
+    `%D'
+          This is a synonym for `%m/%d/%y'.
+
+    `%e'
+          This stands for the day of month, blank-padded.
+
+    `%h'
+          This is a synonym for `%b'.
+
+    `%H'
+          This stands for the hour (00-23).
+
+    `%I'
+          This stands for the hour (01-12).
+
+    `%j'
+          This stands for the day of the year (001-366).
+
+    `%k'
+          This stands for the hour (0-23), blank padded.
+
+    `%l'
+          This stands for the hour (1-12), blank padded.
+
+    `%m'
+          This stands for the month (01-12).
+
+    `%M'
+          This stands for the minute (00-59).
+
+    `%n'
+          This stands for a newline.
+
+    `%p'
+          This stands for `AM' or `PM', as appropriate.
+
+    `%r'
+          This is a synonym for `%I:%M:%S %p'.
+
+    `%R'
+          This is a synonym for `%H:%M'.
+
+    `%S'
+          This stands for the seconds (00-59).
+
+    `%t'
+          This stands for a tab character.
+
+    `%T'
+          This is a synonym for `%H:%M:%S'.
+
+    `%U'
+          This stands for the week of the year (01-52), assuming that
+          weeks start on Sunday.
+
+    `%w'
+          This stands for the numeric day of week (0-6).  Sunday is day
+          0.
+
+    `%W'
+          This stands for the week of the year (01-52), assuming that
+          weeks start on Monday.
+
+    `%x'
+          This has a locale-specific meaning.  In the default locale
+          (named `C'), it is equivalent to `%D'.
+
+    `%X'
+          This has a locale-specific meaning.  In the default locale
+          (named `C'), it is equivalent to `%T'.
+
+    `%y'
+          This stands for the year without century (00-99).
+
+    `%Y'
+          This stands for the year with century.
+
+    `%Z'
+          This stands for the time zone abbreviation.
+
+     You can also specify the field width and type of padding for any of
+     these `%'-sequences.  This works as in `printf': you write the
+     field width as digits in the middle of a `%'-sequences.  If you
+     start the field width with `0', it means to pad with zeros.  If you
+     start the field width with `_', it means to pad with spaces.
+
+     For example, `%S' specifies the number of seconds since the minute;
+     `%03S' means to pad this with zeros to 3 positions, `%_3S' to pad
+     with spaces to 3 positions.  Plain `%3S' pads with zeros, because
+     that is how `%S' normally pads to two positions.
+
+     The characters `E' and `O' act as modifiers when used between `%'
+     and one of the letters in the table above.  `E' specifies using
+     the current locale's "alternative" version of the date and time.
+     In a Japanese locale, for example, `%Ex' might yield a date format
+     based on the Japanese Emperors' reigns.  `E' is allowed in `%Ec',
+     `%EC', `%Ex', `%EX', `%Ey', and `%EY'.
+
+     `O' means to use the current locale's "alternative" representation
+     of numbers, instead of the ordinary decimal digits.  This is
+     allowed with most letters, all the ones that output numbers.
+
+     If UNIVERSAL is non-`nil', that means to describe the time as
+     Universal Time; `nil' means describe it using what Emacs believes
+     is the local time zone (see `current-time-zone').
+
+     This function uses the C library function `strftime' to do most of
+     the work.  In order to communicate with that function, it first
+     encodes its argument using the coding system specified by
+     `locale-coding-system' (*note Locales::); after `strftime' returns
+     the resulting string, `format-time-string' decodes the string
+     using that same coding system.
+
+ - Function: decode-time time
+     This function converts a time value into calendrical information.
+     The return value is a list of nine elements, as follows:
+
+          (SECONDS MINUTES HOUR DAY MONTH YEAR DOW DST ZONE)
+
+     Here is what the elements mean:
+
+    SECONDS
+          The number of seconds past the minute, as an integer between
+          0 and 59.
+
+    MINUTES
+          The number of minutes past the hour, as an integer between 0
+          and 59.
+
+    HOUR
+          The hour of the day, as an integer between 0 and 23.
+
+    DAY
+          The day of the month, as an integer between 1 and 31.
+
+    MONTH
+          The month of the year, as an integer between 1 and 12.
+
+    YEAR
+          The year, an integer typically greater than 1900.
+
+    DOW
+          The day of week, as an integer between 0 and 6, where 0
+          stands for Sunday.
+
+    DST
+          `t' if daylight savings time is effect, otherwise `nil'.
+
+    ZONE
+          An integer indicating the time zone, as the number of seconds
+          east of Greenwich.
+
+     *Common Lisp Note:* Common Lisp has different meanings for DOW and
+     ZONE.
+
+ - Function: encode-time seconds minutes hour day month year &optional
+          zone
+     This function is the inverse of `decode-time'.  It converts seven
+     items of calendrical data into a time value.  For the meanings of
+     the arguments, see the table above under `decode-time'.
+
+     Year numbers less than 100 are not treated specially.  If you want
+     them to stand for years above 1900, or years above 2000, you must
+     alter them yourself before you call `encode-time'.
+
+     The optional argument ZONE defaults to the current time zone and
+     its daylight savings time rules.  If specified, it can be either a
+     list (as you would get from `current-time-zone'), a string as in
+     the `TZ' environment variable, or an integer (as you would get from
+     `decode-time').  The specified zone is used without any further
+     alteration for daylight savings time.
+
+     If you pass more than seven arguments to `encode-time', the first
+     six are used as SECONDS through YEAR, the last argument is used as
+     ZONE, and the arguments in between are ignored.  This feature
+     makes it possible to use the elements of a list returned by
+     `decode-time' as the arguments to `encode-time', like this:
+
+          (apply 'encode-time (decode-time ...))
+
+     You can perform simple date arithmetic by using out-of-range
+     values for the SECONDS, MINUTES, HOUR, DAY, and MONTH arguments;
+     for example, day 0 means the day preceding the given month.
+
+     The operating system puts limits on the range of possible time
+     values; if you try to encode a time that is out of range, an error
+     results.
+
+
+File: elisp,  Node: Timers,  Next: Terminal Input,  Prev: Time Conversion,  Up: System Interface
+
+Timers for Delayed Execution
+============================
+
+   You can set up a "timer" to call a function at a specified future
+time or after a certain length of idleness.
+
+   Emacs cannot run timers at any arbitrary point in a Lisp program; it
+can run them only when Emacs could accept output from a subprocess:
+namely, while waiting or inside certain primitive functions such as
+`sit-for' or `read-event' which _can_ wait.  Therefore, a timer's
+execution may be delayed if Emacs is busy.  However, the time of
+execution is very precise if Emacs is idle.
+
+ - Function: run-at-time time repeat function &rest args
+     This function arranges to call FUNCTION with arguments ARGS at
+     time TIME.  The argument FUNCTION is a function to call later, and
+     ARGS are the arguments to give it when it is called.  The time
+     TIME is specified as a string.
+
+     Absolute times may be specified in a wide variety of formats; this
+     function tries to accept all the commonly used date formats.  Valid
+     formats include these two,
+
+          YEAR-MONTH-DAY HOUR:MIN:SEC TIMEZONE
+          
+          HOUR:MIN:SEC TIMEZONE MONTH/DAY/YEAR
+
+     where in both examples all fields are numbers; the format that
+     `current-time-string' returns is also allowed, and many others as
+     well.
+
+     To specify a relative time, use numbers followed by units.  For
+     example:
+
+    `1 min'
+          denotes 1 minute from now.
+
+    `1 min 5 sec'
+          denotes 65 seconds from now.
+
+    `1 min 2 sec 3 hour 4 day 5 week 6 fortnight 7 month 8 year'
+          denotes exactly 103 months, 123 days, and 10862 seconds from
+          now.
+
+     For relative time values, Emacs considers a month to be exactly
+     thirty days, and a year to be exactly 365.25 days.
+
+     If TIME is a number (integer or floating point), that specifies a
+     relative time measured in seconds.
+
+     The argument REPEAT specifies how often to repeat the call.  If
+     REPEAT is `nil', there are no repetitions; FUNCTION is called just
+     once, at TIME.  If REPEAT is a number, it specifies a repetition
+     period measured in seconds.
+
+     In most cases, REPEAT has no effect on when _first_ call takes
+     place--TIME alone specifies that.  There is one exception: if TIME
+     is `t', then the timer runs whenever the time is a multiple of
+     REPEAT seconds after the epoch.  This is useful for functions like
+     `display-time'.
+
+     The function `run-at-time' returns a timer value that identifies
+     the particular scheduled future action.  You can use this value to
+     call `cancel-timer' (see below).
+
+ - Macro: with-timeout (seconds timeout-forms...) body...
+     Execute BODY, but give up after SECONDS seconds.  If BODY finishes
+     before the time is up, `with-timeout' returns the value of the
+     last form in BODY.  If, however, the execution of BODY is cut
+     short by the timeout, then `with-timeout' executes all the
+     TIMEOUT-FORMS and returns the value of the last of them.
+
+     This macro works by setting a timer to run after SECONDS seconds.
+     If BODY finishes before that time, it cancels the timer.  If the
+     timer actually runs, it terminates execution of BODY, then
+     executes TIMEOUT-FORMS.
+
+     Since timers can run within a Lisp program only when the program
+     calls a primitive that can wait, `with-timeout' cannot stop
+     executing BODY while it is in the midst of a computation--only
+     when it calls one of those primitives.  So use `with-timeout' only
+     with a BODY that waits for input, not one that does a long
+     computation.
+
+   The function `y-or-n-p-with-timeout' provides a simple way to use a
+timer to avoid waiting too long for an answer.  *Note Yes-or-No
+Queries::.
+
+ - Function: run-with-idle-timer secs repeat function &rest args
+     Set up a timer which runs when Emacs has been idle for SECS
+     seconds.  The value of SECS may be an integer or a floating point
+     number.
+
+     If REPEAT is `nil', the timer runs just once, the first time Emacs
+     remains idle for a long enough time.  More often REPEAT is
+     non-`nil', which means to run the timer _each time_ Emacs remains
+     idle for SECS seconds.
+
+     The function `run-with-idle-timer' returns a timer value which you
+     can use in calling `cancel-timer' (see below).
+
+   Emacs becomes "idle" when it starts waiting for user input, and it
+remains idle until the user provides some input.  If a timer is set for
+five seconds of idleness, it runs approximately five seconds after Emacs
+first becomes idle.  Even if REPEAT is non-`nil', this timer will not
+run again as long as Emacs remains idle, because the duration of
+idleness will continue to increase and will not go down to five seconds
+again.
+
+   Emacs can do various things while idle: garbage collect, autosave or
+handle data from a subprocess.  But these interludes during idleness do
+not interfere with idle timers, because they do not reset the clock of
+idleness to zero.  An idle timer set for 600 seconds will run when ten
+minutes have elapsed since the last user command was finished, even if
+subprocess output has been accepted thousands of times within those ten
+minutes, and even if there have been garbage collections and autosaves.
+
+   When the user supplies input, Emacs becomes non-idle while executing
+the input.  Then it becomes idle again, and all the idle timers that are
+set up to repeat will subsequently run another time, one by one.
+
+ - Function: cancel-timer timer
+     Cancel the requested action for TIMER, which should be a value
+     previously returned by `run-at-time' or `run-with-idle-timer'.
+     This cancels the effect of that call to `run-at-time'; the arrival
+     of the specified time will not cause anything special to happen.
+
+
+File: elisp,  Node: Terminal Input,  Next: Terminal Output,  Prev: Timers,  Up: System Interface
+
+Terminal Input
+==============
+
+   This section describes functions and variables for recording or
+manipulating terminal input.  See *Note Display::, for related
+functions.
+
+* Menu:
+
+* Input Modes::		Options for how input is processed.
+* Translating Input::   Low level conversion of some characters or events
+			  into others.
+* Recording Input::	Saving histories of recent or all input events.
+
+
+File: elisp,  Node: Input Modes,  Next: Translating Input,  Up: Terminal Input
+
+Input Modes
+-----------
+
+ - Function: set-input-mode interrupt flow meta quit-char
+     This function sets the mode for reading keyboard input.  If
+     INTERRUPT is non-null, then Emacs uses input interrupts.  If it is
+     `nil', then it uses CBREAK mode.  The default setting is
+     system-dependent.  Some systems always use CBREAK mode regardless
+     of what is specified.
+
+     When Emacs communicates directly with X, it ignores this argument
+     and uses interrupts if that is the way it knows how to communicate.
+
+     If FLOW is non-`nil', then Emacs uses XON/XOFF (`C-q', `C-s') flow
+     control for output to the terminal.  This has no effect except in
+     CBREAK mode.  *Note Flow Control::.
+
+     The argument META controls support for input character codes above
+     127.  If META is `t', Emacs converts characters with the 8th bit
+     set into Meta characters.  If META is `nil', Emacs disregards the
+     8th bit; this is necessary when the terminal uses it as a parity
+     bit.  If META is neither `t' nor `nil', Emacs uses all 8 bits of
+     input unchanged.  This is good for terminals that use 8-bit
+     character sets.
+
+     If QUIT-CHAR is non-`nil', it specifies the character to use for
+     quitting.  Normally this character is `C-g'.  *Note Quitting::.
+
+   The `current-input-mode' function returns the input mode settings
+Emacs is currently using.
+
+ - Function: current-input-mode
+     This function returns the current mode for reading keyboard input.
+     It returns a list, corresponding to the arguments of
+     `set-input-mode', of the form `(INTERRUPT FLOW META QUIT)' in
+     which:
+    INTERRUPT
+          is non-`nil' when Emacs is using interrupt-driven input.  If
+          `nil', Emacs is using CBREAK mode.
+
+    FLOW
+          is non-`nil' if Emacs uses XON/XOFF (`C-q', `C-s') flow
+          control for output to the terminal.  This value is meaningful
+          only when INTERRUPT is `nil'.
+
+    META
+          is `t' if Emacs treats the eighth bit of input characters as
+          the meta bit; `nil' means Emacs clears the eighth bit of every
+          input character; any other value means Emacs uses all eight
+          bits as the basic character code.
+
+    QUIT
+          is the character Emacs currently uses for quitting, usually
+          `C-g'.
+
+
+File: elisp,  Node: Translating Input,  Next: Recording Input,  Prev: Input Modes,  Up: Terminal Input
+
+Translating Input Events
+------------------------
+
+   This section describes features for translating input events into
+other input events before they become part of key sequences.  These
+features apply to each event in the order they are described here: each
+event is first modified according to `extra-keyboard-modifiers', then
+translated through `keyboard-translate-table' (if applicable), and
+finally decoded with the specified keyboard coding system.  If it is
+being read as part of a key sequence, it is then added to the sequence
+being read; then subsequences containing it are checked first with
+`function-key-map' and then with `key-translation-map'.
+
+ - Variable: extra-keyboard-modifiers
+     This variable lets Lisp programs "press" the modifier keys on the
+     keyboard.  The value is a bit mask:
+
+    1
+          The <SHIFT> key.
+
+    2
+          The <LOCK> key.
+
+    4
+          The <CTL> key.
+
+    8
+          The <META> key.
+
+     Each time the user types a keyboard key, it is altered as if the
+     modifier keys specified in the bit mask were held down.
+
+     When using a window system, the program can "press" any of the
+     modifier keys in this way.  Otherwise, only the <CTL> and <META>
+     keys can be virtually pressed.
+
+ - Variable: keyboard-translate-table
+     This variable is the translate table for keyboard characters.  It
+     lets you reshuffle the keys on the keyboard without changing any
+     command bindings.  Its value is normally a char-table, or else
+     `nil'.
+
+     If `keyboard-translate-table' is a char-table (*note
+     Char-Tables::), then each character read from the keyboard is
+     looked up in this char-table.  If the value found there is
+     non-`nil', then it is used instead of the actual input character.
+
+     In the example below, we set `keyboard-translate-table' to a
+     char-table.  Then we fill it in to swap the characters `C-s' and
+     `C-\' and the characters `C-q' and `C-^'.  Subsequently, typing
+     `C-\' has all the usual effects of typing `C-s', and vice versa.
+     (*Note Flow Control::, for more information on this subject.)
+
+          (defun evade-flow-control ()
+            "Replace C-s with C-\ and C-q with C-^."
+            (interactive)
+            (setq keyboard-translate-table
+                  (make-char-table 'keyboard-translate-table nil))
+            ;; Swap `C-s' and `C-\'.
+            (aset keyboard-translate-table ?\034 ?\^s)
+            (aset keyboard-translate-table ?\^s ?\034)
+            ;; Swap `C-q' and `C-^'.
+            (aset keyboard-translate-table ?\036 ?\^q)
+            (aset keyboard-translate-table ?\^q ?\036))
+
+     Note that this translation is the first thing that happens to a
+     character after it is read from the terminal.  Record-keeping
+     features such as `recent-keys' and dribble files record the
+     characters after translation.
+
+ - Function: keyboard-translate from to
+     This function modifies `keyboard-translate-table' to translate
+     character code FROM into character code TO.  It creates the
+     keyboard translate table if necessary.
+
+   The remaining translation features translate subsequences of key
+sequences being read.  They are implemented in `read-key-sequence' and
+have no effect on input read with `read-event'.
+
+ - Variable: function-key-map
+     This variable holds a keymap that describes the character
+     sequences sent by function keys on an ordinary character terminal.
+     This keymap has the same structure as other keymaps, but is used
+     differently: it specifies translations to make while reading key
+     sequences, rather than bindings for key sequences.
+
+     If `function-key-map' "binds" a key sequence K to a vector V, then
+     when K appears as a subsequence _anywhere_ in a key sequence, it
+     is replaced with the events in V.
+
+     For example, VT100 terminals send `<ESC> O P' when the keypad
+     <PF1> key is pressed.  Therefore, we want Emacs to translate that
+     sequence of events into the single event `pf1'.  We accomplish
+     this by "binding" `<ESC> O P' to `[pf1]' in `function-key-map',
+     when using a VT100.
+
+     Thus, typing `C-c <PF1>' sends the character sequence `C-c <ESC> O
+     P'; later the function `read-key-sequence' translates this back
+     into `C-c <PF1>', which it returns as the vector `[?\C-c pf1]'.
+
+     Entries in `function-key-map' are ignored if they conflict with
+     bindings made in the minor mode, local, or global keymaps.  The
+     intent is that the character sequences that function keys send
+     should not have command bindings in their own right--but if they
+     do, the ordinary bindings take priority.
+
+     The value of `function-key-map' is usually set up automatically
+     according to the terminal's Terminfo or Termcap entry, but
+     sometimes those need help from terminal-specific Lisp files.
+     Emacs comes with terminal-specific files for many common
+     terminals; their main purpose is to make entries in
+     `function-key-map' beyond those that can be deduced from Termcap
+     and Terminfo.  *Note Terminal-Specific::.
+
+ - Variable: key-translation-map
+     This variable is another keymap used just like `function-key-map'
+     to translate input events into other events.  It differs from
+     `function-key-map' in two ways:
+
+        * `key-translation-map' goes to work after `function-key-map' is
+          finished; it receives the results of translation by
+          `function-key-map'.
+
+        * `key-translation-map' overrides actual key bindings.  For
+          example, if `C-x f' has a binding in `key-translation-map',
+          that translation takes effect even though `C-x f' also has a
+          key binding in the global map.
+
+     The intent of `key-translation-map' is for users to map one
+     character set to another, including ordinary characters normally
+     bound to `self-insert-command'.
+
+   You can use `function-key-map' or `key-translation-map' for more
+than simple aliases, by using a function, instead of a key sequence, as
+the "translation" of a key.  Then this function is called to compute
+the translation of that key.
+
+   The key translation function receives one argument, which is the
+prompt that was specified in `read-key-sequence'--or `nil' if the key
+sequence is being read by the editor command loop.  In most cases you
+can ignore the prompt value.
+
+   If the function reads input itself, it can have the effect of
+altering the event that follows.  For example, here's how to define
+`C-c h' to turn the character that follows into a Hyper character:
+
+     (defun hyperify (prompt)
+       (let ((e (read-event)))
+         (vector (if (numberp e)
+                     (logior (lsh 1 24) e)
+                   (if (memq 'hyper (event-modifiers e))
+                       e
+                     (add-event-modifier "H-" e))))))
+     
+     (defun add-event-modifier (string e)
+       (let ((symbol (if (symbolp e) e (car e))))
+         (setq symbol (intern (concat string
+                                      (symbol-name symbol))))
+         (if (symbolp e)
+             symbol
+           (cons symbol (cdr e)))))
+     
+     (define-key function-key-map "\C-ch" 'hyperify)
+
+   Finally, if you have enabled keyboard character set decoding using
+`set-keyboard-coding-system', decoding is done after the translations
+listed above.  *Note Specifying Coding Systems::.  In future Emacs
+versions, character set decoding may be done before the other
+translations.
+
+
+File: elisp,  Node: Recording Input,  Prev: Translating Input,  Up: Terminal Input
+
+Recording Input
+---------------
+
+ - Function: recent-keys
+     This function returns a vector containing the last 100 input
+     events from the keyboard or mouse.  All input events are included,
+     whether or not they were used as parts of key sequences.  Thus,
+     you always get the last 100 input events, not counting events
+     generated by keyboard macros.  (These are excluded because they
+     are less interesting for debugging; it should be enough to see the
+     events that invoked the macros.)
+
+     A call to `clear-this-command-keys' (*note Command Loop Info::)
+     causes this function to return an empty vector immediately
+     afterward.
+
+ - Command: open-dribble-file filename
+     This function opens a "dribble file" named FILENAME.  When a
+     dribble file is open, each input event from the keyboard or mouse
+     (but not those from keyboard macros) is written in that file.  A
+     non-character event is expressed using its printed representation
+     surrounded by `<...>'.
+
+     You close the dribble file by calling this function with an
+     argument of `nil'.
+
+     This function is normally used to record the input necessary to
+     trigger an Emacs bug, for the sake of a bug report.
+
+          (open-dribble-file "~/dribble")
+               => nil
+
+   See also the `open-termscript' function (*note Terminal Output::).
+
+
+File: elisp,  Node: Terminal Output,  Next: Sound Output,  Prev: Terminal Input,  Up: System Interface
+
+Terminal Output
+===============
+
+   The terminal output functions send output to the terminal, or keep
+track of output sent to the terminal.  The variable `baud-rate' tells
+you what Emacs thinks is the output speed of the terminal.
+
+ - Variable: baud-rate
+     This variable's value is the output speed of the terminal, as far
+     as Emacs knows.  Setting this variable does not change the speed
+     of actual data transmission, but the value is used for
+     calculations such as padding.  It also affects decisions about
+     whether to scroll part of the screen or repaint--even when using a
+     window system.  (We designed it this way despite the fact that a
+     window system has no true "output speed", to give you a way to
+     tune these decisions.)
+
+     The value is measured in baud.
+
+   If you are running across a network, and different parts of the
+network work at different baud rates, the value returned by Emacs may be
+different from the value used by your local terminal.  Some network
+protocols communicate the local terminal speed to the remote machine, so
+that Emacs and other programs can get the proper value, but others do
+not.  If Emacs has the wrong value, it makes decisions that are less
+than optimal.  To fix the problem, set `baud-rate'.
+
+ - Function: baud-rate
+     This obsolete function returns the value of the variable
+     `baud-rate'.
+
+ - Function: send-string-to-terminal string
+     This function sends STRING to the terminal without alteration.
+     Control characters in STRING have terminal-dependent effects.
+
+     One use of this function is to define function keys on terminals
+     that have downloadable function key definitions.  For example,
+     this is how (on certain terminals) to define function key 4 to
+     move forward four characters (by transmitting the characters `C-u
+     C-f' to the computer):
+
+          (send-string-to-terminal "\eF4\^U\^F")
+               => nil
+
+ - Command: open-termscript filename
+     This function is used to open a "termscript file" that will record
+     all the characters sent by Emacs to the terminal.  It returns
+     `nil'.  Termscript files are useful for investigating problems
+     where Emacs garbles the screen, problems that are due to incorrect
+     Termcap entries or to undesirable settings of terminal options more
+     often than to actual Emacs bugs.  Once you are certain which
+     characters were actually output, you can determine reliably
+     whether they correspond to the Termcap specifications in use.
+
+     See also `open-dribble-file' in *Note Terminal Input::.
+
+          (open-termscript "../junk/termscript")
+               => nil
+
+
+File: elisp,  Node: Sound Output,  Next: Special Keysyms,  Prev: Terminal Output,  Up: System Interface
+
+Sound Output
+============
+
+   To play sound using Emacs, use the function `play-sound'.  Only
+certain systems are supported; if you call `play-sound' on a system
+which cannot really do the job, it gives an error.  Emacs version 20 and
+earlier did not support sound at all.
+
+   The sound must be stored as a file in RIFF-WAVE format (`.wav') or
+Sun Audio format (`.au').
+
+ - Function: play-sound sound
+     This function plays a specified sound.  The argument, SOUND, has
+     the form `(sound PROPERTIES...)', where the PROPERTIES consist of
+     alternating keywords (particular symbols recognized specially) and
+     values corresponding to them.
+
+     Here is a table of the keywords that are currently meaningful in
+     SOUND, and their meanings:
+
+    `:file FILE'
+          This specifies the file containing the sound to play.  If the
+          file name is not absolute, it is expanded against the
+          directory `data-directory'.
+
+    `:data DATA'
+          This specifies the sound to play without need to refer to a
+          file.  The value, DATA, should be a string containing the
+          same bytes as a sound file.  We recommend using a unibyte
+          string.
+
+    `:volume VOLUME'
+          This specifies how loud to play the sound.  It should be a
+          number in the range of 0 to 1.  The default is to use
+          whatever volume has been specified before.
+
+    `:device DEVICE'
+          This specifies the system device on which to play the sound,
+          as a string.  The default device is system-dependent.
+
+     Before actually playing the sound, `play-sound' calls the
+     functions in the list `play-sound-functions'.  Each function is
+     called with one argument, SOUND.
+
+ - Function: play-sound-file file &optional volume device
+     This function is an alternative interface to playing a sound FILE
+     specifying an optional VOLUME and DEVICE.
+
+ - Variable: play-sound-functions
+     A list of functions to be called before playing a sound.  Each
+     function is called with one argument, a property list that
+     describes the sound.
+

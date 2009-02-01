@@ -1,0 +1,6 @@
+(gnus-group-change-level "it.discussioni.ristoranti" 3 9 "it.cultura.classica" nil)
+(gnus-group-set-info '("it.discussioni.ristoranti" 3 nil))
+(gnus-group-change-level "alt.satellite.gps.magellan" 3 9 "alt.satellite.gps" nil)
+(gnus-group-set-info '("alt.satellite.gps.magellan" 3 nil))
+(gnus-group-change-level "alt.satellite.gps.garmin" 3 9 "alt.satellite.gps" nil)
+(gnus-group-set-info '("alt.satellite.gps.garmin" 3 nil))

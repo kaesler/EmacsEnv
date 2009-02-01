@@ -1,0 +1,15 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:575: checking for a BSD compatible install
+configure:659: checking for texi2html
+configure:686: checking for xemacs
+configure:713: checking for makeinfo
+configure:740: checking for install-info
+configure:786: checking if emacs is really XEmacs
+configure:818: checking prefix for your Emacs
+configure:849: checking where .elc files should go
+configure:870: checking for emacs version
+configure:898: checking for acceptable custom library
+configure:1017: checking for recent gnus version
+configure:1098: checking how to rebuild custom autoloads

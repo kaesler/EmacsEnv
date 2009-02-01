@@ -1,0 +1,1160 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Truenames,  Next: File Attributes,  Prev: Kinds of Files,  Up: Information about Files
+
+Truenames
+---------
+
+   The "truename" of a file is the name that you get by following
+symbolic links at all levels until none remain, then simplifying away
+`.' and `..' appearing as name components.  This results in a sort of
+canonical name for the file.  A file does not always have a unique
+truename; the number of distinct truenames a file has is equal to the
+number of hard links to the file.  However, truenames are useful
+because they eliminate symbolic links as a cause of name variation.
+
+ - Function: file-truename filename
+     The function `file-truename' returns the truename of the file
+     FILENAME.  The argument must be an absolute file name.
+
+ - Function: file-chase-links filename
+     This function follows symbolic links, starting with FILENAME,
+     until it finds a file name which is not the name of a symbolic
+     link.  Then it returns that file name.
+
+   To illustrate the difference between `file-chase-links' and
+`file-truename', suppose that `/usr/foo' is a symbolic link to the
+directory `/home/foo', and `/home/foo/hello' is an ordinary file (or at
+least, not a symbolic link) or nonexistent.  Then we would have:
+
+     (file-chase-links "/usr/foo/hello")
+          ;; This does not follow the links in the parent directories.
+          => "/usr/foo/hello"
+     (file-truename "/usr/foo/hello")
+          ;; Assuming that `/home' is not a symbolic link.
+          => "/home/foo/hello"
+
+   *Note Buffer File Name::, for related information.
+
+
+File: elisp,  Node: File Attributes,  Prev: Truenames,  Up: Information about Files
+
+Other Information about Files
+-----------------------------
+
+   This section describes the functions for getting detailed information
+about a file, other than its contents.  This information includes the
+mode bits that control access permission, the owner and group numbers,
+the number of names, the inode number, the size, and the times of access
+and modification.
+
+ - Function: file-modes filename
+     This function returns the mode bits of FILENAME, as an integer.
+     The mode bits are also called the file permissions, and they
+     specify access control in the usual Unix fashion.  If the
+     low-order bit is 1, then the file is executable by all users, if
+     the second-lowest-order bit is 1, then the file is writable by all
+     users, etc.
+
+     The highest value returnable is 4095 (7777 octal), meaning that
+     everyone has read, write, and execute permission, that the SUID bit
+     is set for both others and group, and that the sticky bit is set.
+
+          (file-modes "~/junk/diffs")
+               => 492               ; Decimal integer.
+          (format "%o" 492)
+               => "754"             ; Convert to octal.
+          
+          (set-file-modes "~/junk/diffs" 438)
+               => nil
+          
+          (format "%o" 438)
+               => "666"             ; Convert to octal.
+          
+          % ls -l diffs
+            -rw-rw-rw-  1 lewis 0 3063 Oct 30 16:00 diffs
+
+ - Function: file-nlinks filename
+     This functions returns the number of names (i.e., hard links) that
+     file FILENAME has.  If the file does not exist, then this function
+     returns `nil'.  Note that symbolic links have no effect on this
+     function, because they are not considered to be names of the files
+     they link to.
+
+          % ls -l foo*
+          -rw-rw-rw-  2 rms       4 Aug 19 01:27 foo
+          -rw-rw-rw-  2 rms       4 Aug 19 01:27 foo1
+          
+          (file-nlinks "foo")
+               => 2
+          (file-nlinks "doesnt-exist")
+               => nil
+
+ - Function: file-attributes filename
+     This function returns a list of attributes of file FILENAME.  If
+     the specified file cannot be opened, it returns `nil'.
+
+     The elements of the list, in order, are:
+
+       0. `t' for a directory, a string for a symbolic link (the name
+          linked to), or `nil' for a text file.
+
+       1. The number of names the file has.  Alternate names, also
+          known as hard links, can be created by using the
+          `add-name-to-file' function (*note Changing Files::).
+
+       2. The file's UID.
+
+       3. The file's GID.
+
+       4. The time of last access, as a list of two integers.  The
+          first integer has the high-order 16 bits of time, the second
+          has the low 16 bits.  (This is similar to the value of
+          `current-time'; see *Note Time of Day::.)
+
+       5. The time of last modification as a list of two integers (as
+          above).
+
+       6. The time of last status change as a list of two integers (as
+          above).
+
+       7. The size of the file in bytes.  If the size is too large to
+          fit in a Lisp integer, this is a floating point number.
+
+       8. The file's modes, as a string of ten letters or dashes, as in
+          `ls -l'.
+
+       9. `t' if the file's GID would change if file were deleted and
+          recreated; `nil' otherwise.
+
+      10. The file's inode number.  If possible, this is an integer.
+          If the inode number is too large to be represented as an
+          integer in Emacs Lisp, then the value has the form `(HIGH .
+          LOW)', where LOW holds the low 16 bits.
+
+      11. The file system number of the file system that the file is in.
+          Depending on the magnitude of the value, this can be either
+          an integer or a cons cell, in the same manner as the inode
+          number.  This element and the file's inode number together
+          give enough information to distinguish any two files on the
+          system--no two files can have the same values for both of
+          these numbers.
+
+     For example, here are the file attributes for `files.texi':
+
+          (file-attributes "files.texi")
+               =>  (nil 1 2235 75
+                    (8489 20284)
+                    (8489 20284)
+                    (8489 20285)
+                    14906 "-rw-rw-rw-"
+                    nil 129500 -32252)
+
+     and here is how the result is interpreted:
+
+    `nil'
+          is neither a directory nor a symbolic link.
+
+    `1'
+          has only one name (the name `files.texi' in the current
+          default directory).
+
+    `2235'
+          is owned by the user with UID 2235.
+
+    `75'
+          is in the group with GID 75.
+
+    `(8489 20284)'
+          was last accessed on Aug 19 00:09.
+
+    `(8489 20284)'
+          was last modified on Aug 19 00:09.
+
+    `(8489 20285)'
+          last had its inode changed on Aug 19 00:09.
+
+    `14906'
+          is 14906 bytes long.  (It may not contain 14906 characters,
+          though, if some of the bytes belong to multibyte sequences.)
+
+    `"-rw-rw-rw-"'
+          has a mode of read and write access for the owner, group, and
+          world.
+
+    `nil'
+          would retain the same GID if it were recreated.
+
+    `129500'
+          has an inode number of 129500.
+
+    `-32252'
+          is on file system number -32252.
+
+
+File: elisp,  Node: Changing Files,  Next: File Names,  Prev: Information about Files,  Up: Files
+
+Changing File Names and Attributes
+==================================
+
+   The functions in this section rename, copy, delete, link, and set the
+modes of files.
+
+   In the functions that have an argument NEWNAME, if a file by the
+name of NEWNAME already exists, the actions taken depend on the value
+of the argument OK-IF-ALREADY-EXISTS:
+
+   * Signal a `file-already-exists' error if OK-IF-ALREADY-EXISTS is
+     `nil'.
+
+   * Request confirmation if OK-IF-ALREADY-EXISTS is a number.
+
+   * Replace the old file without confirmation if OK-IF-ALREADY-EXISTS
+     is any other value.
+
+ - Function: add-name-to-file oldname newname &optional
+          ok-if-already-exists
+     This function gives the file named OLDNAME the additional name
+     NEWNAME.  This means that NEWNAME becomes a new "hard link" to
+     OLDNAME.
+
+     In the first part of the following example, we list two files,
+     `foo' and `foo3'.
+
+          % ls -li fo*
+          81908 -rw-rw-rw-  1 rms       29 Aug 18 20:32 foo
+          84302 -rw-rw-rw-  1 rms       24 Aug 18 20:31 foo3
+
+     Now we create a hard link, by calling `add-name-to-file', then list
+     the files again.  This shows two names for one file, `foo' and
+     `foo2'.
+
+          (add-name-to-file "foo" "foo2")
+               => nil
+          
+          % ls -li fo*
+          81908 -rw-rw-rw-  2 rms       29 Aug 18 20:32 foo
+          81908 -rw-rw-rw-  2 rms       29 Aug 18 20:32 foo2
+          84302 -rw-rw-rw-  1 rms       24 Aug 18 20:31 foo3
+
+     Finally, we evaluate the following:
+
+          (add-name-to-file "foo" "foo3" t)
+
+     and list the files again.  Now there are three names for one file:
+     `foo', `foo2', and `foo3'.  The old contents of `foo3' are lost.
+
+          (add-name-to-file "foo1" "foo3")
+               => nil
+          
+          % ls -li fo*
+          81908 -rw-rw-rw-  3 rms       29 Aug 18 20:32 foo
+          81908 -rw-rw-rw-  3 rms       29 Aug 18 20:32 foo2
+          81908 -rw-rw-rw-  3 rms       29 Aug 18 20:32 foo3
+
+     This function is meaningless on operating systems where multiple
+     names for one file are not allowed.  Some systems implement
+     multiple names by copying the file instead.
+
+     See also `file-nlinks' in *Note File Attributes::.
+
+ - Command: rename-file filename newname &optional ok-if-already-exists
+     This command renames the file FILENAME as NEWNAME.
+
+     If FILENAME has additional names aside from FILENAME, it continues
+     to have those names.  In fact, adding the name NEWNAME with
+     `add-name-to-file' and then deleting FILENAME has the same effect
+     as renaming, aside from momentary intermediate states.
+
+     In an interactive call, this function prompts for FILENAME and
+     NEWNAME in the minibuffer; also, it requests confirmation if
+     NEWNAME already exists.
+
+ - Command: copy-file oldname newname &optional ok-if-exists time
+     This command copies the file OLDNAME to NEWNAME.  An error is
+     signaled if OLDNAME does not exist.
+
+     If TIME is non-`nil', then this function gives the new file the
+     same last-modified time that the old one has.  (This works on only
+     some operating systems.)  If setting the time gets an error,
+     `copy-file' signals a `file-date-error' error.
+
+     In an interactive call, this function prompts for FILENAME and
+     NEWNAME in the minibuffer; also, it requests confirmation if
+     NEWNAME already exists.
+
+ - Command: delete-file filename
+     This command deletes the file FILENAME, like the shell command `rm
+     FILENAME'.  If the file has multiple names, it continues to exist
+     under the other names.
+
+     A suitable kind of `file-error' error is signaled if the file does
+     not exist, or is not deletable.  (On Unix and GNU/Linux, a file is
+     deletable if its directory is writable.)
+
+     See also `delete-directory' in *Note Create/Delete Dirs::.
+
+ - Command: make-symbolic-link filename newname &optional ok-if-exists
+     This command makes a symbolic link to FILENAME, named NEWNAME.
+     This is like the shell command `ln -s FILENAME NEWNAME'.
+
+     In an interactive call, this function prompts for FILENAME and
+     NEWNAME in the minibuffer; also, it requests confirmation if
+     NEWNAME already exists.
+
+     This function is not available on systems that don't support
+     symbolic links.
+
+ - Function: define-logical-name varname string
+     This function defines the logical name NAME to have the value
+     STRING.  It is available only on VMS.
+
+ - Function: set-file-modes filename mode
+     This function sets mode bits of FILENAME to MODE (which must be an
+     integer).  Only the low 12 bits of MODE are used.
+
+ - Function: set-default-file-modes mode
+     This function sets the default file protection for new files
+     created by Emacs and its subprocesses.  Every file created with
+     Emacs initially has this protection, or a subset of it
+     (`write-region' will not give a file execute permission even if
+     the default file protection allows execute permission).  On Unix
+     and GNU/Linux, the default protection is the bitwise complement of
+     the "umask" value.
+
+     The argument MODE must be an integer.  On most systems, only the
+     low 9 bits of MODE are meaningful.  You can use the Lisp construct
+     for octal character codes to enter MODE; for example,
+
+          (set-default-file-modes ?\644)
+
+     Saving a modified version of an existing file does not count as
+     creating the file; it preserves the existing file's mode, whatever
+     that is.  So the default file protection has no effect.
+
+ - Function: default-file-modes
+     This function returns the current default protection value.
+
+   On MS-DOS, there is no such thing as an "executable" file mode bit.
+So Emacs considers a file executable if its name ends in one of the
+standard executable extensions, such as `.com', `.bat', `.exe', and
+some others.  Files that begin with the Unix-standard `#!' signature,
+such as shell and Perl scripts, are also considered as executable
+files.  This is reflected in the values returned by `file-modes' and
+`file-attributes'.  Directories are also reported with executable bit
+set, for compatibility with Unix.
+
+
+File: elisp,  Node: File Names,  Next: Contents of Directories,  Prev: Changing Files,  Up: Files
+
+File Names
+==========
+
+   Files are generally referred to by their names, in Emacs as
+elsewhere.  File names in Emacs are represented as strings.  The
+functions that operate on a file all expect a file name argument.
+
+   In addition to operating on files themselves, Emacs Lisp programs
+often need to operate on file names; i.e., to take them apart and to use
+part of a name to construct related file names.  This section describes
+how to manipulate file names.
+
+   The functions in this section do not actually access files, so they
+can operate on file names that do not refer to an existing file or
+directory.
+
+   On MS-DOS and MS-Windows, these functions (like the function that
+actually operate on files) accept MS-DOS or MS-Windows file-name syntax,
+where backslashes separate the components, as well as Unix syntax; but
+they always return Unix syntax.  On VMS, these functions (and the ones
+that operate on files) understand both VMS file-name syntax and Unix
+syntax.  This enables Lisp programs to specify file names in Unix syntax
+and work properly on all systems without change.
+
+* Menu:
+
+* File Name Components::  The directory part of a file name, and the rest.
+* Directory Names::       A directory's name as a directory
+                            is different from its name as a file.
+* Relative File Names::   Some file names are relative to a current directory.
+* File Name Expansion::   Converting relative file names to absolute ones.
+* Unique File Names::     Generating names for temporary files.
+* File Name Completion::  Finding the completions for a given file name.
+* Standard File Names::   If your package uses a fixed file name,
+                            how to handle various operating systems simply.
+
+
+File: elisp,  Node: File Name Components,  Next: Directory Names,  Up: File Names
+
+File Name Components
+--------------------
+
+   The operating system groups files into directories.  To specify a
+file, you must specify the directory and the file's name within that
+directory.  Therefore, Emacs considers a file name as having two main
+parts: the "directory name" part, and the "nondirectory" part (or "file
+name within the directory").  Either part may be empty.  Concatenating
+these two parts reproduces the original file name.
+
+   On most systems, the directory part is everything up to and including
+the last slash (backslash is also allowed in input on MS-DOS or
+MS-Windows); the nondirectory part is the rest.  The rules in VMS syntax
+are complicated.
+
+   For some purposes, the nondirectory part is further subdivided into
+the name proper and the "version number".  On most systems, only backup
+files have version numbers in their names.  On VMS, every file has a
+version number, but most of the time the file name actually used in
+Emacs omits the version number, so that version numbers in Emacs are
+found mostly in directory lists.
+
+ - Function: file-name-directory filename
+     This function returns the directory part of FILENAME (or `nil' if
+     FILENAME does not include a directory part).  On most systems, the
+     function returns a string ending in a slash.  On VMS, it returns a
+     string ending in one of the three characters `:', `]', or `>'.
+
+          (file-name-directory "lewis/foo")  ; Unix example
+               => "lewis/"
+          (file-name-directory "foo")        ; Unix example
+               => nil
+          (file-name-directory "[X]FOO.TMP") ; VMS example
+               => "[X]"
+
+ - Function: file-name-nondirectory filename
+     This function returns the nondirectory part of FILENAME.
+
+          (file-name-nondirectory "lewis/foo")
+               => "foo"
+          (file-name-nondirectory "foo")
+               => "foo"
+          ;; The following example is accurate only on VMS.
+          (file-name-nondirectory "[X]FOO.TMP")
+               => "FOO.TMP"
+
+ - Function: file-name-sans-versions filename &optional
+          keep-backup-version
+     This function returns FILENAME with any file version numbers,
+     backup version numbers, or trailing tildes discarded.
+
+     If KEEP-BACKUP-VERSION is non-`nil', then true file version
+     numbers understood as such by the file system are discarded from
+     the return value, but backup version numbers are kept.
+
+          (file-name-sans-versions "~rms/foo.~1~")
+               => "~rms/foo"
+          (file-name-sans-versions "~rms/foo~")
+               => "~rms/foo"
+          (file-name-sans-versions "~rms/foo")
+               => "~rms/foo"
+          ;; The following example applies to VMS only.
+          (file-name-sans-versions "foo;23")
+               => "foo"
+
+ - Function: file-name-sans-extension filename
+     This function returns FILENAME minus its "extension," if any.  The
+     extension, in a file name, is the part that starts with the last
+     `.' in the last name component.  For example,
+
+          (file-name-sans-extension "foo.lose.c")
+               => "foo.lose"
+          (file-name-sans-extension "big.hack/foo")
+               => "big.hack/foo"
+
+ - Function: file-name-extension filename &optional period
+     This function returns FILENAME's final "extension," if any, after
+     applying `file-name-sans-versions' to remove any version/backup
+     part.  If PERIOD is non-nil, then the returned value includes the
+     period that delimits the extension, and if FILENAME has no
+     extension, the value is `""'.
+
+
+File: elisp,  Node: Directory Names,  Next: Relative File Names,  Prev: File Name Components,  Up: File Names
+
+Directory Names
+---------------
+
+   A "directory name" is the name of a directory.  A directory is a
+kind of file, and it has a file name, which is related to the directory
+name but not identical to it.  (This is not quite the same as the usual
+Unix terminology.)  These two different names for the same entity are
+related by a syntactic transformation.  On most systems, this is simple:
+a directory name ends in a slash (or backslash), whereas the directory's
+name as a file lacks that slash.  On VMS, the relationship is more
+complicated.
+
+   The difference between a directory name and its name as a file is
+subtle but crucial.  When an Emacs variable or function argument is
+described as being a directory name, a file name of a directory is not
+acceptable.
+
+   The following two functions convert between directory names and file
+names.  They do nothing special with environment variable substitutions
+such as `$HOME', and the constructs `~', and `..'.
+
+ - Function: file-name-as-directory filename
+     This function returns a string representing FILENAME in a form
+     that the operating system will interpret as the name of a
+     directory.  On most systems, this means appending a slash to the
+     string (if it does not already end in one).  On VMS, the function
+     converts a string of the form `[X]Y.DIR.1' to the form `[X.Y]'.
+
+          (file-name-as-directory "~rms/lewis")
+               => "~rms/lewis/"
+
+ - Function: directory-file-name dirname
+     This function returns a string representing DIRNAME in a form that
+     the operating system will interpret as the name of a file.  On most
+     systems, this means removing the final slash (or backslash) from
+     the string.  On VMS, the function converts a string of the form
+     `[X.Y]' to `[X]Y.DIR.1'.
+
+          (directory-file-name "~lewis/")
+               => "~lewis"
+
+   Directory name abbreviations are useful for directories that are
+normally accessed through symbolic links.  Sometimes the users recognize
+primarily the link's name as "the name" of the directory, and find it
+annoying to see the directory's "real" name.  If you define the link
+name as an abbreviation for the "real" name, Emacs shows users the
+abbreviation instead.
+
+ - Variable: directory-abbrev-alist
+     The variable `directory-abbrev-alist' contains an alist of
+     abbreviations to use for file directories.  Each element has the
+     form `(FROM . TO)', and says to replace FROM with TO when it
+     appears in a directory name.  The FROM string is actually a
+     regular expression; it should always start with `^'.  The function
+     `abbreviate-file-name' performs these substitutions.
+
+     You can set this variable in `site-init.el' to describe the
+     abbreviations appropriate for your site.
+
+     Here's an example, from a system on which file system `/home/fsf'
+     and so on are normally accessed through symbolic links named `/fsf'
+     and so on.
+
+          (("^/home/fsf" . "/fsf")
+           ("^/home/gp" . "/gp")
+           ("^/home/gd" . "/gd"))
+
+   To convert a directory name to its abbreviation, use this function:
+
+ - Function: abbreviate-file-name dirname
+     This function applies abbreviations from `directory-abbrev-alist'
+     to its argument, and substitutes `~' for the user's home directory.
+
+
+File: elisp,  Node: Relative File Names,  Next: File Name Expansion,  Prev: Directory Names,  Up: File Names
+
+Absolute and Relative File Names
+--------------------------------
+
+   All the directories in the file system form a tree starting at the
+root directory.  A file name can specify all the directory names
+starting from the root of the tree; then it is called an "absolute"
+file name.  Or it can specify the position of the file in the tree
+relative to a default directory; then it is called a "relative" file
+name.  On Unix and GNU/Linux, an absolute file name starts with a slash
+or a tilde (`~'), and a relative one does not.  On MS-DOS and
+MS-Windows, an absolute file name starts with a slash or a backslash, or
+with a drive specification `X:/', where X is the "drive letter".  The
+rules on VMS are complicated.
+
+ - Function: file-name-absolute-p filename
+     This function returns `t' if file FILENAME is an absolute file
+     name, `nil' otherwise.  On VMS, this function understands both
+     Unix syntax and VMS syntax.
+
+          (file-name-absolute-p "~rms/foo")
+               => t
+          (file-name-absolute-p "rms/foo")
+               => nil
+          (file-name-absolute-p "/user/rms/foo")
+               => t
+
+
+File: elisp,  Node: File Name Expansion,  Next: Unique File Names,  Prev: Relative File Names,  Up: File Names
+
+Functions that Expand Filenames
+-------------------------------
+
+   "Expansion" of a file name means converting a relative file name to
+an absolute one.  Since this is done relative to a default directory,
+you must specify the default directory name as well as the file name to
+be expanded.  Expansion also simplifies file names by eliminating
+redundancies such as `./' and `NAME/../'.
+
+ - Function: expand-file-name filename &optional directory
+     This function converts FILENAME to an absolute file name.  If
+     DIRECTORY is supplied, it is the default directory to start with
+     if FILENAME is relative.  (The value of DIRECTORY should itself be
+     an absolute directory name; it may start with `~'.)  Otherwise,
+     the current buffer's value of `default-directory' is used.  For
+     example:
+
+          (expand-file-name "foo")
+               => "/xcssun/users/rms/lewis/foo"
+          (expand-file-name "../foo")
+               => "/xcssun/users/rms/foo"
+          (expand-file-name "foo" "/usr/spool/")
+               => "/usr/spool/foo"
+          (expand-file-name "$HOME/foo")
+               => "/xcssun/users/rms/lewis/$HOME/foo"
+
+     Filenames containing `.' or `..' are simplified to their canonical
+     form:
+
+          (expand-file-name "bar/../foo")
+               => "/xcssun/users/rms/lewis/foo"
+
+     Note that `expand-file-name' does _not_ expand environment
+     variables; only `substitute-in-file-name' does that.
+
+ - Function: file-relative-name filename &optional directory
+     This function does the inverse of expansion--it tries to return a
+     relative name that is equivalent to FILENAME when interpreted
+     relative to DIRECTORY.  If DIRECTORY is omitted or `nil', it
+     defaults to the current buffer's default directory.
+
+     On some operating systems, an absolute file name begins with a
+     device name.  On such systems, FILENAME has no relative equivalent
+     based on DIRECTORY if they start with two different device names.
+     In this case, `file-relative-name' returns FILENAME in absolute
+     form.
+
+          (file-relative-name "/foo/bar" "/foo/")
+               => "bar"
+          (file-relative-name "/foo/bar" "/hack/")
+               => "../foo/bar"
+
+ - Variable: default-directory
+     The value of this buffer-local variable is the default directory
+     for the current buffer.  It should be an absolute directory name;
+     it may start with `~'.  This variable is buffer-local in every
+     buffer.
+
+     `expand-file-name' uses the default directory when its second
+     argument is `nil'.
+
+     Aside from VMS, the value is always a string ending with a slash.
+
+          default-directory
+               => "/user/lewis/manual/"
+
+ - Function: substitute-in-file-name filename
+     This function replaces environment variables references in
+     FILENAME with the environment variable values.  Following standard
+     Unix shell syntax, `$' is the prefix to substitute an environment
+     variable value.
+
+     The environment variable name is the series of alphanumeric
+     characters (including underscores) that follow the `$'.  If the
+     character following the `$' is a `{', then the variable name is
+     everything up to the matching `}'.
+
+     Here we assume that the environment variable `HOME', which holds
+     the user's home directory name, has value `/xcssun/users/rms'.
+
+          (substitute-in-file-name "$HOME/foo")
+               => "/xcssun/users/rms/foo"
+
+     After substitution, if a `~' or a `/' appears following a `/',
+     everything before the following `/' is discarded:
+
+          (substitute-in-file-name "bar/~/foo")
+               => "~/foo"
+          (substitute-in-file-name "/usr/local/$HOME/foo")
+               => "/xcssun/users/rms/foo"
+               ;; `/usr/local/' has been discarded.
+
+     On VMS, `$' substitution is not done, so this function does nothing
+     on VMS except discard superfluous initial components as shown
+     above.
+
+
+File: elisp,  Node: Unique File Names,  Next: File Name Completion,  Prev: File Name Expansion,  Up: File Names
+
+Generating Unique File Names
+----------------------------
+
+   Some programs need to write temporary files.  Here is the usual way
+to construct a name for such a file, starting in Emacs 21:
+
+     (make-temp-file NAME-OF-APPLICATION)
+
+The job of `make-temp-file' is to prevent two different users or two
+different jobs from trying to use the exact same file name.
+
+ - Function: make-temp-file prefix &optional dir-flag
+     This function creates a temporary file and returns its name.  The
+     name starts with PREFIX; it also contains a number that is
+     different in each Emacs job.  If PREFIX is a relative file name,
+     it is expanded against `temporary-file-directory'.
+
+          (make-temp-file "foo")
+               => "/tmp/foo232J6v"
+
+     When `make-temp-file' returns, the file has been created and is
+     empty.  At that point, you should write the intended contents into
+     the file.
+
+     If DIR-FLAG is non-`nil', `make-temp-file' creates an empty
+     directory instead of an empty file.
+
+     To prevent conflicts among different libraries running in the same
+     Emacs, each Lisp program that uses `make-temp-file' should have its
+     own PREFIX.  The number added to the end of PREFIX distinguishes
+     between the same application running in different Emacs jobs.
+     Additional added characters permit a large number of distinct
+     names even in one Emacs job.
+
+   The default directory for temporary files is controlled by the
+variable `temporary-file-directory'.  This variable gives the user a
+uniform way to specify the directory for all temporary files.  Some
+programs use `small-temporary-file-directory' instead, if that is
+non-`nil'.  To use it, you should expand the prefix against the proper
+directory before calling `make-temp-file'.
+
+   In older Emacs versions where `make-temp-file' does not exist, you
+should use `make-temp-name' instead:
+
+     (make-temp-name
+      (expand-file-name NAME-OF-APPLICATION
+                        temporary-file-directory))
+
+ - Function: make-temp-name string
+     This function generates a string that can be used as a unique file
+     name.  The name starts with STRING, and contains a number that is
+     different in each Emacs job.  It is like `make-temp-file' except
+     that it just constructs a name, and does not create a file.  On
+     MS-DOS, the STRING prefix can be truncated to fit into the 8+3
+     file-name limits.
+
+ - Variable: temporary-file-directory
+     This variable specifies the directory name for creating temporary
+     files.  Its value should be a directory name (*note Directory
+     Names::), but it is good for Lisp programs to cope if the value is
+     a directory's file name instead.  Using the value as the second
+     argument to `expand-file-name' is a good way to achieve that.
+
+     The default value is determined in a reasonable way for your
+     operating system; it is based on the `TMPDIR', `TMP' and `TEMP'
+     environment variables, with a fall-back to a system-dependent name
+     if none of these variables is defined.
+
+     Even if you do not use `make-temp-name' to choose the temporary
+     file's name, you should still use this variable to decide which
+     directory to put the file in.  However, if you expect the file to
+     be small, you should use `small-temporary-file-directory' first if
+     that is non-`nil'.
+
+ - Variable: small-temporary-file-directory
+     This variable (new in Emacs 21) specifies the directory name for
+     creating certain temporary files, which are likely to be small.
+
+     If you want to write a temporary file which is likely to be small,
+     you should compute the directory like this:
+
+          (make-temp-file
+            (expand-file-name PREFIX
+                              (or small-temporary-file-directory
+                                  temporary-file-directory)))
+
+
+File: elisp,  Node: File Name Completion,  Next: Standard File Names,  Prev: Unique File Names,  Up: File Names
+
+File Name Completion
+--------------------
+
+   This section describes low-level subroutines for completing a file
+name.  For other completion functions, see *Note Completion::.
+
+ - Function: file-name-all-completions partial-filename directory
+     This function returns a list of all possible completions for a file
+     whose name starts with PARTIAL-FILENAME in directory DIRECTORY.
+     The order of the completions is the order of the files in the
+     directory, which is unpredictable and conveys no useful
+     information.
+
+     The argument PARTIAL-FILENAME must be a file name containing no
+     directory part and no slash (or backslash on some systems).  The
+     current buffer's default directory is prepended to DIRECTORY, if
+     DIRECTORY is not absolute.
+
+     In the following example, suppose that `~rms/lewis' is the current
+     default directory, and has five files whose names begin with `f':
+     `foo', `file~', `file.c', `file.c.~1~', and `file.c.~2~'.
+
+          (file-name-all-completions "f" "")
+               => ("foo" "file~" "file.c.~2~"
+                          "file.c.~1~" "file.c")
+          
+          (file-name-all-completions "fo" "")
+               => ("foo")
+
+ - Function: file-name-completion filename directory
+     This function completes the file name FILENAME in directory
+     DIRECTORY.  It returns the longest prefix common to all file names
+     in directory DIRECTORY that start with FILENAME.
+
+     If only one match exists and FILENAME matches it exactly, the
+     function returns `t'.  The function returns `nil' if directory
+     DIRECTORY contains no name starting with FILENAME.
+
+     In the following example, suppose that the current default
+     directory has five files whose names begin with `f': `foo',
+     `file~', `file.c', `file.c.~1~', and `file.c.~2~'.
+
+          (file-name-completion "fi" "")
+               => "file"
+          
+          (file-name-completion "file.c.~1" "")
+               => "file.c.~1~"
+          
+          (file-name-completion "file.c.~1~" "")
+               => t
+          
+          (file-name-completion "file.c.~3" "")
+               => nil
+
+ - User Option: completion-ignored-extensions
+     `file-name-completion' usually ignores file names that end in any
+     string in this list.  It does not ignore them when all the possible
+     completions end in one of these suffixes or when a buffer showing
+     all possible completions is displayed.
+
+     A typical value might look like this:
+
+          completion-ignored-extensions
+               => (".o" ".elc" "~" ".dvi")
+
+
+File: elisp,  Node: Standard File Names,  Prev: File Name Completion,  Up: File Names
+
+Standard File Names
+-------------------
+
+   Most of the file names used in Lisp programs are entered by the user.
+But occasionally a Lisp program needs to specify a standard file name
+for a particular use--typically, to hold customization information
+about each user.  For example, abbrev definitions are stored (by
+default) in the file `~/.abbrev_defs'; the `completion' package stores
+completions in the file `~/.completions'.  These are two of the many
+standard file names used by parts of Emacs for certain purposes.
+
+   Various operating systems have their own conventions for valid file
+names and for which file names to use for user profile data.  A Lisp
+program which reads a file using a standard file name ought to use, on
+each type of system, a file name suitable for that system.  The function
+`convert-standard-filename' makes this easy to do.
+
+ - Function: convert-standard-filename filename
+     This function alters the file name FILENAME to fit the conventions
+     of the operating system in use, and returns the result as a new
+     string.
+
+   The recommended way to specify a standard file name in a Lisp program
+is to choose a name which fits the conventions of GNU and Unix systems,
+usually with a nondirectory part that starts with a period, and pass it
+to `convert-standard-filename' instead of using it directly.  Here is
+an example from the `completion' package:
+
+     (defvar save-completions-file-name
+             (convert-standard-filename "~/.completions")
+       "*The file name to save completions to.")
+
+   On GNU and Unix systems, and on some other systems as well,
+`convert-standard-filename' returns its argument unchanged.  On some
+other systems, it alters the name to fit the system's conventions.
+
+   For example, on MS-DOS the alterations made by this function include
+converting a leading `.'  to `_', converting a `_' in the middle of the
+name to `.' if there is no other `.', inserting a `.' after eight
+characters if there is none, and truncating to three characters after
+the `.'.  (It makes other changes as well.)  Thus, `.abbrev_defs'
+becomes `_abbrev.def', and `.completions' becomes `_complet.ion'.
+
+
+File: elisp,  Node: Contents of Directories,  Next: Create/Delete Dirs,  Prev: File Names,  Up: Files
+
+Contents of Directories
+=======================
+
+   A directory is a kind of file that contains other files entered under
+various names.  Directories are a feature of the file system.
+
+   Emacs can list the names of the files in a directory as a Lisp list,
+or display the names in a buffer using the `ls' shell command.  In the
+latter case, it can optionally display information about each file,
+depending on the options passed to the `ls' command.
+
+ - Function: directory-files directory &optional full-name match-regexp
+          nosort
+     This function returns a list of the names of the files in the
+     directory DIRECTORY.  By default, the list is in alphabetical
+     order.
+
+     If FULL-NAME is non-`nil', the function returns the files'
+     absolute file names.  Otherwise, it returns the names relative to
+     the specified directory.
+
+     If MATCH-REGEXP is non-`nil', this function returns only those
+     file names that contain a match for that regular expression--the
+     other file names are excluded from the list.
+
+     If NOSORT is non-`nil', `directory-files' does not sort the list,
+     so you get the file names in no particular order.  Use this if you
+     want the utmost possible speed and don't care what order the files
+     are processed in.  If the order of processing is visible to the
+     user, then the user will probably be happier if you do sort the
+     names.
+
+          (directory-files "~lewis")
+               => ("#foo#" "#foo.el#" "." ".."
+                   "dired-mods.el" "files.texi"
+                   "files.texi.~1~")
+
+     An error is signaled if DIRECTORY is not the name of a directory
+     that can be read.
+
+ - Function: file-name-all-versions file dirname
+     This function returns a list of all versions of the file named
+     FILE in directory DIRNAME.
+
+ - Function: file-expand-wildcards pattern &optional full
+     This function expands the wildcard pattern PATTERN, returning a
+     list of file names that match it.
+
+     If PATTERN is written as an absolute file name, the values are
+     absolute also.
+
+     If PATTERN is written as a relative file name, it is interpreted
+     relative to the current default directory.  The file names
+     returned are normally also relative to the current default
+     directory.  However, if FULL is non-`nil', they are absolute.
+
+ - Function: insert-directory file switches &optional wildcard
+          full-directory-p
+     This function inserts (in the current buffer) a directory listing
+     for directory FILE, formatted with `ls' according to SWITCHES.  It
+     leaves point after the inserted text.
+
+     The argument FILE may be either a directory name or a file
+     specification including wildcard characters.  If WILDCARD is
+     non-`nil', that means treat FILE as a file specification with
+     wildcards.
+
+     If FULL-DIRECTORY-P is non-`nil', that means the directory listing
+     is expected to show the full contents of a directory.  You should
+     specify `t' when FILE is a directory and switches do not contain
+     `-d'.  (The `-d' option to `ls' says to describe a directory
+     itself as a file, rather than showing its contents.)
+
+     On most systems, this function works by running a directory listing
+     program whose name is in the variable `insert-directory-program'.
+     If WILDCARD is non-`nil', it also runs the shell specified by
+     `shell-file-name', to expand the wildcards.
+
+     MS-DOS and MS-Windows systems usually lack the standard Unix
+     program `ls', so this function emulates the standard Unix program
+     `ls' with Lisp code.
+
+ - Variable: insert-directory-program
+     This variable's value is the program to run to generate a
+     directory listing for the function `insert-directory'.  It is
+     ignored on systems which generate the listing with Lisp code.
+
+
+File: elisp,  Node: Create/Delete Dirs,  Next: Magic File Names,  Prev: Contents of Directories,  Up: Files
+
+Creating and Deleting Directories
+=================================
+
+   Most Emacs Lisp file-manipulation functions get errors when used on
+files that are directories.  For example, you cannot delete a directory
+with `delete-file'.  These special functions exist to create and delete
+directories.
+
+ - Function: make-directory dirname &optional parents
+     This function creates a directory named DIRNAME.  If PARENTS is
+     non-`nil', that means to create the parent directories first, if
+     they don't already exist.
+
+ - Function: delete-directory dirname
+     This function deletes the directory named DIRNAME.  The function
+     `delete-file' does not work for files that are directories; you
+     must use `delete-directory' for them.  If the directory contains
+     any files, `delete-directory' signals an error.
+
+
+File: elisp,  Node: Magic File Names,  Next: Format Conversion,  Prev: Create/Delete Dirs,  Up: Files
+
+Making Certain File Names "Magic"
+=================================
+
+   You can implement special handling for certain file names.  This is
+called making those names "magic".  The principal use for this feature
+is in implementing remote file names (*note Remote Files: (emacs)Remote
+Files.).
+
+   To define a kind of magic file name, you must supply a regular
+expression to define the class of names (all those that match the
+regular expression), plus a handler that implements all the primitive
+Emacs file operations for file names that do match.
+
+   The variable `file-name-handler-alist' holds a list of handlers,
+together with regular expressions that determine when to apply each
+handler.  Each element has this form:
+
+     (REGEXP . HANDLER)
+
+All the Emacs primitives for file access and file name transformation
+check the given file name against `file-name-handler-alist'.  If the
+file name matches REGEXP, the primitives handle that file by calling
+HANDLER.
+
+   The first argument given to HANDLER is the name of the primitive;
+the remaining arguments are the arguments that were passed to that
+primitive.  (The first of these arguments is most often the file name
+itself.)  For example, if you do this:
+
+     (file-exists-p FILENAME)
+
+and FILENAME has handler HANDLER, then HANDLER is called like this:
+
+     (funcall HANDLER 'file-exists-p FILENAME)
+
+   When a function takes two or more arguments that must be file names,
+it checks each of those names for a handler.  For example, if you do
+this:
+
+     (expand-file-name FILENAME DIRNAME)
+
+then it checks for a handler for FILENAME and then for a handler for
+DIRNAME.  In either case, the HANDLER is called like this:
+
+     (funcall HANDLER 'expand-file-name FILENAME DIRNAME)
+
+The HANDLER then needs to figure out whether to handle FILENAME or
+DIRNAME.
+
+   Here are the operations that a magic file name handler gets to
+handle:
+
+`add-name-to-file', `copy-file', `delete-directory', `delete-file',
+`diff-latest-backup-file', `directory-file-name', `directory-files',
+`dired-call-process', `dired-compress-file', `dired-uncache',
+`expand-file-name', `file-accessible-directory-p',
+`file-attributes', `file-directory-p', `file-executable-p',
+`file-exists-p',
+`file-local-copy', `file-modes', `file-name-all-completions',
+`file-name-as-directory', `file-name-completion', `file-name-directory',
+`file-name-nondirectory', `file-name-sans-versions',
+`file-newer-than-file-p', `file-ownership-preserved-p',
+`file-readable-p', `file-regular-p', `file-symlink-p', `file-truename',
+`file-writable-p', `find-backup-file-name', `get-file-buffer',
+`insert-directory', `insert-file-contents', `load', `make-directory',
+`make-symbolic-link', `rename-file', `set-file-modes',
+`set-visited-file-modtime', `shell-command',
+`unhandled-file-name-directory', `vc-registered',
+`verify-visited-file-modtime',
+`write-region'.
+
+   Handlers for `insert-file-contents' typically need to clear the
+buffer's modified flag, with `(set-buffer-modified-p nil)', if the
+VISIT argument is non-`nil'.  This also has the effect of unlocking the
+buffer if it is locked.
+
+   The handler function must handle all of the above operations, and
+possibly others to be added in the future.  It need not implement all
+these operations itself--when it has nothing special to do for a
+certain operation, it can reinvoke the primitive, to handle the
+operation "in the usual way".  It should always reinvoke the primitive
+for an operation it does not recognize.  Here's one way to do this:
+
+     (defun my-file-handler (operation &rest args)
+       ;; First check for the specific operations
+       ;; that we have special handling for.
+       (cond ((eq operation 'insert-file-contents) ...)
+             ((eq operation 'write-region) ...)
+             ...
+             ;; Handle any operation we don't know about.
+             (t (let ((inhibit-file-name-handlers
+                       (cons 'my-file-handler
+                             (and (eq inhibit-file-name-operation operation)
+                                  inhibit-file-name-handlers)))
+                      (inhibit-file-name-operation operation))
+                  (apply operation args)))))
+
+   When a handler function decides to call the ordinary Emacs primitive
+for the operation at hand, it needs to prevent the primitive from
+calling the same handler once again, thus leading to an infinite
+recursion.  The example above shows how to do this, with the variables
+`inhibit-file-name-handlers' and `inhibit-file-name-operation'.  Be
+careful to use them exactly as shown above; the details are crucial for
+proper behavior in the case of multiple handlers, and for operations
+that have two file names that may each have handlers.
+
+ - Variable: inhibit-file-name-handlers
+     This variable holds a list of handlers whose use is presently
+     inhibited for a certain operation.
+
+ - Variable: inhibit-file-name-operation
+     The operation for which certain handlers are presently inhibited.
+
+ - Function: find-file-name-handler file operation
+     This function returns the handler function for file name FILE, or
+     `nil' if there is none.  The argument OPERATION should be the
+     operation to be performed on the file--the value you will pass to
+     the handler as its first argument when you call it.  The operation
+     is needed for comparison with `inhibit-file-name-operation'.
+
+ - Function: file-local-copy filename
+     This function copies file FILENAME to an ordinary non-magic file,
+     if it isn't one already.
+
+     If FILENAME specifies a magic file name, which programs outside
+     Emacs cannot directly read or write, this copies the contents to
+     an ordinary file and returns that file's name.
+
+     If FILENAME is an ordinary file name, not magic, then this function
+     does nothing and returns `nil'.
+
+ - Function: unhandled-file-name-directory filename
+     This function returns the name of a directory that is not magic.
+     It uses the directory part of FILENAME if that is not magic.  For a
+     magic file name, it invokes the file name handler, which therefore
+     decides what value to return.
+
+     This is useful for running a subprocess; every subprocess must
+     have a non-magic directory to serve as its current directory, and
+     this function is a good way to come up with one.
+

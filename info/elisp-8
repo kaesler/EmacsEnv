@@ -1,0 +1,1217 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Errors,  Next: Cleanups,  Prev: Examples of Catch,  Up: Nonlocal Exits
+
+Errors
+------
+
+   When Emacs Lisp attempts to evaluate a form that, for some reason,
+cannot be evaluated, it "signals" an "error".
+
+   When an error is signaled, Emacs's default reaction is to print an
+error message and terminate execution of the current command.  This is
+the right thing to do in most cases, such as if you type `C-f' at the
+end of the buffer.
+
+   In complicated programs, simple termination may not be what you want.
+For example, the program may have made temporary changes in data
+structures, or created temporary buffers that should be deleted before
+the program is finished.  In such cases, you would use `unwind-protect'
+to establish "cleanup expressions" to be evaluated in case of error.
+(*Note Cleanups::.)  Occasionally, you may wish the program to continue
+execution despite an error in a subroutine.  In these cases, you would
+use `condition-case' to establish "error handlers" to recover control
+in case of error.
+
+   Resist the temptation to use error handling to transfer control from
+one part of the program to another; use `catch' and `throw' instead.
+*Note Catch and Throw::.
+
+* Menu:
+
+* Signaling Errors::      How to report an error.
+* Processing of Errors::  What Emacs does when you report an error.
+* Handling Errors::       How you can trap errors and continue execution.
+* Error Symbols::         How errors are classified for trapping them.
+
+
+File: elisp,  Node: Signaling Errors,  Next: Processing of Errors,  Up: Errors
+
+How to Signal an Error
+......................
+
+   Most errors are signaled "automatically" within Lisp primitives
+which you call for other purposes, such as if you try to take the CAR
+of an integer or move forward a character at the end of the buffer.
+You can also signal errors explicitly with the functions `error' and
+`signal'.
+
+   Quitting, which happens when the user types `C-g', is not considered
+an error, but it is handled almost like an error.  *Note Quitting::.
+
+   The error message should state what is wrong ("File does not
+exist"), not how things ought to be ("File must exist").  The
+convention in Emacs Lisp is that error messages should start with a
+capital letter, but should not end with any sort of punctuation.
+
+ - Function: error format-string &rest args
+     This function signals an error with an error message constructed by
+     applying `format' (*note String Conversion::) to FORMAT-STRING and
+     ARGS.
+
+     These examples show typical uses of `error':
+
+          (error "That is an error -- try something else")
+               error--> That is an error -- try something else
+          
+          (error "You have committed %d errors" 10)
+               error--> You have committed 10 errors
+
+     `error' works by calling `signal' with two arguments: the error
+     symbol `error', and a list containing the string returned by
+     `format'.
+
+     *Warning:* If you want to use your own string as an error message
+     verbatim, don't just write `(error STRING)'.  If STRING contains
+     `%', it will be interpreted as a format specifier, with
+     undesirable results.  Instead, use `(error "%s" STRING)'.
+
+ - Function: signal error-symbol data
+     This function signals an error named by ERROR-SYMBOL.  The
+     argument DATA is a list of additional Lisp objects relevant to the
+     circumstances of the error.
+
+     The argument ERROR-SYMBOL must be an "error symbol"--a symbol
+     bearing a property `error-conditions' whose value is a list of
+     condition names.  This is how Emacs Lisp classifies different
+     sorts of errors.
+
+     The number and significance of the objects in DATA depends on
+     ERROR-SYMBOL.  For example, with a `wrong-type-arg' error, there
+     should be two objects in the list: a predicate that describes the
+     type that was expected, and the object that failed to fit that
+     type.  *Note Error Symbols::, for a description of error symbols.
+
+     Both ERROR-SYMBOL and DATA are available to any error handlers
+     that handle the error: `condition-case' binds a local variable to
+     a list of the form `(ERROR-SYMBOL .  DATA)' (*note Handling
+     Errors::).  If the error is not handled, these two values are used
+     in printing the error message.
+
+     The function `signal' never returns (though in older Emacs versions
+     it could sometimes return).
+
+          (signal 'wrong-number-of-arguments '(x y))
+               error--> Wrong number of arguments: x, y
+          
+          (signal 'no-such-error '("My unknown error condition"))
+               error--> peculiar error: "My unknown error condition"
+
+     Common Lisp note: Emacs Lisp has nothing like the Common Lisp
+     concept of continuable errors.
+
+
+File: elisp,  Node: Processing of Errors,  Next: Handling Errors,  Prev: Signaling Errors,  Up: Errors
+
+How Emacs Processes Errors
+..........................
+
+   When an error is signaled, `signal' searches for an active "handler"
+for the error.  A handler is a sequence of Lisp expressions designated
+to be executed if an error happens in part of the Lisp program.  If the
+error has an applicable handler, the handler is executed, and control
+resumes following the handler.  The handler executes in the environment
+of the `condition-case' that established it; all functions called
+within that `condition-case' have already been exited, and the handler
+cannot return to them.
+
+   If there is no applicable handler for the error, the current command
+is terminated and control returns to the editor command loop, because
+the command loop has an implicit handler for all kinds of errors.  The
+command loop's handler uses the error symbol and associated data to
+print an error message.
+
+   An error that has no explicit handler may call the Lisp debugger.
+The debugger is enabled if the variable `debug-on-error' (*note Error
+Debugging::) is non-`nil'.  Unlike error handlers, the debugger runs in
+the environment of the error, so that you can examine values of
+variables precisely as they were at the time of the error.
+
+
+File: elisp,  Node: Handling Errors,  Next: Error Symbols,  Prev: Processing of Errors,  Up: Errors
+
+Writing Code to Handle Errors
+.............................
+
+   The usual effect of signaling an error is to terminate the command
+that is running and return immediately to the Emacs editor command loop.
+You can arrange to trap errors occurring in a part of your program by
+establishing an error handler, with the special form `condition-case'.
+A simple example looks like this:
+
+     (condition-case nil
+         (delete-file filename)
+       (error nil))
+
+This deletes the file named FILENAME, catching any error and returning
+`nil' if an error occurs.
+
+   The second argument of `condition-case' is called the "protected
+form".  (In the example above, the protected form is a call to
+`delete-file'.)  The error handlers go into effect when this form
+begins execution and are deactivated when this form returns.  They
+remain in effect for all the intervening time.  In particular, they are
+in effect during the execution of functions called by this form, in
+their subroutines, and so on.  This is a good thing, since, strictly
+speaking, errors can be signaled only by Lisp primitives (including
+`signal' and `error') called by the protected form, not by the
+protected form itself.
+
+   The arguments after the protected form are handlers.  Each handler
+lists one or more "condition names" (which are symbols) to specify
+which errors it will handle.  The error symbol specified when an error
+is signaled also defines a list of condition names.  A handler applies
+to an error if they have any condition names in common.  In the example
+above, there is one handler, and it specifies one condition name,
+`error', which covers all errors.
+
+   The search for an applicable handler checks all the established
+handlers starting with the most recently established one.  Thus, if two
+nested `condition-case' forms offer to handle the same error, the inner
+of the two gets to handle it.
+
+   If an error is handled by some `condition-case' form, this
+ordinarily prevents the debugger from being run, even if
+`debug-on-error' says this error should invoke the debugger.  *Note
+Error Debugging::.  If you want to be able to debug errors that are
+caught by a `condition-case', set the variable `debug-on-signal' to a
+non-`nil' value.
+
+   When an error is handled, control returns to the handler.  Before
+this happens, Emacs unbinds all variable bindings made by binding
+constructs that are being exited and executes the cleanups of all
+`unwind-protect' forms that are exited.  Once control arrives at the
+handler, the body of the handler is executed.
+
+   After execution of the handler body, execution returns from the
+`condition-case' form.  Because the protected form is exited completely
+before execution of the handler, the handler cannot resume execution at
+the point of the error, nor can it examine variable bindings that were
+made within the protected form.  All it can do is clean up and proceed.
+
+   The `condition-case' construct is often used to trap errors that are
+predictable, such as failure to open a file in a call to
+`insert-file-contents'.  It is also used to trap errors that are
+totally unpredictable, such as when the program evaluates an expression
+read from the user.
+
+   Error signaling and handling have some resemblance to `throw' and
+`catch' (*note Catch and Throw::), but they are entirely separate
+facilities.  An error cannot be caught by a `catch', and a `throw'
+cannot be handled by an error handler (though using `throw' when there
+is no suitable `catch' signals an error that can be handled).
+
+ - Special Form: condition-case var protected-form handlers...
+     This special form establishes the error handlers HANDLERS around
+     the execution of PROTECTED-FORM.  If PROTECTED-FORM executes
+     without error, the value it returns becomes the value of the
+     `condition-case' form; in this case, the `condition-case' has no
+     effect.  The `condition-case' form makes a difference when an
+     error occurs during PROTECTED-FORM.
+
+     Each of the HANDLERS is a list of the form `(CONDITIONS BODY...)'.
+     Here CONDITIONS is an error condition name to be handled, or a
+     list of condition names; BODY is one or more Lisp expressions to
+     be executed when this handler handles an error.  Here are examples
+     of handlers:
+
+          (error nil)
+          
+          (arith-error (message "Division by zero"))
+          
+          ((arith-error file-error)
+           (message
+            "Either division by zero or failure to open a file"))
+
+     Each error that occurs has an "error symbol" that describes what
+     kind of error it is.  The `error-conditions' property of this
+     symbol is a list of condition names (*note Error Symbols::).  Emacs
+     searches all the active `condition-case' forms for a handler that
+     specifies one or more of these condition names; the innermost
+     matching `condition-case' handles the error.  Within this
+     `condition-case', the first applicable handler handles the error.
+
+     After executing the body of the handler, the `condition-case'
+     returns normally, using the value of the last form in the handler
+     body as the overall value.
+
+     The argument VAR is a variable.  `condition-case' does not bind
+     this variable when executing the PROTECTED-FORM, only when it
+     handles an error.  At that time, it binds VAR locally to an "error
+     description", which is a list giving the particulars of the error.
+     The error description has the form `(ERROR-SYMBOL . DATA)'.  The
+     handler can refer to this list to decide what to do.  For example,
+     if the error is for failure opening a file, the file name is the
+     second element of DATA--the third element of the error description.
+
+     If VAR is `nil', that means no variable is bound.  Then the error
+     symbol and associated data are not available to the handler.
+
+ - Function: error-message-string error-description
+     This function returns the error message string for a given error
+     descriptor.  It is useful if you want to handle an error by
+     printing the usual error message for that error.
+
+   Here is an example of using `condition-case' to handle the error
+that results from dividing by zero.  The handler displays the error
+message (but without a beep), then returns a very large number.
+
+     (defun safe-divide (dividend divisor)
+       (condition-case err
+           ;; Protected form.
+           (/ dividend divisor)
+         ;; The handler.
+         (arith-error                        ; Condition.
+          ;; Display the usual message for this error.
+          (message "%s" (error-message-string err))
+          1000000)))
+     => safe-divide
+     
+     (safe-divide 5 0)
+          -| Arithmetic error: (arith-error)
+     => 1000000
+
+The handler specifies condition name `arith-error' so that it will
+handle only division-by-zero errors.  Other kinds of errors will not be
+handled, at least not by this `condition-case'.  Thus,
+
+     (safe-divide nil 3)
+          error--> Wrong type argument: number-or-marker-p, nil
+
+   Here is a `condition-case' that catches all kinds of errors,
+including those signaled with `error':
+
+     (setq baz 34)
+          => 34
+     
+     (condition-case err
+         (if (eq baz 35)
+             t
+           ;; This is a call to the function `error'.
+           (error "Rats!  The variable %s was %s, not 35" 'baz baz))
+       ;; This is the handler; it is not a form.
+       (error (princ (format "The error was: %s" err))
+              2))
+     -| The error was: (error "Rats!  The variable baz was 34, not 35")
+     => 2
+
+
+File: elisp,  Node: Error Symbols,  Prev: Handling Errors,  Up: Errors
+
+Error Symbols and Condition Names
+.................................
+
+   When you signal an error, you specify an "error symbol" to specify
+the kind of error you have in mind.  Each error has one and only one
+error symbol to categorize it.  This is the finest classification of
+errors defined by the Emacs Lisp language.
+
+   These narrow classifications are grouped into a hierarchy of wider
+classes called "error conditions", identified by "condition names".
+The narrowest such classes belong to the error symbols themselves: each
+error symbol is also a condition name.  There are also condition names
+for more extensive classes, up to the condition name `error' which
+takes in all kinds of errors.  Thus, each error has one or more
+condition names: `error', the error symbol if that is distinct from
+`error', and perhaps some intermediate classifications.
+
+   In order for a symbol to be an error symbol, it must have an
+`error-conditions' property which gives a list of condition names.
+This list defines the conditions that this kind of error belongs to.
+(The error symbol itself, and the symbol `error', should always be
+members of this list.)  Thus, the hierarchy of condition names is
+defined by the `error-conditions' properties of the error symbols.
+
+   In addition to the `error-conditions' list, the error symbol should
+have an `error-message' property whose value is a string to be printed
+when that error is signaled but not handled.  If the `error-message'
+property exists, but is not a string, the error message `peculiar
+error' is used.
+
+   Here is how we define a new error symbol, `new-error':
+
+     (put 'new-error
+          'error-conditions
+          '(error my-own-errors new-error))
+     => (error my-own-errors new-error)
+     (put 'new-error 'error-message "A new error")
+     => "A new error"
+
+This error has three condition names: `new-error', the narrowest
+classification; `my-own-errors', which we imagine is a wider
+classification; and `error', which is the widest of all.
+
+   The error string should start with a capital letter but it should
+not end with a period.  This is for consistency with the rest of Emacs.
+
+   Naturally, Emacs will never signal `new-error' on its own; only an
+explicit call to `signal' (*note Signaling Errors::) in your code can
+do this:
+
+     (signal 'new-error '(x y))
+          error--> A new error: x, y
+
+   This error can be handled through any of the three condition names.
+This example handles `new-error' and any other errors in the class
+`my-own-errors':
+
+     (condition-case foo
+         (bar nil t)
+       (my-own-errors nil))
+
+   The significant way that errors are classified is by their condition
+names--the names used to match errors with handlers.  An error symbol
+serves only as a convenient way to specify the intended error message
+and list of condition names.  It would be cumbersome to give `signal' a
+list of condition names rather than one error symbol.
+
+   By contrast, using only error symbols without condition names would
+seriously decrease the power of `condition-case'.  Condition names make
+it possible to categorize errors at various levels of generality when
+you write an error handler.  Using error symbols alone would eliminate
+all but the narrowest level of classification.
+
+   *Note Standard Errors::, for a list of all the standard error symbols
+and their conditions.
+
+
+File: elisp,  Node: Cleanups,  Prev: Errors,  Up: Nonlocal Exits
+
+Cleaning Up from Nonlocal Exits
+-------------------------------
+
+   The `unwind-protect' construct is essential whenever you temporarily
+put a data structure in an inconsistent state; it permits you to make
+the data consistent again in the event of an error or throw.
+
+ - Special Form: unwind-protect body cleanup-forms...
+     `unwind-protect' executes the BODY with a guarantee that the
+     CLEANUP-FORMS will be evaluated if control leaves BODY, no matter
+     how that happens.  The BODY may complete normally, or execute a
+     `throw' out of the `unwind-protect', or cause an error; in all
+     cases, the CLEANUP-FORMS will be evaluated.
+
+     If the BODY forms finish normally, `unwind-protect' returns the
+     value of the last BODY form, after it evaluates the CLEANUP-FORMS.
+     If the BODY forms do not finish, `unwind-protect' does not return
+     any value in the normal sense.
+
+     Only the BODY is protected by the `unwind-protect'.  If any of the
+     CLEANUP-FORMS themselves exits nonlocally (via a `throw' or an
+     error), `unwind-protect' is _not_ guaranteed to evaluate the rest
+     of them.  If the failure of one of the CLEANUP-FORMS has the
+     potential to cause trouble, then protect it with another
+     `unwind-protect' around that form.
+
+     The number of currently active `unwind-protect' forms counts,
+     together with the number of local variable bindings, against the
+     limit `max-specpdl-size' (*note Local Variables::).
+
+   For example, here we make an invisible buffer for temporary use, and
+make sure to kill it before finishing:
+
+     (save-excursion
+       (let ((buffer (get-buffer-create " *temp*")))
+         (set-buffer buffer)
+         (unwind-protect
+             BODY
+           (kill-buffer buffer))))
+
+You might think that we could just as well write `(kill-buffer
+(current-buffer))' and dispense with the variable `buffer'.  However,
+the way shown above is safer, if BODY happens to get an error after
+switching to a different buffer!  (Alternatively, you could write
+another `save-excursion' around the body, to ensure that the temporary
+buffer becomes current again in time to kill it.)
+
+   Emacs includes a standard macro called `with-temp-buffer' which
+expands into more or less the code shown above (*note Current Buffer::).
+Several of the macros defined in this manual use `unwind-protect' in
+this way.
+
+   Here is an actual example derived from an FTP package.  It creates a
+process (*note Processes::) to try to establish a connection to a remote
+machine.  As the function `ftp-login' is highly susceptible to numerous
+problems that the writer of the function cannot anticipate, it is
+protected with a form that guarantees deletion of the process in the
+event of failure.  Otherwise, Emacs might fill up with useless
+subprocesses.
+
+     (let ((win nil))
+       (unwind-protect
+           (progn
+             (setq process (ftp-setup-buffer host file))
+             (if (setq win (ftp-login process host user password))
+                 (message "Logged in")
+               (error "Ftp login failed")))
+         (or win (and process (delete-process process)))))
+
+   This example has a small bug: if the user types `C-g' to quit, and
+the quit happens immediately after the function `ftp-setup-buffer'
+returns but before the variable `process' is set, the process will not
+be killed.  There is no easy way to fix this bug, but at least it is
+very unlikely.
+
+
+File: elisp,  Node: Variables,  Next: Functions,  Prev: Control Structures,  Up: Top
+
+Variables
+*********
+
+   A "variable" is a name used in a program to stand for a value.
+Nearly all programming languages have variables of some sort.  In the
+text of a Lisp program, variables are written using the syntax for
+symbols.
+
+   In Lisp, unlike most programming languages, programs are represented
+primarily as Lisp objects and only secondarily as text.  The Lisp
+objects used for variables are symbols: the symbol name is the variable
+name, and the variable's value is stored in the value cell of the
+symbol.  The use of a symbol as a variable is independent of its use as
+a function name.  *Note Symbol Components::.
+
+   The Lisp objects that constitute a Lisp program determine the textual
+form of the program--it is simply the read syntax for those Lisp
+objects.  This is why, for example, a variable in a textual Lisp program
+is written using the read syntax for the symbol that represents the
+variable.
+
+* Menu:
+
+* Global Variables::      Variable values that exist permanently, everywhere.
+* Constant Variables::    Certain "variables" have values that never change.
+* Local Variables::       Variable values that exist only temporarily.
+* Void Variables::        Symbols that lack values.
+* Defining Variables::    A definition says a symbol is used as a variable.
+* Tips for Defining::     Things you should think about when you
+                            define a variable.
+* Accessing Variables::   Examining values of variables whose names
+                            are known only at run time.
+* Setting Variables::     Storing new values in variables.
+* Variable Scoping::      How Lisp chooses among local and global values.
+* Buffer-Local Variables::  Variable values in effect only in one buffer.
+* Frame-Local Variables::   Variable values in effect only in one frame.
+* Future Local Variables::  New kinds of local values we might add some day.
+* File Local Variables::  Handling local variable lists in files.
+
+
+File: elisp,  Node: Global Variables,  Next: Constant Variables,  Up: Variables
+
+Global Variables
+================
+
+   The simplest way to use a variable is "globally".  This means that
+the variable has just one value at a time, and this value is in effect
+(at least for the moment) throughout the Lisp system.  The value remains
+in effect until you specify a new one.  When a new value replaces the
+old one, no trace of the old value remains in the variable.
+
+   You specify a value for a symbol with `setq'.  For example,
+
+     (setq x '(a b))
+
+gives the variable `x' the value `(a b)'.  Note that `setq' does not
+evaluate its first argument, the name of the variable, but it does
+evaluate the second argument, the new value.
+
+   Once the variable has a value, you can refer to it by using the
+symbol by itself as an expression.  Thus,
+
+     x => (a b)
+
+assuming the `setq' form shown above has already been executed.
+
+   If you do set the same variable again, the new value replaces the old
+one:
+
+     x
+          => (a b)
+     (setq x 4)
+          => 4
+     x
+          => 4
+
+
+File: elisp,  Node: Constant Variables,  Next: Local Variables,  Prev: Global Variables,  Up: Variables
+
+Variables that Never Change
+===========================
+
+   In Emacs Lisp, certain symbols normally evaluate to themselves.
+These include `nil' and `t', as well as any symbol whose name starts
+with `:' (these are called "keywords").  These symbols cannot be
+rebound, nor can their values be changed.  Any attempt to set or bind
+`nil' or `t' signals a `setting-constant' error.  The same is true for
+a keyword (a symbol whose name starts with `:'), if it is interned in
+the standard obarray, except that setting such a symbol to itself is
+not an error.
+
+     nil == 'nil
+          => nil
+     (setq nil 500)
+     error--> Attempt to set constant symbol: nil
+
+ - Function: keywordp object
+     function returns `t' if OBJECT is a symbol whose name starts with
+     `:', interned in the standard obarray, and returns `nil' otherwise.
+
+
+File: elisp,  Node: Local Variables,  Next: Void Variables,  Prev: Constant Variables,  Up: Variables
+
+Local Variables
+===============
+
+   Global variables have values that last until explicitly superseded
+with new values.  Sometimes it is useful to create variable values that
+exist temporarily--only until a certain part of the program finishes.
+These values are called "local", and the variables so used are called
+"local variables".
+
+   For example, when a function is called, its argument variables
+receive new local values that last until the function exits.  The `let'
+special form explicitly establishes new local values for specified
+variables; these last until exit from the `let' form.
+
+   Establishing a local value saves away the previous value (or lack of
+one) of the variable.  When the life span of the local value is over,
+the previous value is restored.  In the mean time, we say that the
+previous value is "shadowed" and "not visible".  Both global and local
+values may be shadowed (*note Scope::).
+
+   If you set a variable (such as with `setq') while it is local, this
+replaces the local value; it does not alter the global value, or
+previous local values, that are shadowed.  To model this behavior, we
+speak of a "local binding" of the variable as well as a local value.
+
+   The local binding is a conceptual place that holds a local value.
+Entry to a function, or a special form such as `let', creates the local
+binding; exit from the function or from the `let' removes the local
+binding.  As long as the local binding lasts, the variable's value is
+stored within it.  Use of `setq' or `set' while there is a local
+binding stores a different value into the local binding; it does not
+create a new binding.
+
+   We also speak of the "global binding", which is where (conceptually)
+the global value is kept.
+
+   A variable can have more than one local binding at a time (for
+example, if there are nested `let' forms that bind it).  In such a
+case, the most recently created local binding that still exists is the
+"current binding" of the variable.  (This rule is called "dynamic
+scoping"; see *Note Variable Scoping::.)  If there are no local
+bindings, the variable's global binding is its current binding.  We
+sometimes call the current binding the "most-local existing binding",
+for emphasis.  Ordinary evaluation of a symbol always returns the value
+of its current binding.
+
+   The special forms `let' and `let*' exist to create local bindings.
+
+ - Special Form: let (bindings...) forms...
+     This special form binds variables according to BINDINGS and then
+     evaluates all of the FORMS in textual order.  The `let'-form
+     returns the value of the last form in FORMS.
+
+     Each of the BINDINGS is either (i) a symbol, in which case that
+     symbol is bound to `nil'; or (ii) a list of the form `(SYMBOL
+     VALUE-FORM)', in which case SYMBOL is bound to the result of
+     evaluating VALUE-FORM.  If VALUE-FORM is omitted, `nil' is used.
+
+     All of the VALUE-FORMs in BINDINGS are evaluated in the order they
+     appear and _before_ binding any of the symbols to them.  Here is
+     an example of this: `Z' is bound to the old value of `Y', which is
+     2, not the new value of `Y', which is 1.
+
+          (setq Y 2)
+               => 2
+          (let ((Y 1)
+                (Z Y))
+            (list Y Z))
+               => (1 2)
+
+ - Special Form: let* (bindings...) forms...
+     This special form is like `let', but it binds each variable right
+     after computing its local value, before computing the local value
+     for the next variable.  Therefore, an expression in BINDINGS can
+     reasonably refer to the preceding symbols bound in this `let*'
+     form.  Compare the following example with the example above for
+     `let'.
+
+          (setq Y 2)
+               => 2
+          (let* ((Y 1)
+                 (Z Y))    ; Use the just-established value of `Y'.
+            (list Y Z))
+               => (1 1)
+
+   Here is a complete list of the other facilities that create local
+bindings:
+
+   * Function calls (*note Functions::).
+
+   * Macro calls (*note Macros::).
+
+   * `condition-case' (*note Errors::).
+
+   Variables can also have buffer-local bindings (*note Buffer-Local
+Variables::) and frame-local bindings (*note Frame-Local Variables::); a
+few variables have terminal-local bindings (*note Multiple Displays::).
+These kinds of bindings work somewhat like ordinary local bindings, but
+they are localized depending on "where" you are in Emacs, rather than
+localized in time.
+
+ - Variable: max-specpdl-size
+     This variable defines the limit on the total number of local
+     variable bindings and `unwind-protect' cleanups (*note Nonlocal
+     Exits::) that are allowed before signaling an error (with data
+     `"Variable binding depth exceeds max-specpdl-size"').
+
+     This limit, with the associated error when it is exceeded, is one
+     way that Lisp avoids infinite recursion on an ill-defined function.
+     `max-lisp-eval-depth' provides another limit on depth of nesting.
+     *Note Eval::.
+
+     The default value is 600.  Entry to the Lisp debugger increases the
+     value, if there is little room left, to make sure the debugger
+     itself has room to execute.
+
+
+File: elisp,  Node: Void Variables,  Next: Defining Variables,  Prev: Local Variables,  Up: Variables
+
+When a Variable is "Void"
+=========================
+
+   If you have never given a symbol any value as a global variable, we
+say that that symbol's global value is "void".  In other words, the
+symbol's value cell does not have any Lisp object in it.  If you try to
+evaluate the symbol, you get a `void-variable' error rather than a
+value.
+
+   Note that a value of `nil' is not the same as void.  The symbol
+`nil' is a Lisp object and can be the value of a variable just as any
+other object can be; but it is _a value_.  A void variable does not
+have any value.
+
+   After you have given a variable a value, you can make it void once
+more using `makunbound'.
+
+ - Function: makunbound symbol
+     This function makes the current variable binding of SYMBOL void.
+     Subsequent attempts to use this symbol's value as a variable will
+     signal the error `void-variable', unless and until you set it
+     again.
+
+     `makunbound' returns SYMBOL.
+
+          (makunbound 'x)      ; Make the global value of `x' void.
+               => x
+          x
+          error--> Symbol's value as variable is void: x
+
+     If SYMBOL is locally bound, `makunbound' affects the most local
+     existing binding.  This is the only way a symbol can have a void
+     local binding, since all the constructs that create local bindings
+     create them with values.  In this case, the voidness lasts at most
+     as long as the binding does; when the binding is removed due to
+     exit from the construct that made it, the previous local or global
+     binding is reexposed as usual, and the variable is no longer void
+     unless the newly reexposed binding was void all along.
+
+          (setq x 1)               ; Put a value in the global binding.
+               => 1
+          (let ((x 2))             ; Locally bind it.
+            (makunbound 'x)        ; Void the local binding.
+            x)
+          error--> Symbol's value as variable is void: x
+          x                        ; The global binding is unchanged.
+               => 1
+          
+          (let ((x 2))             ; Locally bind it.
+            (let ((x 3))           ; And again.
+              (makunbound 'x)      ; Void the innermost-local binding.
+              x))                  ; And refer: it's void.
+          error--> Symbol's value as variable is void: x
+          
+          (let ((x 2))
+            (let ((x 3))
+              (makunbound 'x))     ; Void inner binding, then remove it.
+            x)                     ; Now outer `let' binding is visible.
+               => 2
+
+   A variable that has been made void with `makunbound' is
+indistinguishable from one that has never received a value and has
+always been void.
+
+   You can use the function `boundp' to test whether a variable is
+currently void.
+
+ - Function: boundp variable
+     `boundp' returns `t' if VARIABLE (a symbol) is not void; more
+     precisely, if its current binding is not void.  It returns `nil'
+     otherwise.
+
+          (boundp 'abracadabra)          ; Starts out void.
+               => nil
+          (let ((abracadabra 5))         ; Locally bind it.
+            (boundp 'abracadabra))
+               => t
+          (boundp 'abracadabra)          ; Still globally void.
+               => nil
+          (setq abracadabra 5)           ; Make it globally nonvoid.
+               => 5
+          (boundp 'abracadabra)
+               => t
+
+
+File: elisp,  Node: Defining Variables,  Next: Tips for Defining,  Prev: Void Variables,  Up: Variables
+
+Defining Global Variables
+=========================
+
+   You may announce your intention to use a symbol as a global variable
+with a "variable definition": a special form, either `defconst' or
+`defvar'.
+
+   In Emacs Lisp, definitions serve three purposes.  First, they inform
+people who read the code that certain symbols are _intended_ to be used
+a certain way (as variables).  Second, they inform the Lisp system of
+these things, supplying a value and documentation.  Third, they provide
+information to utilities such as `etags' and `make-docfile', which
+create data bases of the functions and variables in a program.
+
+   The difference between `defconst' and `defvar' is primarily a matter
+of intent, serving to inform human readers of whether the value should
+ever change.  Emacs Lisp does not restrict the ways in which a variable
+can be used based on `defconst' or `defvar' declarations.  However, it
+does make a difference for initialization: `defconst' unconditionally
+initializes the variable, while `defvar' initializes it only if it is
+void.
+
+ - Special Form: defvar symbol [value [doc-string]]
+     This special form defines SYMBOL as a variable and can also
+     initialize and document it.  The definition informs a person
+     reading your code that SYMBOL is used as a variable that might be
+     set or changed.  Note that SYMBOL is not evaluated; the symbol to
+     be defined must appear explicitly in the `defvar'.
+
+     If SYMBOL is void and VALUE is specified, `defvar' evaluates it
+     and sets SYMBOL to the result.  But if SYMBOL already has a value
+     (i.e., it is not void), VALUE is not even evaluated, and SYMBOL's
+     value remains unchanged.  If VALUE is omitted, the value of SYMBOL
+     is not changed in any case.
+
+     If SYMBOL has a buffer-local binding in the current buffer,
+     `defvar' operates on the default value, which is
+     buffer-independent, not the current (buffer-local) binding.  It
+     sets the default value if the default value is void.  *Note
+     Buffer-Local Variables::.
+
+     When you evaluate a top-level `defvar' form with `C-M-x' in Emacs
+     Lisp mode (`eval-defun'), a special feature of `eval-defun'
+     arranges to set the variable unconditionally, without testing
+     whether its value is void.
+
+     If the DOC-STRING argument appears, it specifies the documentation
+     for the variable.  (This opportunity to specify documentation is
+     one of the main benefits of defining the variable.)  The
+     documentation is stored in the symbol's `variable-documentation'
+     property.  The Emacs help functions (*note Documentation::) look
+     for this property.
+
+     If the variable is a user option that users would want to set
+     interactively, you should use `*' as the first character of
+     DOC-STRING.  This lets users set the variable conveniently using
+     the `set-variable' command.  Note that you should nearly always
+     use `defcustom' instead of `defvar' to define these variables, so
+     that users can use `M-x customize' and related commands to set
+     them.  *Note Customization::.
+
+     Here are some examples.  This form defines `foo' but does not
+     initialize it:
+
+          (defvar foo)
+               => foo
+
+     This example initializes the value of `bar' to `23', and gives it
+     a documentation string:
+
+          (defvar bar 23
+            "The normal weight of a bar.")
+               => bar
+
+     The following form changes the documentation string for `bar',
+     making it a user option, but does not change the value, since `bar'
+     already has a value.  (The addition `(1+ nil)' would get an error
+     if it were evaluated, but since it is not evaluated, there is no
+     error.)
+
+          (defvar bar (1+ nil)
+            "*The normal weight of a bar.")
+               => bar
+          bar
+               => 23
+
+     Here is an equivalent expression for the `defvar' special form:
+
+          (defvar SYMBOL VALUE DOC-STRING)
+          ==
+          (progn
+            (if (not (boundp 'SYMBOL))
+                (setq SYMBOL VALUE))
+            (if 'DOC-STRING
+              (put 'SYMBOL 'variable-documentation 'DOC-STRING))
+            'SYMBOL)
+
+     The `defvar' form returns SYMBOL, but it is normally used at top
+     level in a file where its value does not matter.
+
+ - Special Form: defconst symbol [value [doc-string]]
+     This special form defines SYMBOL as a value and initializes it.
+     It informs a person reading your code that SYMBOL has a standard
+     global value, established here, that should not be changed by the
+     user or by other programs.  Note that SYMBOL is not evaluated; the
+     symbol to be defined must appear explicitly in the `defconst'.
+
+     `defconst' always evaluates VALUE, and sets the value of SYMBOL to
+     the result if VALUE is given.  If SYMBOL does have a buffer-local
+     binding in the current buffer, `defconst' sets the default value,
+     not the buffer-local value.  (But you should not be making
+     buffer-local bindings for a symbol that is defined with
+     `defconst'.)
+
+     Here, `pi' is a constant that presumably ought not to be changed
+     by anyone (attempts by the Indiana State Legislature
+     notwithstanding).  As the second form illustrates, however, this
+     is only advisory.
+
+          (defconst pi 3.1415 "Pi to five places.")
+               => pi
+          (setq pi 3)
+               => pi
+          pi
+               => 3
+
+ - Function: user-variable-p variable
+     This function returns `t' if VARIABLE is a user option--a variable
+     intended to be set by the user for customization--and `nil'
+     otherwise.  (Variables other than user options exist for the
+     internal purposes of Lisp programs, and users need not know about
+     them.)
+
+     User option variables are distinguished from other variables either
+     though being declared using `defcustom'(1) or by the first
+     character of their `variable-documentation' property.  If the
+     property exists and is a string, and its first character is `*',
+     then the variable is a user option.
+
+   If a user option variable has a `variable-interactive' property, the
+`set-variable' command uses that value to control reading the new value
+for the variable.  The property's value is used as if it were specified
+in `interactive' (*note Using Interactive::).  However, this feature is
+largely obsoleted by `defcustom' (*note Customization::).
+
+   *Warning:* If the `defconst' and `defvar' special forms are used
+while the variable has a local binding, they set the local binding's
+value; the global binding is not changed.  This is not what you usually
+want.  To prevent it, use these special forms at top level in a file,
+where normally no local binding is in effect, and make sure to load the
+file before making a local binding for the variable.
+
+   ---------- Footnotes ----------
+
+   (1) They may also be declared equivalently in `cus-start.el'.
+
+
+File: elisp,  Node: Tips for Defining,  Next: Accessing Variables,  Prev: Defining Variables,  Up: Variables
+
+Tips for Defining Variables Robustly
+====================================
+
+   When you define a variable whose value is a function, or a list of
+functions, use a name that ends in `-function' or `-functions',
+respectively.
+
+   There are several other variable name conventions; here is a
+complete list:
+
+`...-hook'
+     The variable is a normal hook (*note Hooks::).
+
+`...-function'
+     The value is a function.
+
+`...-functions'
+     The value is a list of functions.
+
+`...-form'
+     The value is a form (an expression).
+
+`...-forms'
+     The value is a list of forms (expressions).
+
+`...-predicate'
+     The value is a predicate--a function of one argument that returns
+     non-`nil' for "good" arguments and `nil' for "bad" arguments.
+
+`...-flag'
+     The value is significant only as to whether it is `nil' or not.
+
+`...-program'
+     The value is a program name.
+
+`...-command'
+     The value is a whole shell command.
+
+``'-switches'
+     The value specifies options for a command.
+
+   When you define a variable, always consider whether you should mark
+it as "risky"; see *Note File Local Variables::.
+
+   When defining and initializing a variable that holds a complicated
+value (such as a keymap with bindings in it), it's best to put the
+entire computation of the value into the `defvar', like this:
+
+     (defvar my-mode-map
+       (let ((map (make-sparse-keymap)))
+         (define-key map "\C-c\C-a" 'my-command)
+         ...
+         map)
+       DOCSTRING)
+
+This method has several benefits.  First, if the user quits while
+loading the file, the variable is either still uninitialized or
+initialized properly, never in-between.  If it is still uninitialized,
+reloading the file will initialize it properly.  Second, reloading the
+file once the variable is initialized will not alter it; that is
+important if the user has run hooks to alter part of the contents (such
+as, to rebind keys).  Third, evaluating the `defvar' form with `C-M-x'
+_will_ reinitialize the map completely.
+
+   Putting so much code in the `defvar' form has one disadvantage: it
+puts the documentation string far away from the line which names the
+variable.  Here's a safe way to avoid that:
+
+     (defvar my-mode-map nil
+       DOCSTRING)
+     (unless my-mode-map
+       (let ((map (make-sparse-keymap)))
+         (define-key map "\C-c\C-a" 'my-command)
+         ...
+         (setq my-mode-map map)))
+
+This has all the same advantages as putting the initialization inside
+the `defvar', except that you must type `C-M-x' twice, once on each
+form, if you do want to reinitialize the variable.
+
+   But be careful not to write the code like this:
+
+     (defvar my-mode-map nil
+       DOCSTRING)
+     (unless my-mode-map
+       (setq my-mode-map (make-sparse-keymap))
+       (define-key my-mode-map "\C-c\C-a" 'my-command)
+       ...)
+
+This code sets the variable, then alters it, but it does so in more than
+one step.  If the user quits just after the `setq', that leaves the
+variable neither correctly initialized nor void nor `nil'.  Once that
+happens, reloading the file will not initialize the variable; it will
+remain incomplete.
+
+
+File: elisp,  Node: Accessing Variables,  Next: Setting Variables,  Prev: Tips for Defining,  Up: Variables
+
+Accessing Variable Values
+=========================
+
+   The usual way to reference a variable is to write the symbol which
+names it (*note Symbol Forms::).  This requires you to specify the
+variable name when you write the program.  Usually that is exactly what
+you want to do.  Occasionally you need to choose at run time which
+variable to reference; then you can use `symbol-value'.
+
+ - Function: symbol-value symbol
+     This function returns the value of SYMBOL.  This is the value in
+     the innermost local binding of the symbol, or its global value if
+     it has no local bindings.
+
+          (setq abracadabra 5)
+               => 5
+          (setq foo 9)
+               => 9
+          
+          ;; Here the symbol `abracadabra'
+          ;;   is the symbol whose value is examined.
+          (let ((abracadabra 'foo))
+            (symbol-value 'abracadabra))
+               => foo
+          
+          ;; Here the value of `abracadabra',
+          ;;   which is `foo',
+          ;;   is the symbol whose value is examined.
+          (let ((abracadabra 'foo))
+            (symbol-value abracadabra))
+               => 9
+          
+          (symbol-value 'abracadabra)
+               => 5
+
+     A `void-variable' error is signaled if the current binding of
+     SYMBOL is void.
+
+
+File: elisp,  Node: Setting Variables,  Next: Variable Scoping,  Prev: Accessing Variables,  Up: Variables
+
+How to Alter a Variable Value
+=============================
+
+   The usual way to change the value of a variable is with the special
+form `setq'.  When you need to compute the choice of variable at run
+time, use the function `set'.
+
+ - Special Form: setq [symbol form]...
+     This special form is the most common method of changing a
+     variable's value.  Each SYMBOL is given a new value, which is the
+     result of evaluating the corresponding FORM.  The most-local
+     existing binding of the symbol is changed.
+
+     `setq' does not evaluate SYMBOL; it sets the symbol that you
+     write.  We say that this argument is "automatically quoted".  The
+     `q' in `setq' stands for "quoted."
+
+     The value of the `setq' form is the value of the last FORM.
+
+          (setq x (1+ 2))
+               => 3
+          x                   ; `x' now has a global value.
+               => 3
+          (let ((x 5))
+            (setq x 6)        ; The local binding of `x' is set.
+            x)
+               => 6
+          x                   ; The global value is unchanged.
+               => 3
+
+     Note that the first FORM is evaluated, then the first SYMBOL is
+     set, then the second FORM is evaluated, then the second SYMBOL is
+     set, and so on:
+
+          (setq x 10          ; Notice that `x' is set before
+                y (1+ x))     ;   the value of `y' is computed.
+               => 11
+
+ - Function: set symbol value
+     This function sets SYMBOL's value to VALUE, then returns VALUE.
+     Since `set' is a function, the expression written for SYMBOL is
+     evaluated to obtain the symbol to set.
+
+     The most-local existing binding of the variable is the binding
+     that is set; shadowed bindings are not affected.
+
+          (set one 1)
+          error--> Symbol's value as variable is void: one
+          (set 'one 1)
+               => 1
+          (set 'two 'one)
+               => one
+          (set two 2)         ; `two' evaluates to symbol `one'.
+               => 2
+          one                 ; So it is `one' that was set.
+               => 2
+          (let ((one 1))      ; This binding of `one' is set,
+            (set 'one 3)      ;   not the global value.
+            one)
+               => 3
+          one
+               => 2
+
+     If SYMBOL is not actually a symbol, a `wrong-type-argument' error
+     is signaled.
+
+          (set '(x y) 'z)
+          error--> Wrong type argument: symbolp, (x y)
+
+     Logically speaking, `set' is a more fundamental primitive than
+     `setq'.  Any use of `setq' can be trivially rewritten to use
+     `set'; `setq' could even be defined as a macro, given the
+     availability of `set'.  However, `set' itself is rarely used;
+     beginners hardly need to know about it.  It is useful only for
+     choosing at run time which variable to set.  For example, the
+     command `set-variable', which reads a variable name from the user
+     and then sets the variable, needs to use `set'.
+
+          Common Lisp note: In Common Lisp, `set' always changes the
+          symbol's "special" or dynamic value, ignoring any lexical
+          bindings.  In Emacs Lisp, all variables and all bindings are
+          dynamic, so `set' always affects the most local existing
+          binding.
+
+   One other function for setting a variable is designed to add an
+element to a list if it is not already present in the list.
+
+ - Function: add-to-list symbol element
+     This function sets the variable SYMBOL by consing ELEMENT onto the
+     old value, if ELEMENT is not already a member of that value.  It
+     returns the resulting list, whether updated or not.  The value of
+     SYMBOL had better be a list already before the call.
+
+     The argument SYMBOL is not implicitly quoted; `add-to-list' is an
+     ordinary function, like `set' and unlike `setq'.  Quote the
+     argument yourself if that is what you want.
+
+   Here's a scenario showing how to use `add-to-list':
+
+     (setq foo '(a b))
+          => (a b)
+     
+     (add-to-list 'foo 'c)     ;; Add `c'.
+          => (c a b)
+     
+     (add-to-list 'foo 'b)     ;; No effect.
+          => (c a b)
+     
+     foo                       ;; `foo' was changed.
+          => (c a b)
+
+   An equivalent expression for `(add-to-list 'VAR VALUE)' is this:
+
+     (or (member VALUE VAR)
+         (setq VAR (cons VALUE VAR)))
+

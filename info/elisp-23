@@ -1,0 +1,1137 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Keys in Documentation,  Next: Describing Characters,  Prev: Accessing Documentation,  Up: Documentation
+
+Substituting Key Bindings in Documentation
+==========================================
+
+   When documentation strings refer to key sequences, they should use
+the current, actual key bindings.  They can do so using certain special
+text sequences described below.  Accessing documentation strings in the
+usual way substitutes current key binding information for these special
+sequences.  This works by calling `substitute-command-keys'.  You can
+also call that function yourself.
+
+   Here is a list of the special sequences and what they mean:
+
+`\[COMMAND]'
+     stands for a key sequence that will invoke COMMAND, or `M-x
+     COMMAND' if COMMAND has no key bindings.
+
+`\{MAPVAR}'
+     stands for a summary of the keymap which is the value of the
+     variable MAPVAR.  The summary is made using `describe-bindings'.
+
+`\<MAPVAR>'
+     stands for no text itself.  It is used only for a side effect: it
+     specifies MAPVAR's value as the keymap for any following
+     `\[COMMAND]' sequences in this documentation string.
+
+`\='
+     quotes the following character and is discarded; thus, `\=\[' puts
+     `\[' into the output, and `\=\=' puts `\=' into the output.
+
+   *Please note:* Each `\' must be doubled when written in a string in
+Emacs Lisp.
+
+ - Function: substitute-command-keys string
+     This function scans STRING for the above special sequences and
+     replaces them by what they stand for, returning the result as a
+     string.  This permits display of documentation that refers
+     accurately to the user's own customized key bindings.
+
+   Here are examples of the special sequences:
+
+     (substitute-command-keys
+        "To abort recursive edit, type: \\[abort-recursive-edit]")
+     => "To abort recursive edit, type: C-]"
+     
+     (substitute-command-keys
+        "The keys that are defined for the minibuffer here are:
+       \\{minibuffer-local-must-match-map}")
+     => "The keys that are defined for the minibuffer here are:
+     
+     ?               minibuffer-completion-help
+     SPC             minibuffer-complete-word
+     TAB             minibuffer-complete
+     C-j             minibuffer-complete-and-exit
+     RET             minibuffer-complete-and-exit
+     C-g             abort-recursive-edit
+     "
+     
+     (substitute-command-keys
+        "To abort a recursive edit from the minibuffer, type\
+     \\<minibuffer-local-must-match-map>\\[abort-recursive-edit].")
+     => "To abort a recursive edit from the minibuffer, type C-g."
+
+
+File: elisp,  Node: Describing Characters,  Next: Help Functions,  Prev: Keys in Documentation,  Up: Documentation
+
+Describing Characters for Help Messages
+=======================================
+
+   These functions convert events, key sequences, or characters to
+textual descriptions.  These descriptions are useful for including
+arbitrary text characters or key sequences in messages, because they
+convert non-printing and whitespace characters to sequences of printing
+characters.  The description of a non-whitespace printing character is
+the character itself.
+
+ - Function: key-description sequence
+     This function returns a string containing the Emacs standard
+     notation for the input events in SEQUENCE.  The argument SEQUENCE
+     may be a string, vector or list.  *Note Input Events::, for more
+     information about valid events.  See also the examples for
+     `single-key-description', below.
+
+ - Function: single-key-description event &optional no-angles
+     This function returns a string describing EVENT in the standard
+     Emacs notation for keyboard input.  A normal printing character
+     appears as itself, but a control character turns into a string
+     starting with `C-', a meta character turns into a string starting
+     with `M-', and space, tab, etc. appear as `SPC', `TAB', etc.  A
+     function key symbol appears inside angle brackets `<...>'.  An
+     event that is a list appears as the name of the symbol in the CAR
+     of the list, inside angle brackets.
+
+     If the optional argument NO-ANGLES is non-`nil', the angle
+     brackets around function keys and event symbols are omitted; this
+     is for compatibility with old versions of Emacs which didn't use
+     the brackets.
+
+          (single-key-description ?\C-x)
+               => "C-x"
+          (key-description "\C-x \M-y \n \t \r \f123")
+               => "C-x SPC M-y SPC C-j SPC TAB SPC RET SPC C-l 1 2 3"
+          (single-key-description 'delete)
+               => "<delete>"
+          (single-key-description 'C-mouse-1)
+               => "<C-mouse-1>"
+          (single-key-description 'C-mouse-1 t)
+               => "C-mouse-1"
+
+ - Function: text-char-description character
+     This function returns a string describing CHARACTER in the
+     standard Emacs notation for characters that appear in text--like
+     `single-key-description', except that control characters are
+     represented with a leading caret (which is how control characters
+     in Emacs buffers are usually displayed).
+
+          (text-char-description ?\C-c)
+               => "^C"
+          (text-char-description ?\M-m)
+               => "M-m"
+          (text-char-description ?\C-\M-m)
+               => "M-^M"
+
+ - Function: read-kbd-macro string
+     This function is used mainly for operating on keyboard macros, but
+     it can also be used as a rough inverse for `key-description'.  You
+     call it with a string containing key descriptions, separated by
+     spaces; it returns a string or vector containing the corresponding
+     events.  (This may or may not be a single valid key sequence,
+     depending on what events you use; *note Keymap Terminology::.)
+
+
+File: elisp,  Node: Help Functions,  Prev: Describing Characters,  Up: Documentation
+
+Help Functions
+==============
+
+   Emacs provides a variety of on-line help functions, all accessible to
+the user as subcommands of the prefix `C-h'.  For more information
+about them, see *Note Help: (emacs)Help.  Here we describe some
+program-level interfaces to the same information.
+
+ - Command: apropos regexp &optional do-all
+     This function finds all symbols whose names contain a match for the
+     regular expression REGEXP, and returns a list of them (*note
+     Regular Expressions::).  It also displays the symbols in a buffer
+     named `*Help*', each with a one-line description taken from the
+     beginning of its documentation string.
+
+     If DO-ALL is non-`nil', then `apropos' also shows key bindings for
+     the functions that are found; it also shows all symbols, even
+     those that are neither functions nor variables.
+
+     In the first of the following examples, `apropos' finds all the
+     symbols with names containing `exec'.  (We don't show here the
+     output that results in the `*Help*' buffer.)
+
+          (apropos "exec")
+               => (Buffer-menu-execute command-execute exec-directory
+              exec-path execute-extended-command execute-kbd-macro
+              executing-kbd-macro executing-macro)
+
+ - Variable: help-map
+     The value of this variable is a local keymap for characters
+     following the Help key, `C-h'.
+
+ - Prefix Command: help-command
+     This symbol is not a function; its function definition cell holds
+     the keymap known as `help-map'.  It is defined in `help.el' as
+     follows:
+
+          (define-key global-map "\C-h" 'help-command)
+          (fset 'help-command help-map)
+
+ - Function: print-help-return-message &optional function
+     This function builds a string that explains how to restore the
+     previous state of the windows after a help command.  After
+     building the message, it applies FUNCTION to it if FUNCTION is
+     non-`nil'.  Otherwise it calls `message' to display it in the echo
+     area.
+
+     This function expects to be called inside a
+     `with-output-to-temp-buffer' special form, and expects
+     `standard-output' to have the value bound by that special form.
+     For an example of its use, see the long example in *Note Accessing
+     Documentation::.
+
+ - Variable: help-char
+     The value of this variable is the help character--the character
+     that Emacs recognizes as meaning Help.  By default, its value is
+     8, which stands for `C-h'.  When Emacs reads this character, if
+     `help-form' is a non-`nil' Lisp expression, it evaluates that
+     expression, and displays the result in a window if it is a string.
+
+     Usually the value of `help-form' is `nil'.  Then the help
+     character has no special meaning at the level of command input, and
+     it becomes part of a key sequence in the normal way.  The standard
+     key binding of `C-h' is a prefix key for several general-purpose
+     help features.
+
+     The help character is special after prefix keys, too.  If it has no
+     binding as a subcommand of the prefix key, it runs
+     `describe-prefix-bindings', which displays a list of all the
+     subcommands of the prefix key.
+
+ - Variable: help-event-list
+     The value of this variable is a list of event types that serve as
+     alternative "help characters."  These events are handled just like
+     the event specified by `help-char'.
+
+ - Variable: help-form
+     If this variable is non-`nil', its value is a form to evaluate
+     whenever the character `help-char' is read.  If evaluating the form
+     produces a string, that string is displayed.
+
+     A command that calls `read-event' or `read-char' probably should
+     bind `help-form' to a non-`nil' expression while it does input.
+     (The time when you should not do this is when `C-h' has some other
+     meaning.)  Evaluating this expression should result in a string
+     that explains what the input is for and how to enter it properly.
+
+     Entry to the minibuffer binds this variable to the value of
+     `minibuffer-help-form' (*note Minibuffer Misc::).
+
+ - Variable: prefix-help-command
+     This variable holds a function to print help for a prefix key.  The
+     function is called when the user types a prefix key followed by
+     the help character, and the help character has no binding after
+     that prefix.  The variable's default value is
+     `describe-prefix-bindings'.
+
+ - Function: describe-prefix-bindings
+     This function calls `describe-bindings' to display a list of all
+     the subcommands of the prefix key of the most recent key sequence.
+     The prefix described consists of all but the last event of that
+     key sequence.  (The last event is, presumably, the help character.)
+
+   The following two functions are meant for modes that want to provide
+help without relinquishing control, such as the "electric" modes.
+Their names begin with `Helper' to distinguish them from the ordinary
+help functions.
+
+ - Command: Helper-describe-bindings
+     This command pops up a window displaying a help buffer containing a
+     listing of all of the key bindings from both the local and global
+     keymaps.  It works by calling `describe-bindings'.
+
+ - Command: Helper-help
+     This command provides help for the current mode.  It prompts the
+     user in the minibuffer with the message `Help (Type ? for further
+     options)', and then provides assistance in finding out what the key
+     bindings are, and what the mode is intended for.  It returns `nil'.
+
+     This can be customized by changing the map `Helper-help-map'.
+
+ - Variable: data-directory
+     This variable holds the name of the directory in which Emacs finds
+     certain documentation and text files that come with Emacs.  In
+     older Emacs versions, `exec-directory' was used for this.
+
+ - Macro: make-help-screen fname help-line help-text help-map
+     This macro defines a help command named FNAME that acts like a
+     prefix key that shows a list of the subcommands it offers.
+
+     When invoked, FNAME displays HELP-TEXT in a window, then reads and
+     executes a key sequence according to HELP-MAP.  The string
+     HELP-TEXT should describe the bindings available in HELP-MAP.
+
+     The command FNAME is defined to handle a few events itself, by
+     scrolling the display of HELP-TEXT.  When FNAME reads one of those
+     special events, it does the scrolling and then reads another
+     event.  When it reads an event that is not one of those few, and
+     which has a binding in HELP-MAP, it executes that key's binding and
+     then returns.
+
+     The argument HELP-LINE should be a single-line summary of the
+     alternatives in HELP-MAP.  In the current version of Emacs, this
+     argument is used only if you set the option `three-step-help' to
+     `t'.
+
+     This macro is used in the command `help-for-help' which is the
+     binding of `C-h C-h'.
+
+ - User Option: three-step-help
+     If this variable is non-`nil', commands defined with
+     `make-help-screen' display their HELP-LINE strings in the echo
+     area at first, and display the longer HELP-TEXT strings only if
+     the user types the help character again.
+
+
+File: elisp,  Node: Files,  Next: Backups and Auto-Saving,  Prev: Documentation,  Up: Top
+
+Files
+*****
+
+   In Emacs, you can find, create, view, save, and otherwise work with
+files and file directories.  This chapter describes most of the
+file-related functions of Emacs Lisp, but a few others are described in
+*Note Buffers::, and those related to backups and auto-saving are
+described in *Note Backups and Auto-Saving::.
+
+   Many of the file functions take one or more arguments that are file
+names.  A file name is actually a string.  Most of these functions
+expand file name arguments by calling `expand-file-name', so that `~'
+is handled correctly, as are relative file names (including `../').
+These functions don't recognize environment variable substitutions such
+as `$HOME'.  *Note File Name Expansion::.
+
+   When file I/O functions signal Lisp errors, they usually use the
+condition `file-error' (*note Handling Errors::).  The error message is
+in most cases obtained from the operating system, according to locale
+`system-message-locale', and decoded using coding system
+`locale-coding-system' (*note Locales::).
+
+* Menu:
+
+* Visiting Files::           Reading files into Emacs buffers for editing.
+* Saving Buffers::           Writing changed buffers back into files.
+* Reading from Files::       Reading files into buffers without visiting.
+* Writing to Files::         Writing new files from parts of buffers.
+* File Locks::               Locking and unlocking files, to prevent
+                               simultaneous editing by two people.
+* Information about Files::  Testing existence, accessibility, size of files.
+* Changing Files::           Renaming files, changing protection, etc.
+* File Names::               Decomposing and expanding file names.
+* Contents of Directories::  Getting a list of the files in a directory.
+* Create/Delete Dirs::	     Creating and Deleting Directories.
+* Magic File Names::	     Defining "magic" special handling
+			       for certain file names.
+* Format Conversion::        Conversion to and from various file formats.
+
+
+File: elisp,  Node: Visiting Files,  Next: Saving Buffers,  Up: Files
+
+Visiting Files
+==============
+
+   Visiting a file means reading a file into a buffer.  Once this is
+done, we say that the buffer is "visiting" that file, and call the file
+"the visited file" of the buffer.
+
+   A file and a buffer are two different things.  A file is information
+recorded permanently in the computer (unless you delete it).  A buffer,
+on the other hand, is information inside of Emacs that will vanish at
+the end of the editing session (or when you kill the buffer).  Usually,
+a buffer contains information that you have copied from a file; then we
+say the buffer is visiting that file.  The copy in the buffer is what
+you modify with editing commands.  Such changes to the buffer do not
+change the file; therefore, to make the changes permanent, you must
+"save" the buffer, which means copying the altered buffer contents back
+into the file.
+
+   In spite of the distinction between files and buffers, people often
+refer to a file when they mean a buffer and vice-versa.  Indeed, we say,
+"I am editing a file," rather than, "I am editing a buffer that I will
+soon save as a file of the same name."  Humans do not usually need to
+make the distinction explicit.  When dealing with a computer program,
+however, it is good to keep the distinction in mind.
+
+* Menu:
+
+* Visiting Functions::         The usual interface functions for visiting.
+* Subroutines of Visiting::    Lower-level subroutines that they use.
+
+
+File: elisp,  Node: Visiting Functions,  Next: Subroutines of Visiting,  Up: Visiting Files
+
+Functions for Visiting Files
+----------------------------
+
+   This section describes the functions normally used to visit files.
+For historical reasons, these functions have names starting with
+`find-' rather than `visit-'.  *Note Buffer File Name::, for functions
+and variables that access the visited file name of a buffer or that
+find an existing buffer by its visited file name.
+
+   In a Lisp program, if you want to look at the contents of a file but
+not alter it, the fastest way is to use `insert-file-contents' in a
+temporary buffer.  Visiting the file is not necessary and takes longer.
+*Note Reading from Files::.
+
+ - Command: find-file filename &optional wildcards
+     This command selects a buffer visiting the file FILENAME, using an
+     existing buffer if there is one, and otherwise creating a new
+     buffer and reading the file into it.  It also returns that buffer.
+
+     The body of the `find-file' function is very simple and looks like
+     this:
+
+          (switch-to-buffer (find-file-noselect filename))
+
+     (See `switch-to-buffer' in *Note Displaying Buffers::.)
+
+     If WILDCARDS is non-`nil', which is always true in an interactive
+     call, then `find-file' expands wildcard characters in FILENAME and
+     visits all the matching files.
+
+     When `find-file' is called interactively, it prompts for FILENAME
+     in the minibuffer.
+
+ - Function: find-file-noselect filename &optional nowarn rawfile
+          wildcards
+     This function is the guts of all the file-visiting functions.  It
+     finds or creates a buffer visiting the file FILENAME, and returns
+     it.  It uses an existing buffer if there is one, and otherwise
+     creates a new buffer and reads the file into it.  You may make the
+     buffer current or display it in a window if you wish, but this
+     function does not do so.
+
+     If WILDCARDS is non-`nil', then `find-file-noselect' expands
+     wildcard characters in FILENAME and visits all the matching files.
+
+     When `find-file-noselect' uses an existing buffer, it first
+     verifies that the file has not changed since it was last visited or
+     saved in that buffer.  If the file has changed, then this function
+     asks the user whether to reread the changed file.  If the user says
+     `yes', any changes previously made in the buffer are lost.
+
+     This function displays warning or advisory messages in various
+     peculiar cases, unless the optional argument NOWARN is non-`nil'.
+     For example, if it needs to create a buffer, and there is no file
+     named FILENAME, it displays the message `(New file)' in the echo
+     area, and leaves the buffer empty.
+
+     The `find-file-noselect' function normally calls `after-find-file'
+     after reading the file (*note Subroutines of Visiting::).  That
+     function sets the buffer major mode, parses local variables, warns
+     the user if there exists an auto-save file more recent than the
+     file just visited, and finishes by running the functions in
+     `find-file-hooks'.
+
+     If the optional argument RAWFILE is non-`nil', then
+     `after-find-file' is not called, and the
+     `find-file-not-found-hooks' are not run in case of failure.  What's
+     more, a non-`nil' RAWFILE value suppresses coding system
+     conversion (*note Coding Systems::) and format conversion (*note
+     Format Conversion::).
+
+     The `find-file-noselect' function usually returns the buffer that
+     is visiting the file FILENAME.  But, if wildcards are actually
+     used and expanded, it returns a list of buffers that are visiting
+     the various files.
+
+          (find-file-noselect "/etc/fstab")
+               => #<buffer fstab>
+
+ - Command: find-file-other-window filename &optional wildcards
+     This command selects a buffer visiting the file FILENAME, but does
+     so in a window other than the selected window.  It may use another
+     existing window or split a window; see *Note Displaying Buffers::.
+
+     When this command is called interactively, it prompts for FILENAME.
+
+ - Command: find-file-read-only filename &optional wildcards
+     This command selects a buffer visiting the file FILENAME, like
+     `find-file', but it marks the buffer as read-only.  *Note Read
+     Only Buffers::, for related functions and variables.
+
+     When this command is called interactively, it prompts for FILENAME.
+
+ - Command: view-file filename
+     This command visits FILENAME using View mode, returning to the
+     previous buffer when you exit View mode.  View mode is a minor
+     mode that provides commands to skim rapidly through the file, but
+     does not let you modify the text.  Entering View mode runs the
+     normal hook `view-mode-hook'.  *Note Hooks::.
+
+     When `view-file' is called interactively, it prompts for FILENAME.
+
+ - Variable: find-file-wildcards
+     If this variable is non-`nil', then the various `find-file'
+     commands check for wildcard characters and visit all the files that
+     match them.  If this is `nil', then wildcard characters are not
+     treated specially.
+
+ - Variable: find-file-hooks
+     The value of this variable is a list of functions to be called
+     after a file is visited.  The file's local-variables specification
+     (if any) will have been processed before the hooks are run.  The
+     buffer visiting the file is current when the hook functions are
+     run.
+
+     This variable works just like a normal hook, but we think that
+     renaming it would not be advisable.  *Note Hooks::.
+
+ - Variable: find-file-not-found-hooks
+     The value of this variable is a list of functions to be called when
+     `find-file' or `find-file-noselect' is passed a nonexistent file
+     name.  `find-file-noselect' calls these functions as soon as it
+     detects a nonexistent file.  It calls them in the order of the
+     list, until one of them returns non-`nil'.  `buffer-file-name' is
+     already set up.
+
+     This is not a normal hook because the values of the functions are
+     used, and in many cases only some of the functions are called.
+
+
+File: elisp,  Node: Subroutines of Visiting,  Prev: Visiting Functions,  Up: Visiting Files
+
+Subroutines of Visiting
+-----------------------
+
+   The `find-file-noselect' function uses two important subroutines
+which are sometimes useful in user Lisp code: `create-file-buffer' and
+`after-find-file'.  This section explains how to use them.
+
+ - Function: create-file-buffer filename
+     This function creates a suitably named buffer for visiting
+     FILENAME, and returns it.  It uses FILENAME (sans directory) as
+     the name if that name is free; otherwise, it appends a string such
+     as `<2>' to get an unused name.  See also *Note Creating Buffers::.
+
+     *Please note:* `create-file-buffer' does _not_ associate the new
+     buffer with a file and does not select the buffer.  It also does
+     not use the default major mode.
+
+          (create-file-buffer "foo")
+               => #<buffer foo>
+          (create-file-buffer "foo")
+               => #<buffer foo<2>>
+          (create-file-buffer "foo")
+               => #<buffer foo<3>>
+
+     This function is used by `find-file-noselect'.  It uses
+     `generate-new-buffer' (*note Creating Buffers::).
+
+ - Function: after-find-file &optional error warn noauto
+          after-find-file-from-revert-buffer nomodes
+     This function sets the buffer major mode, and parses local
+     variables (*note Auto Major Mode::).  It is called by
+     `find-file-noselect' and by the default revert function (*note
+     Reverting::).
+
+     If reading the file got an error because the file does not exist,
+     but its directory does exist, the caller should pass a non-`nil'
+     value for ERROR.  In that case, `after-find-file' issues a warning:
+     `(New file)'.  For more serious errors, the caller should usually
+     not call `after-find-file'.
+
+     If WARN is non-`nil', then this function issues a warning if an
+     auto-save file exists and is more recent than the visited file.
+
+     If NOAUTO is non-`nil', that says not to enable or disable
+     Auto-Save mode.  The mode remains enabled if it was enabled before.
+
+     If AFTER-FIND-FILE-FROM-REVERT-BUFFER is non-`nil', that means
+     this call was from `revert-buffer'.  This has no direct effect,
+     but some mode functions and hook functions check the value of this
+     variable.
+
+     If NOMODES is non-`nil', that means don't alter the buffer's major
+     mode, don't process local variables specifications in the file,
+     and don't run `find-file-hooks'.  This feature is used by
+     `revert-buffer' in some cases.
+
+     The last thing `after-find-file' does is call all the functions in
+     the list `find-file-hooks'.
+
+
+File: elisp,  Node: Saving Buffers,  Next: Reading from Files,  Prev: Visiting Files,  Up: Files
+
+Saving Buffers
+==============
+
+   When you edit a file in Emacs, you are actually working on a buffer
+that is visiting that file--that is, the contents of the file are
+copied into the buffer and the copy is what you edit.  Changes to the
+buffer do not change the file until you "save" the buffer, which means
+copying the contents of the buffer into the file.
+
+ - Command: save-buffer &optional backup-option
+     This function saves the contents of the current buffer in its
+     visited file if the buffer has been modified since it was last
+     visited or saved.  Otherwise it does nothing.
+
+     `save-buffer' is responsible for making backup files.  Normally,
+     BACKUP-OPTION is `nil', and `save-buffer' makes a backup file only
+     if this is the first save since visiting the file.  Other values
+     for BACKUP-OPTION request the making of backup files in other
+     circumstances:
+
+        * With an argument of 4 or 64, reflecting 1 or 3 `C-u''s, the
+          `save-buffer' function marks this version of the file to be
+          backed up when the buffer is next saved.
+
+        * With an argument of 16 or 64, reflecting 2 or 3 `C-u''s, the
+          `save-buffer' function unconditionally backs up the previous
+          version of the file before saving it.
+
+ - Command: save-some-buffers &optional save-silently-p pred
+     This command saves some modified file-visiting buffers.  Normally
+     it asks the user about each buffer.  But if SAVE-SILENTLY-P is
+     non-`nil', it saves all the file-visiting buffers without querying
+     the user.
+
+     The optional PRED argument controls which buffers to ask about.
+     If it is `nil', that means to ask only about file-visiting buffers.
+     If it is `t', that means also offer to save certain other non-file
+     buffers--those that have a non-`nil' buffer-local value of
+     `buffer-offer-save'.  (A user who says `yes' to saving a non-file
+     buffer is asked to specify the file name to use.)  The
+     `save-buffers-kill-emacs' function passes the value `t' for PRED.
+
+     If PRED is neither `t' nor `nil', then it should be a function of
+     no arguments.  It will be called in each buffer to decide whether
+     to offer to save that buffer.  If it returns a non-`nil' value in
+     a certain buffer, that means do offer to save that buffer.
+
+ - Command: write-file filename &optional confirm
+     This function writes the current buffer into file FILENAME, makes
+     the buffer visit that file, and marks it not modified.  Then it
+     renames the buffer based on FILENAME, appending a string like `<2>'
+     if necessary to make a unique buffer name.  It does most of this
+     work by calling `set-visited-file-name' (*note Buffer File Name::)
+     and `save-buffer'.
+
+     If CONFIRM is non-`nil', that means to ask for confirmation before
+     overwriting an existing file.
+
+   Saving a buffer runs several hooks.  It also performs format
+conversion (*note Format Conversion::), and may save text properties in
+"annotations" (*note Saving Properties::).
+
+ - Variable: write-file-hooks
+     The value of this variable is a list of functions to be called
+     before writing out a buffer to its visited file.  If one of them
+     returns non-`nil', the file is considered already written and the
+     rest of the functions are not called, nor is the usual code for
+     writing the file executed.
+
+     If a function in `write-file-hooks' returns non-`nil', it is
+     responsible for making a backup file (if that is appropriate).  To
+     do so, execute the following code:
+
+          (or buffer-backed-up (backup-buffer))
+
+     You might wish to save the file modes value returned by
+     `backup-buffer' and use that to set the mode bits of the file that
+     you write.  This is what `save-buffer' normally does.
+
+     The hook functions in `write-file-hooks' are also responsible for
+     encoding the data (if desired): they must choose a suitable coding
+     system (*note Lisp and Coding Systems::), perform the encoding
+     (*note Explicit Encoding::), and set `last-coding-system-used' to
+     the coding system that was used (*note Encoding and I/O::).
+
+     Do not make this variable buffer-local.  To set up buffer-specific
+     hook functions, use `write-contents-hooks' instead.
+
+     Even though this is not a normal hook, you can use `add-hook' and
+     `remove-hook' to manipulate the list.  *Note Hooks::.
+
+ - Variable: local-write-file-hooks
+     This works just like `write-file-hooks', but it is intended to be
+     made buffer-local in particular buffers, and used for hooks that
+     pertain to the file name or the way the buffer contents were
+     obtained.
+
+     The variable is marked as a permanent local, so that changing the
+     major mode does not alter a buffer-local value.  This is
+     convenient for packages that read "file" contents in special ways,
+     and set up hooks to save the data in a corresponding way.
+
+ - Variable: write-contents-hooks
+     This works just like `write-file-hooks', but it is intended for
+     hooks that pertain to the contents of the file, as opposed to
+     hooks that pertain to where the file came from.  Such hooks are
+     usually set up by major modes, as buffer-local bindings for this
+     variable.
+
+     This variable automatically becomes buffer-local whenever it is
+     set; switching to a new major mode always resets this variable.
+     When you use `add-hooks' to add an element to this hook, you
+     should _not_ specify a non-`nil' LOCAL argument, since this
+     variable is used _only_ buffer-locally.
+
+ - Variable: after-save-hook
+     This normal hook runs after a buffer has been saved in its visited
+     file.  One use of this hook is in Fast Lock mode; it uses this
+     hook to save the highlighting information in a cache file.
+
+ - Variable: file-precious-flag
+     If this variable is non-`nil', then `save-buffer' protects against
+     I/O errors while saving by writing the new file to a temporary
+     name instead of the name it is supposed to have, and then renaming
+     it to the intended name after it is clear there are no errors.
+     This procedure prevents problems such as a lack of disk space from
+     resulting in an invalid file.
+
+     As a side effect, backups are necessarily made by copying.  *Note
+     Rename or Copy::.  Yet, at the same time, saving a precious file
+     always breaks all hard links between the file you save and other
+     file names.
+
+     Some modes give this variable a non-`nil' buffer-local value in
+     particular buffers.
+
+ - User Option: require-final-newline
+     This variable determines whether files may be written out that do
+     _not_ end with a newline.  If the value of the variable is `t',
+     then `save-buffer' silently adds a newline at the end of the file
+     whenever the buffer being saved does not already end in one.  If
+     the value of the variable is non-`nil', but not `t', then
+     `save-buffer' asks the user whether to add a newline each time the
+     case arises.
+
+     If the value of the variable is `nil', then `save-buffer' doesn't
+     add newlines at all.  `nil' is the default value, but a few major
+     modes set it to `t' in particular buffers.
+
+   See also the function `set-visited-file-name' (*note Buffer File
+Name::).
+
+
+File: elisp,  Node: Reading from Files,  Next: Writing to Files,  Prev: Saving Buffers,  Up: Files
+
+Reading from Files
+==================
+
+   You can copy a file from the disk and insert it into a buffer using
+the `insert-file-contents' function.  Don't use the user-level command
+`insert-file' in a Lisp program, as that sets the mark.
+
+ - Function: insert-file-contents filename &optional visit beg end
+          replace
+     This function inserts the contents of file FILENAME into the
+     current buffer after point.  It returns a list of the absolute
+     file name and the length of the data inserted.  An error is
+     signaled if FILENAME is not the name of a file that can be read.
+
+     The function `insert-file-contents' checks the file contents
+     against the defined file formats, and converts the file contents if
+     appropriate.  *Note Format Conversion::.  It also calls the
+     functions in the list `after-insert-file-functions'; see *Note
+     Saving Properties::.  Normally, one of the functions in the
+     `after-insert-file-functions' list determines the coding system
+     (*note Coding Systems::) used for decoding the file's contents.
+
+     If VISIT is non-`nil', this function additionally marks the buffer
+     as unmodified and sets up various fields in the buffer so that it
+     is visiting the file FILENAME: these include the buffer's visited
+     file name and its last save file modtime.  This feature is used by
+     `find-file-noselect' and you probably should not use it yourself.
+
+     If BEG and END are non-`nil', they should be integers specifying
+     the portion of the file to insert.  In this case, VISIT must be
+     `nil'.  For example,
+
+          (insert-file-contents filename nil 0 500)
+
+     inserts the first 500 characters of a file.
+
+     If the argument REPLACE is non-`nil', it means to replace the
+     contents of the buffer (actually, just the accessible portion)
+     with the contents of the file.  This is better than simply
+     deleting the buffer contents and inserting the whole file, because
+     (1) it preserves some marker positions and (2) it puts less data
+     in the undo list.
+
+     It is possible to read a special file (such as a FIFO or an I/O
+     device) with `insert-file-contents', as long as REPLACE and VISIT
+     are `nil'.
+
+ - Function: insert-file-contents-literally filename &optional visit
+          beg end replace
+     This function works like `insert-file-contents' except that it does
+     not do format decoding (*note Format Conversion::), does not do
+     character code conversion (*note Coding Systems::), does not run
+     `find-file-hooks', does not perform automatic uncompression, and so
+     on.
+
+   If you want to pass a file name to another process so that another
+program can read the file, use the function `file-local-copy'; see
+*Note Magic File Names::.
+
+
+File: elisp,  Node: Writing to Files,  Next: File Locks,  Prev: Reading from Files,  Up: Files
+
+Writing to Files
+================
+
+   You can write the contents of a buffer, or part of a buffer, directly
+to a file on disk using the `append-to-file' and `write-region'
+functions.  Don't use these functions to write to files that are being
+visited; that could cause confusion in the mechanisms for visiting.
+
+ - Command: append-to-file start end filename
+     This function appends the contents of the region delimited by
+     START and END in the current buffer to the end of file FILENAME.
+     If that file does not exist, it is created.  This function returns
+     `nil'.
+
+     An error is signaled if FILENAME specifies a nonwritable file, or
+     a nonexistent file in a directory where files cannot be created.
+
+ - Command: write-region start end filename &optional append visit
+          lockname mustbenew
+     This function writes the region delimited by START and END in the
+     current buffer into the file specified by FILENAME.
+
+     If START is a string, then `write-region' writes or appends that
+     string, rather than text from the buffer.  END is ignored in this
+     case.
+
+     If APPEND is non-`nil', then the specified text is appended to the
+     existing file contents (if any).  Starting in Emacs 21, if APPEND
+     is an integer, then `write-region' seeks to that byte offset from
+     the start of the file and writes the data from there.
+
+     If MUSTBENEW is non-`nil', then `write-region' asks for
+     confirmation if FILENAME names an existing file.  Starting in
+     Emacs 21, if MUSTBENEW is the symbol `excl', then `write-region'
+     does not ask for confirmation, but instead it signals an error
+     `file-already-exists' if the file already exists.
+
+     The test for an existing file, when MUSTBENEW is `excl', uses a
+     special system feature.  At least for files on a local disk, there
+     is no chance that some other program could create a file of the
+     same name before Emacs does, without Emacs's noticing.
+
+     If VISIT is `t', then Emacs establishes an association between the
+     buffer and the file: the buffer is then visiting that file.  It
+     also sets the last file modification time for the current buffer to
+     FILENAME's modtime, and marks the buffer as not modified.  This
+     feature is used by `save-buffer', but you probably should not use
+     it yourself.
+
+     If VISIT is a string, it specifies the file name to visit.  This
+     way, you can write the data to one file (FILENAME) while recording
+     the buffer as visiting another file (VISIT).  The argument VISIT
+     is used in the echo area message and also for file locking; VISIT
+     is stored in `buffer-file-name'.  This feature is used to
+     implement `file-precious-flag'; don't use it yourself unless you
+     really know what you're doing.
+
+     The optional argument LOCKNAME, if non-`nil', specifies the file
+     name to use for purposes of locking and unlocking, overriding
+     FILENAME and VISIT for that purpose.
+
+     The function `write-region' converts the data which it writes to
+     the appropriate file formats specified by `buffer-file-format'.
+     *Note Format Conversion::.  It also calls the functions in the list
+     `write-region-annotate-functions'; see *Note Saving Properties::.
+
+     Normally, `write-region' displays the message `Wrote FILENAME' in
+     the echo area.  If VISIT is neither `t' nor `nil' nor a string,
+     then this message is inhibited.  This feature is useful for
+     programs that use files for internal purposes, files that the user
+     does not need to know about.
+
+ - Macro: with-temp-file file body...
+     The `with-temp-file' macro evaluates the BODY forms with a
+     temporary buffer as the current buffer; then, at the end, it
+     writes the buffer contents into file FILE.  It kills the temporary
+     buffer when finished, restoring the buffer that was current before
+     the `with-temp-file' form.  Then it returns the value of the last
+     form in BODY.
+
+     The current buffer is restored even in case of an abnormal exit via
+     `throw' or error (*note Nonlocal Exits::).
+
+     See also `with-temp-buffer' in *Note Current Buffer::.
+
+
+File: elisp,  Node: File Locks,  Next: Information about Files,  Prev: Writing to Files,  Up: Files
+
+File Locks
+==========
+
+   When two users edit the same file at the same time, they are likely
+to interfere with each other.  Emacs tries to prevent this situation
+from arising by recording a "file lock" when a file is being modified.
+Emacs can then detect the first attempt to modify a buffer visiting a
+file that is locked by another Emacs job, and ask the user what to do.
+The file lock is really a file, a symbolic link with a special name,
+stored in the same directory as the file you are editing.
+
+   When you access files using NFS, there may be a small probability
+that you and another user will both lock the same file "simultaneously".
+If this happens, it is possible for the two users to make changes
+simultaneously, but Emacs will still warn the user who saves second.
+Also, the detection of modification of a buffer visiting a file changed
+on disk catches some cases of simultaneous editing; see *Note
+Modification Time::.
+
+ - Function: file-locked-p filename
+     This function returns `nil' if the file FILENAME is not locked.
+     It returns `t' if it is locked by this Emacs process, and it
+     returns the name of the user who has locked it if it is locked by
+     some other job.
+
+          (file-locked-p "foo")
+               => nil
+
+ - Function: lock-buffer &optional filename
+     This function locks the file FILENAME, if the current buffer is
+     modified.  The argument FILENAME defaults to the current buffer's
+     visited file.  Nothing is done if the current buffer is not
+     visiting a file, or is not modified.
+
+ - Function: unlock-buffer
+     This function unlocks the file being visited in the current buffer,
+     if the buffer is modified.  If the buffer is not modified, then
+     the file should not be locked, so this function does nothing.  It
+     also does nothing if the current buffer is not visiting a file.
+
+   File locking is not supported on some systems.  On systems that do
+not support it, the functions `lock-buffer', `unlock-buffer' and
+`file-locked-p' do nothing and return `nil'.
+
+ - Function: ask-user-about-lock file other-user
+     This function is called when the user tries to modify FILE, but it
+     is locked by another user named OTHER-USER.  The default
+     definition of this function asks the user to say what to do.  The
+     value this function returns determines what Emacs does next:
+
+        * A value of `t' says to grab the lock on the file.  Then this
+          user may edit the file and OTHER-USER loses the lock.
+
+        * A value of `nil' says to ignore the lock and let this user
+          edit the file anyway.
+
+        * This function may instead signal a `file-locked' error, in
+          which case the change that the user was about to make does
+          not take place.
+
+          The error message for this error looks like this:
+
+               error--> File is locked: FILE OTHER-USER
+
+          where `file' is the name of the file and OTHER-USER is the
+          name of the user who has locked the file.
+
+     If you wish, you can replace the `ask-user-about-lock' function
+     with your own version that makes the decision in another way.  The
+     code for its usual definition is in `userlock.el'.
+
+
+File: elisp,  Node: Information about Files,  Next: Changing Files,  Prev: File Locks,  Up: Files
+
+Information about Files
+=======================
+
+   The functions described in this section all operate on strings that
+designate file names.  All the functions have names that begin with the
+word `file'.  These functions all return information about actual files
+or directories, so their arguments must all exist as actual files or
+directories unless otherwise noted.
+
+* Menu:
+
+* Testing Accessibility::   Is a given file readable?  Writable?
+* Kinds of Files::          Is it a directory?  A symbolic link?
+* Truenames::		    Eliminating symbolic links from a file name.
+* File Attributes::         How large is it?  Any other names?  Etc.
+
+
+File: elisp,  Node: Testing Accessibility,  Next: Kinds of Files,  Up: Information about Files
+
+Testing Accessibility
+---------------------
+
+   These functions test for permission to access a file in specific
+ways.
+
+ - Function: file-exists-p filename
+     This function returns `t' if a file named FILENAME appears to
+     exist.  This does not mean you can necessarily read the file, only
+     that you can find out its attributes.  (On Unix and GNU/Linux,
+     this is true if the file exists and you have execute permission on
+     the containing directories, regardless of the protection of the
+     file itself.)
+
+     If the file does not exist, or if fascist access control policies
+     prevent you from finding the attributes of the file, this function
+     returns `nil'.
+
+ - Function: file-readable-p filename
+     This function returns `t' if a file named FILENAME exists and you
+     can read it.  It returns `nil' otherwise.
+
+          (file-readable-p "files.texi")
+               => t
+          (file-exists-p "/usr/spool/mqueue")
+               => t
+          (file-readable-p "/usr/spool/mqueue")
+               => nil
+
+ - Function: file-executable-p filename
+     This function returns `t' if a file named FILENAME exists and you
+     can execute it.  It returns `nil' otherwise.  On Unix and
+     GNU/Linux, if the file is a directory, execute permission means
+     you can check the existence and attributes of files inside the
+     directory, and open those files if their modes permit.
+
+ - Function: file-writable-p filename
+     This function returns `t' if the file FILENAME can be written or
+     created by you, and `nil' otherwise.  A file is writable if the
+     file exists and you can write it.  It is creatable if it does not
+     exist, but the specified directory does exist and you can write in
+     that directory.
+
+     In the third example below, `foo' is not writable because the
+     parent directory does not exist, even though the user could create
+     such a directory.
+
+          (file-writable-p "~/foo")
+               => t
+          (file-writable-p "/foo")
+               => nil
+          (file-writable-p "~/no-such-dir/foo")
+               => nil
+
+ - Function: file-accessible-directory-p dirname
+     This function returns `t' if you have permission to open existing
+     files in the directory whose name as a file is DIRNAME; otherwise
+     (or if there is no such directory), it returns `nil'.  The value
+     of DIRNAME may be either a directory name or the file name of a
+     file which is a directory.
+
+     Example: after the following,
+
+          (file-accessible-directory-p "/foo")
+               => nil
+
+     we can deduce that any attempt to read a file in `/foo/' will give
+     an error.
+
+ - Function: access-file filename string
+     This function opens file FILENAME for reading, then closes it and
+     returns `nil'.  However, if the open fails, it signals an error
+     using STRING as the error message text.
+
+ - Function: file-ownership-preserved-p filename
+     This function returns `t' if deleting the file FILENAME and then
+     creating it anew would keep the file's owner unchanged.
+
+ - Function: file-newer-than-file-p filename1 filename2
+     This function returns `t' if the file FILENAME1 is newer than file
+     FILENAME2.  If FILENAME1 does not exist, it returns `nil'.  If
+     FILENAME2 does not exist, it returns `t'.
+
+     In the following example, assume that the file `aug-19' was written
+     on the 19th, `aug-20' was written on the 20th, and the file
+     `no-file' doesn't exist at all.
+
+          (file-newer-than-file-p "aug-19" "aug-20")
+               => nil
+          (file-newer-than-file-p "aug-20" "aug-19")
+               => t
+          (file-newer-than-file-p "aug-19" "no-file")
+               => t
+          (file-newer-than-file-p "no-file" "aug-19")
+               => nil
+
+     You can use `file-attributes' to get a file's last modification
+     time as a list of two numbers.  *Note File Attributes::.
+
+
+File: elisp,  Node: Kinds of Files,  Next: Truenames,  Prev: Testing Accessibility,  Up: Information about Files
+
+Distinguishing Kinds of Files
+-----------------------------
+
+   This section describes how to distinguish various kinds of files,
+such as directories, symbolic links, and ordinary files.
+
+ - Function: file-symlink-p filename
+     If the file FILENAME is a symbolic link, the `file-symlink-p'
+     function returns the file name to which it is linked.  This may be
+     the name of a text file, a directory, or even another symbolic
+     link, or it may be a nonexistent file name.
+
+     If the file FILENAME is not a symbolic link (or there is no such
+     file), `file-symlink-p' returns `nil'.
+
+          (file-symlink-p "foo")
+               => nil
+          (file-symlink-p "sym-link")
+               => "foo"
+          (file-symlink-p "sym-link2")
+               => "sym-link"
+          (file-symlink-p "/bin")
+               => "/pub/bin"
+
+
+ - Function: file-directory-p filename
+     This function returns `t' if FILENAME is the name of an existing
+     directory, `nil' otherwise.
+
+          (file-directory-p "~rms")
+               => t
+          (file-directory-p "~rms/lewis/files.texi")
+               => nil
+          (file-directory-p "~rms/lewis/no-such-file")
+               => nil
+          (file-directory-p "$HOME")
+               => nil
+          (file-directory-p
+           (substitute-in-file-name "$HOME"))
+               => t
+
+ - Function: file-regular-p filename
+     This function returns `t' if the file FILENAME exists and is a
+     regular file (not a directory, named pipe, terminal, or other I/O
+     device).
+

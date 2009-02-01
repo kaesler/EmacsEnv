@@ -1,0 +1,1224 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Fontsets,  Prev: Font Lookup,  Up: Faces
+
+Fontsets
+--------
+
+   A "fontset" is a list of fonts, each assigned to a range of
+character codes.  An individual font cannot display the whole range of
+characters that Emacs supports, but a fontset can.  Fontsets have names,
+just as fonts do, and you can use a fontset name in place of a font name
+when you specify the "font" for a frame or a face.  Here is information
+about defining a fontset under Lisp program control.
+
+ - Function: create-fontset-from-fontset-spec fontset-spec &optional
+          style-variant-p noerror
+     This function defines a new fontset according to the specification
+     string FONTSET-SPEC.  The string should have this format:
+
+          FONTPATTERN, [CHARSETNAME:FONTNAME]...
+
+     Whitespace characters before and after the commas are ignored.
+
+     The first part of the string, FONTPATTERN, should have the form of
+     a standard X font name, except that the last two fields should be
+     `fontset-ALIAS'.
+
+     The new fontset has two names, one long and one short.  The long
+     name is FONTPATTERN in its entirety.  The short name is
+     `fontset-ALIAS'.  You can refer to the fontset by either name.  If
+     a fontset with the same name already exists, an error is signaled,
+     unless NOERROR is non-`nil', in which case this function does
+     nothing.
+
+     If optional argument STYLE-VARIANT-P is non-`nil', that says to
+     create bold, italic and bold-italic variants of the fontset as
+     well.  These variant fontsets do not have a short name, only a
+     long one, which is made by altering FONTPATTERN to indicate the
+     bold or italic status.
+
+     The specification string also says which fonts to use in the
+     fontset.  See below for the details.
+
+   The construct `CHARSET:FONT' specifies which font to use (in this
+fontset) for one particular character set.  Here, CHARSET is the name
+of a character set, and FONT is the font to use for that character set.
+You can use this construct any number of times in the specification
+string.
+
+   For the remaining character sets, those that you don't specify
+explicitly, Emacs chooses a font based on FONTPATTERN: it replaces
+`fontset-ALIAS' with a value that names one character set.  For the
+ASCII character set, `fontset-ALIAS' is replaced with `ISO8859-1'.
+
+   In addition, when several consecutive fields are wildcards, Emacs
+collapses them into a single wildcard.  This is to prevent use of
+auto-scaled fonts.  Fonts made by scaling larger fonts are not usable
+for editing, and scaling a smaller font is not useful because it is
+better to use the smaller font in its own size, which Emacs does.
+
+   Thus if FONTPATTERN is this,
+
+     -*-fixed-medium-r-normal-*-24-*-*-*-*-*-fontset-24
+
+the font specification for ASCII characters would be this:
+
+     -*-fixed-medium-r-normal-*-24-*-ISO8859-1
+
+and the font specification for Chinese GB2312 characters would be this:
+
+     -*-fixed-medium-r-normal-*-24-*-gb2312*-*
+
+   You may not have any Chinese font matching the above font
+specification.  Most X distributions include only Chinese fonts that
+have `song ti' or `fangsong ti' in the FAMILY field.  In such a case,
+`Fontset-N' can be specified as below:
+
+     Emacs.Fontset-0: -*-fixed-medium-r-normal-*-24-*-*-*-*-*-fontset-24,\
+             chinese-gb2312:-*-*-medium-r-normal-*-24-*-gb2312*-*
+
+Then, the font specifications for all but Chinese GB2312 characters have
+`fixed' in the FAMILY field, and the font specification for Chinese
+GB2312 characters has a wild card `*' in the FAMILY field.
+
+
+File: elisp,  Node: Display Property,  Next: Images,  Prev: Faces,  Up: Display
+
+The `display' Property
+======================
+
+   The `display' text property (or overlay property) is used to insert
+images into text, and also control other aspects of how text displays.
+These features are available starting in Emacs 21.  The value of the
+`display' property should be a display specification, or a list or
+vector containing several display specifications.  The rest of this
+section describes several kinds of display specifications and what they
+mean.
+
+* Menu:
+
+* Specified Space::     Displaying one space with a specified width.
+* Other Display Specs:: Displaying an image; magnifying text; moving it
+                          up or down on the page; adjusting the width
+                          of spaces within text.
+* Display Margins::     Displaying text or images to the side of the main text.
+* Conditional Display:: Making any of the above features conditional
+                          depending on some Lisp expression.
+
+
+File: elisp,  Node: Specified Space,  Next: Other Display Specs,  Up: Display Property
+
+Specified Spaces
+----------------
+
+   To display a space of specified width and/or height, use a display
+specification of the form `(space . PROPS)', where PROPS is a property
+list (a list of alternating properties and values).  You can put this
+property on one or more consecutive characters; a space of the
+specified height and width is displayed in place of _all_ of those
+characters.  These are the properties you can use to specify the weight
+of the space:
+
+`:width WIDTH'
+     Specifies that the space width should be WIDTH times the normal
+     character width.  WIDTH can be an integer or floating point number.
+
+`:relative-width FACTOR'
+     Specifies that the width of the stretch should be computed from the
+     first character in the group of consecutive characters that have
+     the same `display' property.  The space width is the width of that
+     character, multiplied by FACTOR.
+
+`:align-to HPOS'
+     Specifies that the space should be wide enough to reach HPOS.  The
+     value HPOS is measured in units of the normal character width.  It
+     may be an interer or a floating point number.
+
+   Exactly one of the above properties should be used.  You can also
+specify the height of the space, with other properties:
+
+`:height HEIGHT'
+     Specifies the height of the space, as HEIGHT, measured in terms of
+     the normal line height.
+
+`:relative-height FACTOR'
+     Specifies the height of the space, multiplying the ordinary height
+     of the text having this display specification by FACTOR.
+
+`:ascent ASCENT'
+     Specifies that ASCENT percent of the height of the space should be
+     considered as the ascent of the space--that is, the part above the
+     baseline.  The value of ASCENT must be a non-negative number no
+     greater than 100.
+
+   You should not use both `:height' and `:relative-height' together.
+
+
+File: elisp,  Node: Other Display Specs,  Next: Display Margins,  Prev: Specified Space,  Up: Display Property
+
+Other Display Specifications
+----------------------------
+
+`(image . IMAGE-PROPS)'
+     This is in fact an image descriptor (*note Images::).  When used
+     as a display specification, it means to display the image instead
+     of the text that has the display specification.
+
+`((margin nil) STRING)'
+`STRING'
+     A display specification of this form means to display STRING
+     instead of the text that has the display specification, at the same
+     position as that text.  This is a special case of marginal display
+     (*note Display Margins::).
+
+     Recursive display specifications are not supported, i.e. string
+     display specifications that have a display specification property
+     themselves.
+
+`(space-width FACTOR)'
+     This display specification affects all the space characters within
+     the text that has the specification.  It displays all of these
+     spaces FACTOR times as wide as normal.  The element FACTOR should
+     be an integer or float.  Characters other than spaces are not
+     affected at all; in particular, this has no effect on tab
+     characters.
+
+`(height HEIGHT)'
+     This display specification makes the text taller or shorter.  Here
+     are the possibilities for HEIGHT:
+
+    `(+ N)'
+          This means to use a font that is N steps larger.  A "step" is
+          defined by the set of available fonts--specifically, those
+          that match what was otherwise specified for this text, in all
+          attributes except height.  Each size for which a suitable
+          font is available counts as another step.  N should be an
+          integer.
+
+    `(- N)'
+          This means to use a font that is N steps smaller.
+
+    a number, FACTOR
+          A number, FACTOR, means to use a font that is FACTOR times as
+          tall as the default font.
+
+    a symbol, FUNCTION
+          A symbol is a function to compute the height.  It is called
+          with the current height as argument, and should return the
+          new height to use.
+
+    anything else, FORM
+          If the HEIGHT value doesn't fit the previous possibilities,
+          it is a form.  Emacs evaluates it to get the new height, with
+          the symbol `height' bound to the current specified font
+          height.
+
+`(raise FACTOR)'
+     This kind of display specification raises or lowers the text it
+     applies to, relative to the baseline of the line.
+
+     FACTOR must be a number, which is interpreted as a multiple of the
+     height of the affected text.  If it is positive, that means to
+     display the characters raised.  If it is negative, that means to
+     display them lower down.
+
+     If the text also has a `height' display specification, that does
+     not affect the amount of raising or lowering, which is based on the
+     faces used for the text.
+
+
+File: elisp,  Node: Display Margins,  Next: Conditional Display,  Prev: Other Display Specs,  Up: Display Property
+
+Displaying in the Margins
+-------------------------
+
+   A buffer can have blank areas called "display margins" on the left
+and on the right.  Ordinary text never appears in these areas, but you
+can put things into the display margins using the `display' property.
+
+   To put text in the left or right display margin of the window, use a
+display specification of the form `(margin right-margin)' or `(margin
+left-margin)' on it.  To put an image in a display margin, use that
+display specification along with the display specification for the
+image.
+
+   Before the display margins can display anything, you must give them
+a nonzero width.  The usual way to do that is to set these variables:
+
+ - Variable: left-margin-width
+     This variable specifies the width of the left margin.  It is
+     buffer-local in all buffers.
+
+ - Variable: right-margin-width
+     This variable specifies the width of the right margin.  It is
+     buffer-local in all buffers.
+
+   Setting these variables does not immediately affect the window.
+These variables are checked when a new buffer is displayed in the
+window.  Thus, you can make changes take effect by calling
+`set-window-buffer'.
+
+   You can also set the margin widths immediately.
+
+ - Function: set-window-margins window left &optional right
+     This function specifies the margin widths for window WINDOW.  The
+     argument LEFT controls the left margin and RIGHT controls the
+     right margin (default `0').
+
+ - Function: window-margins &optional window
+     This function returns the left and right margins of WINDOW as a
+     cons cell of the form `(LEFT . RIGHT)'.  If WINDOW is `nil', the
+     selected window is used.
+
+
+File: elisp,  Node: Conditional Display,  Prev: Display Margins,  Up: Display Property
+
+Conditional Display Specifications
+----------------------------------
+
+   You can make any display specification conditional.  To do that,
+package it in another list of the form `(when CONDITION .  SPEC)'.
+Then the specification SPEC applies only when CONDITION evaluates to a
+non-`nil' value.  During the evaluation, `object' is bound to the
+string or buffer having the conditional `display' property.  `position'
+and `buffer-position' are bound to the position within `object' and the
+buffer position where the `display' property was found, respectively.
+Both positions can be different when `object' is a string.
+
+
+File: elisp,  Node: Images,  Next: Blinking,  Prev: Display Property,  Up: Display
+
+Images
+======
+
+   To display an image in an Emacs buffer, you must first create an
+image descriptor, then use it as a display specifier in the `display'
+property of text that is displayed (*note Display Property::).  Like the
+`display' property, this feature is available starting in Emacs 21.
+
+   Emacs can display a number of different image formats; some of them
+are supported only if particular support libraries are installed on your
+machine.  The supported image formats include XBM, XPM (needing the
+libraries `libXpm' version 3.4k and `libz'), GIF (needing `libungif'
+4.1.0), Postscript, PBM, JPEG (needing the `libjpeg' library version
+v6a), TIFF (needing `libtiff' v3.4), and PNG (needing `libpng' 1.0.2).
+
+   You specify one of these formats with an image type symbol.  The
+image type symbols are `xbm', `xpm', `gif', `postscript', `pbm',
+`jpeg', `tiff', and `png'.
+
+ - Variable: image-types
+     This variable contains a list of those image type symbols that are
+     supported in the current configuration.
+
+* Menu:
+
+* Image Descriptors::   How to specify an image for use in `:display'.
+* XBM Images::          Special features for XBM format.
+* XPM Images::          Special features for XPM format.
+* GIF Images::          Special features for GIF format.
+* Postscript Images::   Special features for Postscript format.
+* Other Image Types::   Various other formats are supported.
+* Defining Images::     Convenient ways to define an image for later use.
+* Showing Images::      Convenient ways to display an image once it is defined.
+* Image Cache::         Internal mechanisms of image display.
+
+
+File: elisp,  Node: Image Descriptors,  Next: XBM Images,  Up: Images
+
+Image Descriptors
+-----------------
+
+   An image description is a list of the form `(image . PROPS)', where
+PROPS is a property list containing alternating keyword symbols
+(symbols whose names start with a colon) and their values.  You can use
+any Lisp object as a property, but the only properties that have any
+special meaning are certain symbols, all of them keywords.
+
+   Every image descriptor must contain the property `:type TYPE' to
+specify the format of the image.  The value of TYPE should be an image
+type symbol; for example, `xpm' for an image in XPM format.
+
+   Here is a list of other properties that are meaningful for all image
+types:
+
+`:file FILE'
+     The `:file' property specifies to load the image from file FILE.
+     If FILE is not an absolute file name, it is expanded in
+     `data-directory'.
+
+`:data DATA'
+     The `:data' property specifies the actual contents of the image.
+     Each image must use either `:data' or `:file', but not both.  For
+     most image types, the value of the `:data' property should be a
+     string containing the image data; we recommend using a unibyte
+     string.
+
+     Before using `:data', look for further information in the section
+     below describing the specific image format.  For some image types,
+     `:data' may not be supported; for some, it allows other data types;
+     for some, `:data' alone is not enough, so you need to use other
+     image properties along with `:data'.
+
+`:margin MARGIN'
+     The `:margin' property specifies how many pixels to add as an
+     extra margin around the image.  The value, MARGIN, must be a a
+     non-negative number, or a pair `(X . Y)' of such numbers.  If it
+     is a pair, X specifies how many pixels to add horizontally, and Y
+     specifies how many pixels to add vertically.  If `:margin' is not
+     specified, the default is zero.
+
+`:ascent ASCENT'
+     The `:ascent' property specifies the amount of the image's height
+     to use for its ascent--that is, the part above the baseline.  The
+     value, ASCENT, must be a number in the range 0 to 100, or the
+     symbol `center'.
+
+     If ASCENT is a number, that percentage of the image's height is
+     used for its ascent.
+
+     If ASCENT is `center', the image is vertically centered around a
+     centerline which would be the vertical centerline of text drawn at
+     the position of the image, in the manner specified by the text
+     properties and overlays that apply to the image.
+
+     If this property is omitted, it defaults to 50.
+
+`:relief RELIEF'
+     The `:relief' property, if non-`nil', adds a shadow rectangle
+     around the image.  The value, RELIEF, specifies the width of the
+     shadow lines, in pixels.  If RELIEF is negative, shadows are drawn
+     so that the image appears as a pressed button; otherwise, it
+     appears as an unpressed button.
+
+`:conversion ALGORITHM'
+     The `:conversion' property, if non-`nil', specifies a conversion
+     algorithm that should be applied to the image before it is
+     displayed; the value, ALGORITHM, specifies which algorithm.
+
+    `laplace'
+    `emboss'
+          Specifies the Laplace edge detection algorithm, which blurs
+          out small differences in color while highlighting larger
+          differences.  People sometimes consider this useful for
+          displaying the image for a "disabled" button.
+
+    `(edge-detection :matrix MATRIX :color-adjust ADJUST)'
+          Specifies a general edge-detection algorithm.  MATRIX must be
+          either a nine-element list or a nine-element vector of
+          numbers.  A pixel at position x/y in the transformed image is
+          computed from original pixels around that position.  MATRIX
+          specifies, for each pixel in the neighborhood of x/y, a
+          factor with which that pixel will influence the transformed
+          pixel; element 0 specifies the factor for the pixel at
+          x-1/y-1, element 1 the factor for the pixel at x/y-1 etc., as
+          shown below:
+                 (x-1/y-1  x/y-1  x+1/y-1
+                  x-1/y    x/y    x+1/y
+                  x-1/y+1  x/y+1  x+1/y+1)
+
+          The resulting pixel is computed from the color intensity of
+          the color resulting from summing up the RGB values of
+          surrounding pixels, multiplied by the specified factors, and
+          dividing that sum by the sum of the factors' absolute values.
+
+          Laplace edge-detection currently uses a matrix of
+                 (1  0  0
+                  0  0  0
+                  9  9 -1)
+
+          Emboss edge-detection uses a matrix of
+                 ( 2 -1  0
+                  -1  0  1
+                   0  1 -2)
+
+    `disabled'
+          Specifies transforming the image so that it looks "disabled".
+
+`:mask MASK'
+     If MASK is `heuristic' or `(heuristic BG)', build a clipping mask
+     for the image, so that the background of a frame is visible behind
+     the image.  If BG is not specified, or if BG is `t', determine the
+     background color of the image by looking at the four corners of
+     the image, assuming the most frequently occurring color from the
+     corners is the background color of the image.  Otherwise, BG must
+     be a list `(RED GREEN BLUE)' specifying the color to assume for
+     the background of the image.
+
+     If MASK is nil, remove a mask from the image, if it has one.
+     Images in some formats include a mask which can be removed by
+     specifying `:mask nil'.
+
+ - Function: image-mask-p spec &optional frame
+     This function returns `t' if image SPEC has a mask bitmap.  FRAME
+     is the frame on which the image will be displayed.  FRAME `nil' or
+     omitted means to use the selected frame (*note Input Focus::).
+
+
+File: elisp,  Node: XBM Images,  Next: XPM Images,  Prev: Image Descriptors,  Up: Images
+
+XBM Images
+----------
+
+   To use XBM format, specify `xbm' as the image type.  This image
+format doesn't require an external library, so images of this type are
+always supported.
+
+   Additional image properties supported for the `xbm' image type are:
+
+`:foreground FOREGROUND'
+     The value, FOREGROUND, should be a string specifying the image
+     foreground color, or `nil' for the default color.  This color is
+     used for each pixel in the XBM that is 1.  The default is the
+     frame's foreground color.
+
+`:background BACKGROUND'
+     The value, BACKGROUND, should be a string specifying the image
+     background color, or `nil' for the default color.  This color is
+     used for each pixel in the XBM that is 0.  The default is the
+     frame's background color.
+
+   If you specify an XBM image using data within Emacs instead of an
+external file, use the following three properties:
+
+`:data DATA'
+     The value, DATA, specifies the contents of the image.  There are
+     three formats you can use for DATA:
+
+        * A vector of strings or bool-vectors, each specifying one line
+          of the image.  Do specify `:height' and `:width'.
+
+        * A string containing the same byte sequence as an XBM file
+          would contain.  You must not specify `:height' and `:width'
+          in this case, because omitting them is what indicates the
+          data has the format of an XBM file.  The file contents
+          specify the height and width of the image.
+
+        * A string or a bool-vector containing the bits of the image
+          (plus perhaps some extra bits at the end that will not be
+          used).  It should contain at least WIDTH * `height' bits.  In
+          this case, you must specify `:height' and `:width', both to
+          indicate that the string contains just the bits rather than a
+          whole XBM file, and to specify the size of the image.
+
+`:width WIDTH'
+     The value, WIDTH, specifies the width of the image, in pixels.
+
+`:height HEIGHT'
+     The value, HEIGHT, specifies the height of the image, in pixels.
+
+
+File: elisp,  Node: XPM Images,  Next: GIF Images,  Prev: XBM Images,  Up: Images
+
+XPM Images
+----------
+
+   To use XPM format, specify `xpm' as the image type.  The additional
+image property `:color-symbols' is also meaningful with the `xpm' image
+type:
+
+`:color-symbols SYMBOLS'
+     The value, SYMBOLS, should be an alist whose elements have the
+     form `(NAME . COLOR)'.  In each element, NAME is the name of a
+     color as it appears in the image file, and COLOR specifies the
+     actual color to use for displaying that name.
+
+
+File: elisp,  Node: GIF Images,  Next: Postscript Images,  Prev: XPM Images,  Up: Images
+
+GIF Images
+----------
+
+   For GIF images, specify image type `gif'.  Because of the patents in
+the US covering the LZW algorithm, the continued use of GIF format is a
+problem for the whole Internet; to end this problem, it is a good idea
+for everyone, even outside the US, to stop using GIFS right away
+(`http://www.burnallgifs.org/').  But if you still want to use them,
+Emacs can display them.
+
+`:index INDEX'
+     You can use `:index' to specify one image from a GIF file that
+     contains more than one image.  This property specifies use of image
+     number INDEX from the file.  An error is signaled if the GIF file
+     doesn't contain an image with index INDEX.
+
+
+File: elisp,  Node: Postscript Images,  Next: Other Image Types,  Prev: GIF Images,  Up: Images
+
+Postscript Images
+-----------------
+
+   To use Postscript for an image, specify image type `postscript'.
+This works only if you have Ghostscript installed.  You must always use
+these three properties:
+
+`:pt-width WIDTH'
+     The value, WIDTH, specifies the width of the image measured in
+     points (1/72 inch).  WIDTH must be an integer.
+
+`:pt-height HEIGHT'
+     The value, HEIGHT, specifies the height of the image in points
+     (1/72 inch).  HEIGHT must be an integer.
+
+`:bounding-box BOX'
+     The value, BOX, must be a list or vector of four integers, which
+     specifying the bounding box of the Postscript image, analogous to
+     the `BoundingBox' comment found in Postscript files.
+
+          %%BoundingBox: 22 171 567 738
+
+   Displaying Postscript images from Lisp data is not currently
+implemented, but it may be implemented by the time you read this.  See
+the `etc/NEWS' file to make sure.
+
+
+File: elisp,  Node: Other Image Types,  Next: Defining Images,  Prev: Postscript Images,  Up: Images
+
+Other Image Types
+-----------------
+
+   For PBM images, specify image type `pbm'.  Color, gray-scale and
+monochromatic images are supported.   For mono PBM images, two
+additional image properties are supported.
+
+`:foreground FOREGROUND'
+     The value, FOREGROUND, should be a string specifying the image
+     foreground color, or `nil' for the default color.  This color is
+     used for each pixel in the XBM that is 1.  The default is the
+     frame's foreground color.
+
+`:background BACKGROUND'
+     The value, BACKGROUND, should be a string specifying the image
+     background color, or `nil' for the default color.  This color is
+     used for each pixel in the XBM that is 0.  The default is the
+     frame's background color.
+
+   For JPEG images, specify image type `jpeg'.
+
+   For TIFF images, specify image type `tiff'.
+
+   For PNG images, specify image type `png'.
+
+
+File: elisp,  Node: Defining Images,  Next: Showing Images,  Prev: Other Image Types,  Up: Images
+
+Defining Images
+---------------
+
+   The functions `create-image', `defimage' and `find-image' provide
+convenient ways to create image descriptors.
+
+ - Function: create-image file &optional type &rest props
+     This function creates and returns an image descriptor which uses
+     the data in FILE.
+
+     The optional argument TYPE is a symbol specifying the image type.
+     If TYPE is omitted or `nil', `create-image' tries to determine the
+     image type from the file's first few bytes, or else from the
+     file's name.
+
+     The remaining arguments, PROPS, specify additional image
+     properties--for example,
+
+          (create-image "foo.xpm" 'xpm :heuristic-mask t)
+
+     The function returns `nil' if images of this type are not
+     supported.  Otherwise it returns an image descriptor.
+
+ - Macro: defimage variable doc &rest specs
+     This macro defines VARIABLE as an image name.  The second argument,
+     DOC, is an optional documentation string.  The remaining
+     arguments, SPECS, specify alternative ways to display the image.
+
+     Each argument in SPECS has the form of a property list, and each
+     one should specify at least the `:type' property and the `:file'
+     property.  Here is an example:
+
+          (defimage test-image
+            '((:type xpm :file "~/test1.xpm")
+              (:type xbm :file "~/test1.xbm")))
+
+     `defimage' tests each argument, one by one, to see if it is
+     usable--that is, if the type is supported and the file exists.  The
+     first usable argument is used to make an image descriptor which is
+     stored in the variable VARIABLE.
+
+     If none of the alternatives will work, then VARIABLE is defined as
+     `nil'.
+
+ - Function: find-image specs
+     This function provides a convenient way to find an image
+     satisfying one of a list of image specifications SPECS.
+
+     Each specification in SPECS is a property list with contents
+     depending on image type.  All specifications must at least contain
+     the properties `:type TYPE' and either `:file FILE' or
+     `:data DATA', where TYPE is a symbol specifying the image type,
+     e.g. `xbm', FILE is the file to load the image from, and DATA is a
+     string containing the actual image data.  The first specification
+     in the list whose TYPE is supported, and FILE exists, is used to
+     construct the image specification to be returned.  If no
+     specification is satisfied, `nil' is returned.
+
+     The image is looked for first on `load-path' and then in
+     `data-directory'.
+
+
+File: elisp,  Node: Showing Images,  Next: Image Cache,  Prev: Defining Images,  Up: Images
+
+Showing Images
+--------------
+
+   You can use an image descriptor by setting up the `display' property
+yourself, but it is easier to use the functions in this section.
+
+ - Function: insert-image image &optional string area
+     This function inserts IMAGE in the current buffer at point.  The
+     value IMAGE should be an image descriptor; it could be a value
+     returned by `create-image', or the value of a symbol defined with
+     `defimage'.  The argument STRING specifies the text to put in the
+     buffer to hold the image.
+
+     The argument AREA specifies whether to put the image in a margin.
+     If it is `left-margin', the image appears in the left margin;
+     `right-margin' specifies the right margin.  If AREA is `nil' or
+     omitted, the image is displayed at point within the buffer's text.
+
+     Internally, this function inserts STRING in the buffer, and gives
+     it a `display' property which specifies IMAGE.  *Note Display
+     Property::.
+
+ - Function: put-image image pos &optional string area
+     This function puts image IMAGE in front of POS in the current
+     buffer.  The argument POS should be an integer or a marker.  It
+     specifies the buffer position where the image should appear.  The
+     argument STRING specifies the text that should hold the image as
+     an alternative to the default.
+
+     The argument IMAGE must be an image descriptor, perhaps returned
+     by `create-image' or stored by `defimage'.
+
+     The argument AREA specifies whether to put the image in a margin.
+     If it is `left-margin', the image appears in the left margin;
+     `right-margin' specifies the right margin.  If AREA is `nil' or
+     omitted, the image is displayed at point within the buffer's text.
+
+     Internally, this function creates an overlay, and gives it a
+     `before-string' property containing text that has a `display'
+     property whose value is the image.  (Whew!)
+
+ - Function: remove-images start end &optional buffer
+     This function removes images in BUFFER between positions START and
+     END.  If BUFFER is omitted or `nil', images are removed from the
+     current buffer.
+
+     This removes only images that were put into BUFFER the way
+     `put-image' does it, not images that were inserted with
+     `insert-image' or in other ways.
+
+ - Function: image-size spec &optional pixels frame
+     This function returns the size of an image as a pair
+     `(WIDTH . HEIGHT)'.  SPEC is an image specification.  PIXELS
+     non-nil means return sizes measured in pixels, otherwise return
+     sizes measured in canonical character units (fractions of the
+     width/height of the frame's default font).  FRAME is the frame on
+     which the image will be displayed.  FRAME null or omitted means
+     use the selected frame (*note Input Focus::).
+
+
+File: elisp,  Node: Image Cache,  Prev: Showing Images,  Up: Images
+
+Image Cache
+-----------
+
+   Emacs stores images in an image cache when it displays them, so it
+can display them again more efficiently.  It removes an image from the
+cache when it hasn't been displayed for a specified period of time.
+
+   When an image is looked up in the cache, its specification is
+compared with cached image specifications using `equal'.  This means
+that all images with equal specifications share the same image in the
+cache.
+
+ - Variable: image-cache-eviction-delay
+     This variable specifies the number of seconds an image can remain
+     in the cache without being displayed.  When an image is not
+     displayed for this length of time, Emacs removes it from the image
+     cache.
+
+     If the value is `nil', Emacs does not remove images from the cache
+     except when you explicitly clear it.  This mode can be useful for
+     debugging.
+
+ - Function: clear-image-cache &optional frame
+     This function clears the image cache.  If FRAME is non-`nil', only
+     the cache for that frame is cleared.  Otherwise all frames' caches
+     are cleared.
+
+
+File: elisp,  Node: Blinking,  Next: Inverse Video,  Prev: Images,  Up: Display
+
+Blinking Parentheses
+====================
+
+   This section describes the mechanism by which Emacs shows a matching
+open parenthesis when the user inserts a close parenthesis.
+
+ - Variable: blink-paren-function
+     The value of this variable should be a function (of no arguments)
+     to be called whenever a character with close parenthesis syntax is
+     inserted.  The value of `blink-paren-function' may be `nil', in
+     which case nothing is done.
+
+ - User Option: blink-matching-paren
+     If this variable is `nil', then `blink-matching-open' does nothing.
+
+ - User Option: blink-matching-paren-distance
+     This variable specifies the maximum distance to scan for a matching
+     parenthesis before giving up.
+
+ - User Option: blink-matching-delay
+     This variable specifies the number of seconds for the cursor to
+     remain at the matching parenthesis.  A fraction of a second often
+     gives good results, but the default is 1, which works on all
+     systems.
+
+ - Command: blink-matching-open
+     This function is the default value of `blink-paren-function'.  It
+     assumes that point follows a character with close parenthesis
+     syntax and moves the cursor momentarily to the matching opening
+     character.  If that character is not already on the screen, it
+     displays the character's context in the echo area.  To avoid long
+     delays, this function does not search farther than
+     `blink-matching-paren-distance' characters.
+
+     Here is an example of calling this function explicitly.
+
+          (defun interactive-blink-matching-open ()
+            "Indicate momentarily the start of sexp before point."
+            (interactive)
+            (let ((blink-matching-paren-distance
+                   (buffer-size))
+                  (blink-matching-paren t))
+              (blink-matching-open)))
+
+
+File: elisp,  Node: Inverse Video,  Next: Usual Display,  Prev: Blinking,  Up: Display
+
+Inverse Video
+=============
+
+ - User Option: inverse-video
+     This variable controls whether Emacs uses inverse video for all
+     text on the screen.  Non-`nil' means yes, `nil' means no.  The
+     default is `nil'.
+
+ - User Option: mode-line-inverse-video
+     This variable controls the use of inverse video for mode lines and
+     menu bars.  If it is non-`nil', then these lines are displayed in
+     inverse video.  Otherwise, these lines are displayed normally,
+     just like other text.  The default is `t'.
+
+     For window frames, this feature actually applies the face named
+     `mode-line'; that face is normally set up as the inverse of the
+     default face, unless you change it.
+
+
+File: elisp,  Node: Usual Display,  Next: Display Tables,  Prev: Inverse Video,  Up: Display
+
+Usual Display Conventions
+=========================
+
+   The usual display conventions define how to display each character
+code.  You can override these conventions by setting up a display table
+(*note Display Tables::).  Here are the usual display conventions:
+
+   * Character codes 32 through 126 map to glyph codes 32 through 126.
+     Normally this means they display as themselves.
+
+   * Character code 9 is a horizontal tab.  It displays as whitespace
+     up to a position determined by `tab-width'.
+
+   * Character code 10 is a newline.
+
+   * All other codes in the range 0 through 31, and code 127, display
+     in one of two ways according to the value of `ctl-arrow'.  If it is
+     non-`nil', these codes map to sequences of two glyphs, where the
+     first glyph is the ASCII code for `^'.  (A display table can
+     specify a glyph to use instead of `^'.)  Otherwise, these codes map
+     just like the codes in the range 128 to 255.
+
+     On MS-DOS terminals, Emacs arranges by default for the character
+     code 127 to be mapped to the glyph code 127, which normally
+     displays as an empty polygon.  This glyph is used to display
+     non-ASCII characters that the MS-DOS terminal doesn't support.
+     *Note MS-DOS and MULE: (emacs)MS-DOS and MULE.
+
+   * Character codes 128 through 255 map to sequences of four glyphs,
+     where the first glyph is the ASCII code for `\', and the others are
+     digit characters representing the character code in octal.  (A
+     display table can specify a glyph to use instead of `\'.)
+
+   * Multibyte character codes above 256 are displayed as themselves,
+     or as a question mark or empty box if the terminal cannot display
+     that character.
+
+   The usual display conventions apply even when there is a display
+table, for any character whose entry in the active display table is
+`nil'.  Thus, when you set up a display table, you need only specify
+the characters for which you want special behavior.
+
+   These display rules apply to carriage return (character code 13),
+when it appears in the buffer.  But that character may not appear in the
+buffer where you expect it, if it was eliminated as part of end-of-line
+conversion (*note Coding System Basics::).
+
+   These variables affect the way certain characters are displayed on
+the screen.  Since they change the number of columns the characters
+occupy, they also affect the indentation functions.  These variables
+also affect how the mode line is displayed; if you want to force
+redisplay of the mode line using the new values, call the function
+`force-mode-line-update' (*note Mode Line Format::).
+
+ - User Option: ctl-arrow
+     This buffer-local variable controls how control characters are
+     displayed.  If it is non-`nil', they are displayed as a caret
+     followed by the character: `^A'.  If it is `nil', they are
+     displayed as a backslash followed by three octal digits: `\001'.
+
+ - Variable: default-ctl-arrow
+     The value of this variable is the default value for `ctl-arrow' in
+     buffers that do not override it.  *Note Default Value::.
+
+ - User Option: indicate-empty-lines
+     When this is non-`nil', Emacs displays a special glyph in each
+     empty line at the end of the buffer, on terminals that support it
+     (window systems).
+
+ - User Option: tab-width
+     The value of this variable is the spacing between tab stops used
+     for displaying tab characters in Emacs buffers.  The value is in
+     units of columns, and the default is 8.  Note that this feature is
+     completely independent of the user-settable tab stops used by the
+     command `tab-to-tab-stop'.  *Note Indent Tabs::.
+
+
+File: elisp,  Node: Display Tables,  Next: Beeping,  Prev: Usual Display,  Up: Display
+
+Display Tables
+==============
+
+   You can use the "display table" feature to control how all possible
+character codes display on the screen.  This is useful for displaying
+European languages that have letters not in the ASCII character set.
+
+   The display table maps each character code into a sequence of
+"glyphs", each glyph being a graphic that takes up one character
+position on the screen.  You can also define how to display each glyph
+on your terminal, using the "glyph table".
+
+   Display tables affect how the mode line is displayed; if you want to
+force redisplay of the mode line using a new display table, call
+`force-mode-line-update' (*note Mode Line Format::).
+
+* Menu:
+
+* Display Table Format::	What a display table consists of.
+* Active Display Table::	How Emacs selects a display table to use.
+* Glyphs::			How to define a glyph, and what glyphs mean.
+
+
+File: elisp,  Node: Display Table Format,  Next: Active Display Table,  Up: Display Tables
+
+Display Table Format
+--------------------
+
+   A display table is actually a char-table (*note Char-Tables::) with
+`display-table' as its subtype.
+
+ - Function: make-display-table
+     This creates and returns a display table.  The table initially has
+     `nil' in all elements.
+
+   The ordinary elements of the display table are indexed by character
+codes; the element at index C says how to display the character code C.
+The value should be `nil' or a vector of glyph values (*note
+Glyphs::).  If an element is `nil', it says to display that character
+according to the usual display conventions (*note Usual Display::).
+
+   If you use the display table to change the display of newline
+characters, the whole buffer will be displayed as one long "line."
+
+   The display table also has six "extra slots" which serve special
+purposes.  Here is a table of their meanings; `nil' in any slot means
+to use the default for that slot, as stated below.
+
+0
+     The glyph for the end of a truncated screen line (the default for
+     this is `$').  *Note Glyphs::.  Newer Emacs versions, on some
+     platforms, display arrows to indicate truncation--the display
+     table has no effect in these situations.
+
+1
+     The glyph for the end of a continued line (the default is `\').
+     Newer Emacs versions, on some platforms, display curved arrows to
+     indicate truncation--the display table has no effect in these
+     situations.
+
+2
+     The glyph for indicating a character displayed as an octal
+     character code (the default is `\').
+
+3
+     The glyph for indicating a control character (the default is `^').
+
+4
+     A vector of glyphs for indicating the presence of invisible lines
+     (the default is `...').  *Note Selective Display::.
+
+5
+     The glyph used to draw the border between side-by-side windows (the
+     default is `|').  *Note Splitting Windows::.  This takes effect
+     only when there are no scroll bars; if scroll bars are supported
+     and in use, a scroll bar separates the two windows.
+
+   For example, here is how to construct a display table that mimics the
+effect of setting `ctl-arrow' to a non-`nil' value:
+
+     (setq disptab (make-display-table))
+     (let ((i 0))
+       (while (< i 32)
+         (or (= i ?\t) (= i ?\n)
+             (aset disptab i (vector ?^ (+ i 64))))
+         (setq i (1+ i)))
+       (aset disptab 127 (vector ?^ ??)))
+
+ - Function: display-table-slot display-table slot
+     This function returns the value of the extra slot SLOT of
+     DISPLAY-TABLE.  The argument SLOT may be a number from 0 to 5
+     inclusive, or a slot name (symbol).  Valid symbols are
+     `truncation', `wrap', `escape', `control', `selective-display',
+     and `vertical-border'.
+
+ - Function: set-display-table-slot display-table slot value
+     This function stores VALUE in the extra slot SLOT of
+     DISPLAY-TABLE.  The argument SLOT may be a number from 0 to 5
+     inclusive, or a slot name (symbol).  Valid symbols are
+     `truncation', `wrap', `escape', `control', `selective-display',
+     and `vertical-border'.
+
+ - Function: describe-display-table display-table
+     This function displays a description of the display table
+     DISPLAY-TABLE in a help buffer.
+
+ - Command: describe-current-display-table
+     This command displays a description of the current display table
+     in a help buffer.
+
+
+File: elisp,  Node: Active Display Table,  Next: Glyphs,  Prev: Display Table Format,  Up: Display Tables
+
+Active Display Table
+--------------------
+
+   Each window can specify a display table, and so can each buffer.
+When a buffer B is displayed in window W, display uses the display
+table for window W if it has one; otherwise, the display table for
+buffer B if it has one; otherwise, the standard display table if any.
+The display table chosen is called the "active" display table.
+
+ - Function: window-display-table window
+     This function returns WINDOW's display table, or `nil' if WINDOW
+     does not have an assigned display table.
+
+ - Function: set-window-display-table window table
+     This function sets the display table of WINDOW to TABLE.  The
+     argument TABLE should be either a display table or `nil'.
+
+ - Variable: buffer-display-table
+     This variable is automatically buffer-local in all buffers; its
+     value in a particular buffer specifies the display table for that
+     buffer.  If it is `nil', that means the buffer does not have an
+     assigned display table.
+
+ - Variable: standard-display-table
+     This variable's value is the default display table, used whenever a
+     window has no display table and neither does the buffer displayed
+     in that window.  This variable is `nil' by default.
+
+   If there is no display table to use for a particular window--that is,
+if the window specifies none, its buffer specifies none, and
+`standard-display-table' is `nil'--then Emacs uses the usual display
+conventions for all character codes in that window.  *Note Usual
+Display::.
+
+   A number of functions for changing the standard display table are
+defined in the library `disp-table'.
+
+
+File: elisp,  Node: Glyphs,  Prev: Active Display Table,  Up: Display Tables
+
+Glyphs
+------
+
+   A "glyph" is a generalization of a character; it stands for an image
+that takes up a single character position on the screen.  Glyphs are
+represented in Lisp as integers, just as characters are.
+
+   The meaning of each integer, as a glyph, is defined by the glyph
+table, which is the value of the variable `glyph-table'.
+
+ - Variable: glyph-table
+     The value of this variable is the current glyph table.  It should
+     be a vector; the Gth element defines glyph code G.  If the value
+     is `nil' instead of a vector, then all glyphs are simple (see
+     below).  The glyph table is not used on windowed displays.
+
+   Here are the possible types of elements in the glyph table:
+
+STRING
+     Send the characters in STRING to the terminal to output this
+     glyph.  This alternative is available on character terminals, but
+     not under a window system.
+
+INTEGER
+     Define this glyph code as an alias for glyph code INTEGER.  You
+     can use an alias to specify a face code for the glyph; see below.
+
+`nil'
+     This glyph is simple.  The glyph code mod 524288 is the character
+     to output, and the glyph code divided by 524288 specifies the face
+     number (*note Face Functions::) to use while outputting it.
+     (524288 is 2**19.)  *Note Faces::.
+
+   If a glyph code is greater than or equal to the length of the glyph
+table, that code is automatically simple.
+
+ - Function: create-glyph string
+     This function returns a newly-allocated glyph code which is set up
+     to display by sending STRING to the terminal.
+
+
+File: elisp,  Node: Beeping,  Next: Window Systems,  Prev: Display Tables,  Up: Display
+
+Beeping
+=======
+
+   This section describes how to make Emacs ring the bell (or blink the
+screen) to attract the user's attention.  Be conservative about how
+often you do this; frequent bells can become irritating.  Also be
+careful not to use just beeping when signaling an error is more
+appropriate.  (*Note Errors::.)
+
+ - Function: ding &optional do-not-terminate
+     This function beeps, or flashes the screen (see `visible-bell'
+     below).  It also terminates any keyboard macro currently executing
+     unless DO-NOT-TERMINATE is non-`nil'.
+
+ - Function: beep &optional do-not-terminate
+     This is a synonym for `ding'.
+
+ - User Option: visible-bell
+     This variable determines whether Emacs should flash the screen to
+     represent a bell.  Non-`nil' means yes, `nil' means no.  This is
+     effective on a window system, and on a character-only terminal
+     provided the terminal's Termcap entry defines the visible bell
+     capability (`vb').
+
+ - Variable: ring-bell-function
+     If this is non-`nil', it specifies how Emacs should "ring the
+     bell."  Its value should be a function of no arguments.  If this is
+     non-`nil', it takes precedence over the `visible-bell' variable.
+
+
+File: elisp,  Node: Window Systems,  Prev: Beeping,  Up: Display
+
+Window Systems
+==============
+
+   Emacs works with several window systems, most notably the X Window
+System.  Both Emacs and X use the term "window", but use it
+differently.  An Emacs frame is a single window as far as X is
+concerned; the individual Emacs windows are not known to X at all.
+
+ - Variable: window-system
+     This variable tells Lisp programs what window system Emacs is
+     running under.  The possible values are
+
+    `x'
+          Emacs is displaying using X.
+
+    `pc'
+          Emacs is displaying using MS-DOS.
+
+    `w32'
+          Emacs is displaying using Windows.
+
+    `mac'
+          Emacs is displaying using a Macintosh.
+
+    `nil'
+          Emacs is using a character-based terminal.
+
+ - Variable: window-setup-hook
+     This variable is a normal hook which Emacs runs after handling the
+     initialization files.  Emacs runs this hook after it has completed
+     loading your init file, the default initialization file (if any),
+     and the terminal-specific Lisp code, and running the hook
+     `term-setup-hook'.
+
+     This hook is used for internal purposes: setting up communication
+     with the window system, and creating the initial window.  Users
+     should not interfere with it.
+
+
+File: elisp,  Node: Calendar,  Next: System Interface,  Prev: Display,  Up: Top
+
+Customizing the Calendar and Diary
+**********************************
+
+   There are many customizations that you can use to make the calendar
+and diary suit your personal tastes.
+
+* Menu:
+
+* Calendar Customizing::   Defaults you can set.
+* Holiday Customizing::    Defining your own holidays.
+* Date Display Format::    Changing the format.
+* Time Display Format::    Changing the format.
+* Daylight Savings::       Changing the default.
+* Diary Customizing::      Defaults you can set.
+* Hebrew/Islamic Entries:: How to obtain them.
+* Fancy Diary Display::    Enhancing the diary display, sorting entries,
+                             using included diary files.
+* Sexp Diary Entries::     Fancy things you can do.
+* Appt Customizing::	   Customizing appointment reminders.
+

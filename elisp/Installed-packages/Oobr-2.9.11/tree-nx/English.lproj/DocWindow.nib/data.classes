@@ -1,0 +1,31 @@
+TreeController = {
+    ACTIONS = {
+	info:;
+	open:;
+    };
+    OUTLETS = {
+	treeView;
+	infoPanel;
+    };
+    SUPERCLASS = Object;
+};
+FirstResponder = {
+    ACTIONS = {
+    };
+    SUPERCLASS = Object;
+};
+TreeView = {
+    ACTIONS = {
+	setCurrButtonByName:;
+	scale:;
+	displayButByName:;
+    };
+    OUTLETS = {
+	selectedField;
+	lineList;
+	treeRoot;
+	currentButton;
+	priorButton;
+    };
+    SUPERCLASS = View;
+};

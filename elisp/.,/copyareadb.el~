@@ -1,0 +1,3 @@
+(defun canonicalise-copyarea-db-file (dir)
+  (interactive "D")
+  (message dir))

@@ -1,0 +1,16 @@
+case `uname -n` in
+
+    durif) 
+        ;;
+
+    kaesler8300) 
+        cd ~/views/web/durif/ctclients_dev; subst 'w:' .
+        cd ~/views/web/durif/ctclients_dev2; subst 'r:' .
+        ;;
+
+    kaesler2)
+        cd ~/views/web/durif/ctclients_dev; subst 'w:' .
+        cd ~/views/web/durif/ctclients_dev2; subst 'r:' .
+        ;;
+
+esac

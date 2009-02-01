@@ -1,0 +1,1257 @@
+This is emacs-lisp-intro.info, produced by makeinfo version 4.0b from
+emacs-lisp-intro.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Emacs Lisp Intro: (eintr).
+  			A simple introduction to Emacs Lisp programming.
+END-INFO-DIR-ENTRY
+
+   This is an introduction to `Programming in Emacs Lisp', for people
+who are not programmers.
+
+   Edition 2.04, 2001 Dec 17
+
+   Copyright (C) 1990, '91, '92, '93, '94, '95, '97, 2001 Free Software
+Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Section being the Preface, with the Front-Cover Texts being
+no Front-Cover Texts, and with the Back-Cover Texts being no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: emacs-lisp-intro.info,  Node: Mode Line,  Prev: Miscellaneous,  Up: Emacs Initialization
+
+A Modified Mode Line
+====================
+
+   Finally, a feature I really like: a modified mode line.
+
+   When I work over a network, I forget which machine I am using.  Also,
+I tend to I lose track of where I am, and which line point is on.
+
+   So I reset my mode line to look like this:
+
+     -:-- foo.texi   rattlesnake:/home/bob/  Line 1  (Texinfo Fill) Top
+
+   I am visiting a file called `foo.texi', on my machine `rattlesnake'
+in my `/home/bob' buffer.  I am on line 1, in Texinfo mode, and am at
+the top of the buffer.
+
+   My `.emacs' file has a section that looks like this:
+
+     ;; Set a Mode Line that tells me which machine, which directory,
+     ;; and which line I am on, plus the other customary information.
+     (setq default-mode-line-format
+      (quote
+       (#("-" 0 1
+          (help-echo
+           "mouse-1: select window, mouse-2: delete others ..."))
+        mode-line-mule-info
+        mode-line-modified
+        mode-line-frame-identification
+        "    "
+        mode-line-buffer-identification
+        "    "
+        (:eval (substring
+                (system-name) 0 (string-match "\\..+" (system-name))))
+        ":"
+        default-directory
+        #(" " 0 1
+          (help-echo
+           "mouse-1: select window, mouse-2: delete others ..."))
+        (line-number-mode " Line %l ")
+        global-mode-string
+        #("   %[(" 0 6
+          (help-echo
+           "mouse-1: select window, mouse-2: delete others ..."))
+        (:eval (mode-line-mode-name))
+        mode-line-process
+        minor-mode-alist
+        #("%n" 0 2 (help-echo "mouse-2: widen" local-map (keymap ...)))
+        ")%] "
+        (-3 . "%P")
+        ;;   "-%-"
+        )))
+
+Here, I redefine the default mode line.  Most of the parts are from the
+original; but I make a few changes.  I set the _default_ mode line
+format so as to permit various modes, such as Info, to override it.
+
+   Many elements in the list are self-explanatory: `mode-line-modified'
+is a variable that tells whether the buffer has been modified,
+`mode-name' tells the name of the mode, and so on.  However, the format
+looks complicated because of two features we have not discussed.
+
+   The first string in the mode line is a dash or hyphen, `-'.  In the
+old days, it would have been specified simply as `"-"'.  But nowadays,
+Emacs can add properties to a string, such as highlighting or, as in
+this case, a help feature.  If you place your mouse cursor over the
+hyphen, some help information appears  (By default, you must wait one
+second before the information appears.  You can change that timing by
+changing the value of `tooltip-delay'.)
+
+   The new string format has a special syntax:
+
+     #("-" 0 1 (help-echo "mouse-1: select window, ..."))
+
+The `#(' begins a list.  The first element of the list is the string
+itself, just one `-'.  The second and third elements specify the range
+over which the fourth element applies.  A range starts _after_ a
+character, so a zero means the range starts just before the first
+character; a 1 means that the range ends just after the first
+character.  The third element is the property for the range.  It
+consists of a property list,  a property name, in this case,
+`help-echo', followed by a value, in this case, a string.  The second,
+third, and fourth elements of this new string format can be repeated.
+
+   *Note Text Properties in String: (elisp)Text Props and Strings, and
+see *Note Mode Line Format: (elisp)Mode Line Format, for more
+information.
+
+   `mode-line-buffer-identification' displays the current buffer name.
+It is a list beginning `(#("%12b" 0 4 ...'.  The `#(' begins the list.
+
+   The `"%12b"' displays the current buffer name, using the
+`buffer-name' function with which we are familiar; the `12' specifies
+the maximum number of characters that will be displayed.  When a name
+has fewer characters, whitespace is added to fill out to this number.
+(Buffer names can and often should be longer than 12 characters; this
+length works well in a typical 80 column wide window.)
+
+   `:eval' is a new feature in GNU Emacs version 21.  It says to
+evaluate the following form and use the result as a string to display.
+In this case, the expression displays the first component of the full
+system name.  The end of the first component is a `.' (`period'), so I
+use the `string-match' function to tell me the length of the first
+component.  The substring from the zeroth character to that length is
+the name of the machine.
+
+   This is the expression:
+
+     (:eval (substring
+             (system-name) 0 (string-match "\\..+" (system-name))))
+
+   `%[' and `%]' cause a pair of square brackets to appear for each
+recursive editing level.  `%n' says `Narrow' when narrowing is in
+effect.  `%P' tells you the percentage of the buffer that is above the
+bottom of the window, or `Top', `Bottom', or `All'.  (A lower case `p'
+tell you the percentage above the _top_ of the window.)  `%-' inserts
+enough dashes to fill out the line.
+
+   Remember, "You don't have to like Emacs to like it" -- your own
+Emacs can have different colors, different commands, and different keys
+than a default Emacs.
+
+   On the other hand, if you want to bring up a plain `out of the box'
+Emacs, with no customization, type:
+
+     emacs -q
+
+This will start an Emacs that does _not_ load your `~/.emacs'
+initialization file.  A plain, default Emacs.  Nothing more.
+
+
+File: emacs-lisp-intro.info,  Node: Debugging,  Next: Conclusion,  Prev: Emacs Initialization,  Up: Top
+
+Debugging
+*********
+
+   GNU Emacs has two debuggers, `debug' and `edebug'.  The first is
+built into the internals of Emacs and is always with you; the second
+requires that you instrument a function before you can use it.
+
+   Both debuggers are described extensively in *Note Debugging Lisp
+Programs: (elisp)Debugging.  In this chapter, I will walk through a
+short example of each.
+
+* Menu:
+
+* debug::                       How to use the built-in debugger.
+* debug-on-entry::              Start debugging when you call a function.
+* debug-on-quit::               Start debugging when you quit with C-g.
+* edebug::                      How to use Edebug, a source level debugger.
+* Debugging Exercises::
+
+
+File: emacs-lisp-intro.info,  Node: debug,  Next: debug-on-entry,  Prev: Debugging,  Up: Debugging
+
+`debug'
+=======
+
+   Suppose you have written a function definition that is intended to
+return the sum of the numbers 1 through a given number.  (This is the
+`triangle' function discussed earlier.  *Note Example with Decrementing
+Counter: Decrementing Example, for a discussion.)
+
+   However, your function definition has a bug.  You have mistyped `1='
+for `1-'.  Here is the broken definition:
+
+     (defun triangle-bugged (number)
+       "Return sum of numbers 1 through NUMBER inclusive."
+       (let ((total 0))
+         (while (> number 0)
+           (setq total (+ total number))
+           (setq number (1= number)))      ; Error here.
+         total))
+
+   If you are reading this in Info, you can evaluate this definition in
+the normal fashion.  You will see `triangle-bugged' appear in the echo
+area.
+
+   Now evaluate the `triangle-bugged' function with an argument of 4:
+
+     (triangle-bugged 4)
+
+In GNU Emacs version 21, you will create and enter a `*Backtrace*'
+buffer that says:
+
+     ---------- Buffer: *Backtrace* ----------
+     Debugger entered--Lisp error: (void-function 1=)
+       (1= number)
+       (setq number (1= number))
+       (while (> number 0) (setq total (+ total number))
+             (setq number (1= number)))
+       (let ((total 0)) (while (> number 0) (setq total ...)
+         (setq number ...)) total)
+       triangle-bugged(4)
+       eval((triangle-bugged 4))
+       eval-last-sexp-1(nil)
+       eval-last-sexp(nil)
+       call-interactively(eval-last-sexp)
+     ---------- Buffer: *Backtrace* ----------
+
+(I have reformatted this example slightly; the debugger does not fold
+long lines.  As usual, you can quit the debugger by typing `q' in the
+`*Backtrace*' buffer.)
+
+   In practice, for a bug as simple as this, the `Lisp error' line will
+tell you what you need to know to correct the definition.  The function
+`1=' is `void'.
+
+   In GNU Emacs 20 and before, you will see:
+
+     Symbol's function definition is void: 1=
+
+which has the same meaning as the `*Backtrace*' buffer line in version
+21.
+
+   However, suppose you are not quite certain what is going on?  You
+can read the complete backtrace.
+
+   In this case, you need to run GNU Emacs 21, which automatically
+starts the debugger that puts you in the `*Backtrace*' buffer; or else,
+you need to start the debugger manually as described below.
+
+   Read the `*Backtrace*' buffer from the bottom up; it tells you what
+Emacs did that led to the error.  Emacs made an interactive call to
+`C-x C-e' (`eval-last-sexp'), which led to the evaluation of the
+`triangle-bugged' expression.  Each line above tells you what the Lisp
+interpreter evaluated next.
+
+   The third line from the top of the buffer is
+
+     (setq number (1= number))
+
+Emacs tried to evaluate this expression; in order to do so, it tried to
+evaluate the inner expression shown on the second line from the top:
+
+     (1= number)
+
+This is where the error occurred; as the top line says:
+
+     Debugger entered--Lisp error: (void-function 1=)
+
+You can correct the mistake, re-evaluate the function definition, and
+then run your test again.
+
+
+File: emacs-lisp-intro.info,  Node: debug-on-entry,  Next: debug-on-quit,  Prev: debug,  Up: Debugging
+
+`debug-on-entry'
+================
+
+   GNU Emacs 21 starts the debugger automatically when your function has
+an error.  GNU Emacs version 20 and before did not; it simply presented
+you with an error message.  You had to start the debugger manually.
+
+   You can start the debugger manually for all versions of Emacs; the
+advantage is that the debugger runs even if you do not have a bug in
+your code.  Sometimes your code will be free of bugs!
+
+   You can enter the debugger when you call the function by calling
+`debug-on-entry'.
+
+Type:
+
+     M-x debug-on-entry RET triangle-bugged RET
+
+Now, evaluate the following:
+
+     (triangle-bugged 5)
+
+All versions of Emacs will create a `*Backtrace*' buffer and tell you
+that it is beginning to evaluate the `triangle-bugged' function:
+
+     ---------- Buffer: *Backtrace* ----------
+     Debugger entered--entering a function:
+     * triangle-bugged(5)
+       eval((triangle-bugged 5))
+       eval-last-sexp-1(nil)
+       eval-last-sexp(nil)
+       call-interactively(eval-last-sexp)
+     ---------- Buffer: *Backtrace* ----------
+
+   In the `*Backtrace*' buffer, type `d'.  Emacs will evaluate the
+first expression in `triangle-bugged'; the buffer will look like this:
+
+     ---------- Buffer: *Backtrace* ----------
+     Debugger entered--beginning evaluation of function call form:
+     * (let ((total 0)) (while (> number 0) (setq total ...)
+             (setq number ...)) total)
+     * triangle-bugged(5)
+       eval((triangle-bugged 5))
+       eval-last-sexp-1(nil)
+       eval-last-sexp(nil)
+       call-interactively(eval-last-sexp)
+     ---------- Buffer: *Backtrace* ----------
+
+Now, type `d' again, eight times, slowly.  Each time you type `d',
+Emacs will evaluate another expression in the function definition.
+
+   Eventually, the buffer will look like this:
+
+     ---------- Buffer: *Backtrace* ----------
+     Debugger entered--beginning evaluation of function call form:
+     * (setq number (1= number))
+     * (while (> number 0) (setq total (+ total number))
+             (setq number (1= number)))
+     * (let ((total 0)) (while (> number 0) (setq total ...)
+             (setq number ...)) total)
+     * triangle-bugged(5)
+       eval((triangle-bugged 5))
+       eval-last-sexp-1(nil)
+       eval-last-sexp(nil)
+       call-interactively(eval-last-sexp)
+     ---------- Buffer: *Backtrace* ----------
+
+Finally, after you type `d' two more times, Emacs will reach the error,
+and the top two lines of the `*Backtrace*' buffer will look like this:
+
+     ---------- Buffer: *Backtrace* ----------
+     Debugger entered--Lisp error: (void-function 1=)
+     * (1= number)
+     ...
+     ---------- Buffer: *Backtrace* ----------
+
+   By typing `d', you were able to step through the function.
+
+   You can quit a `*Backtrace*' buffer by typing `q' in it; this quits
+the trace, but does not cancel `debug-on-entry'.
+
+   To cancel the effect of `debug-on-entry', call
+`cancel-debug-on-entry' and the name of the function, like this:
+
+     M-x cancel-debug-on-entry RET triangle-bugged RET
+
+(If you are reading this in Info, cancel `debug-on-entry' now.)
+
+
+File: emacs-lisp-intro.info,  Node: debug-on-quit,  Next: edebug,  Prev: debug-on-entry,  Up: Debugging
+
+`debug-on-quit' and `(debug)'
+=============================
+
+   In addition to setting `debug-on-error' or calling `debug-on-entry',
+there are two other ways to start `debug'.
+
+   You can start `debug' whenever you type `C-g' (`keyboard-quit') by
+setting the variable `debug-on-quit' to `t'.  This is useful for
+debugging infinite loops.
+
+   Or, you can insert a line that says `(debug)' into your code where
+you want the debugger to start, like this:
+
+     (defun triangle-bugged (number)
+       "Return sum of numbers 1 through NUMBER inclusive."
+       (let ((total 0))
+         (while (> number 0)
+           (setq total (+ total number))
+           (debug)                         ; Start debugger.
+           (setq number (1= number)))      ; Error here.
+         total))
+
+   The `debug' function is described in detail in *Note The Lisp
+Debugger: (elisp)Debugger.
+
+
+File: emacs-lisp-intro.info,  Node: edebug,  Next: Debugging Exercises,  Prev: debug-on-quit,  Up: Debugging
+
+The `edebug' Source Level Debugger
+==================================
+
+   Edebug is a source level debugger.  Edebug normally displays the
+source of the code you are debugging, with an arrow at the left that
+shows which line you are currently executing.
+
+   You can walk through the execution of a function, line by line, or
+run quickly until reaching a "breakpoint" where execution stops.
+
+   Edebug is described in *Note Edebug: (elisp)edebug.
+
+   Here is a bugged function definition for `triangle-recursively'.
+*Note Recursion in place of a counter: Recursive triangle function, for
+a review of it.
+
+     (defun triangle-recursively-bugged (number)
+       "Return sum of numbers 1 through NUMBER inclusive.
+     Uses recursion."
+       (if (= number 1)
+           1
+         (+ number
+            (triangle-recursively-bugged
+             (1= number)))))               ; Error here.
+
+Normally, you would install this definition by positioning your cursor
+after the function's closing parenthesis and typing `C-x C-e'
+(`eval-last-sexp') or else by positioning your cursor within the
+definition and typing `C-M-x' (`eval-defun').  (By default, the
+`eval-defun' command works only in Emacs Lisp mode or in Lisp
+Interactive mode.)
+
+   However, to prepare this function definition for Edebug, you must
+first "instrument" the code using a different command.  You can do this
+by positioning your cursor within the definition and typing
+
+     M-x edebug-defun RET
+
+This will cause Emacs to load Edebug automatically if it is not already
+loaded, and properly instrument the function.
+
+   After instrumenting the function, place your cursor after the
+following expression and type `C-x C-e' (`eval-last-sexp'):
+
+     (triangle-recursively-bugged 3)
+
+You will be jumped back to the source for `triangle-recursively-bugged'
+and the cursor positioned at the beginning of the `if' line of the
+function.  Also, you will see an arrowhead at the left hand side of
+that line.  The arrowhead marks the line where the function is
+executing.  (In the following examples, we show the arrowhead with
+`=>'; in a windowing system, you may see the arrowhead as a solid
+triangle in the window `fringe'.)
+
+     =>-!-(if (= number 1)
+
+In the example, the location of point is displayed as `-!-' (in a
+printed book, it is displayed with a five pointed star).
+
+If you now press <SPC>, point will move to the next expression to be
+executed; the line will look like this:
+
+     =>(if -!-(= number 1)
+
+As you continue to press <SPC>, point will move from expression to
+expression.  At the same time, whenever an expression returns a value,
+that value will be displayed in the echo area.  For example, after you
+move point past `number', you will see the following:
+
+     Result: 3 = C-c
+
+This means the value of `number' is 3, which is ASCII `control-c' (the
+third letter of the alphabet).
+
+   You can continue moving through the code until you reach the line
+with the error.  Before evaluation, that line looks like this:
+
+     =>        -!-(1= number)))))               ; Error here.
+
+When you press <SPC> once again, you will produce an error message that
+says:
+
+     Symbol's function definition is void: 1=
+
+This is the bug.
+
+   Press `q' to quit Edebug.
+
+   To remove instrumentation from a function definition, simply
+re-evaluate it with a command that does not instrument it.  For
+example, you could place your cursor after the definition's closing
+parenthesis and type `C-x C-e'.
+
+   Edebug does a great deal more than walk with you through a function.
+You can set it so it races through on its own, stopping only at an
+error or at specified stopping points; you can cause it to display the
+changing values of various expressions; you can find out how many times
+a function is called, and more.
+
+   Edebug is described in *Note Edebug: (elisp)edebug.
+
+
+File: emacs-lisp-intro.info,  Node: Debugging Exercises,  Prev: edebug,  Up: Debugging
+
+Debugging Exercises
+===================
+
+   * Install the `count-words-region' function and then cause it to
+     enter the built-in debugger when you call it.  Run the command on a
+     region containing two words.  You will need to press `d' a
+     remarkable number of times.  On your system, is a `hook' called
+     after the command finishes?  (For information on hooks, see *Note
+     Command Loop Overview: (elisp)Command Overview.)
+
+   * Copy `count-words-region' into the `*scratch*' buffer, instrument
+     the function for Edebug, and walk through its execution.  The
+     function does not need to have a bug, although you can introduce
+     one if you wish.  If the function lacks a bug, the walk-through
+     completes without problems.
+
+   * While running Edebug, type `?' to see a list of all the Edebug
+     commands.  (The `global-edebug-prefix' is usually `C-x X', i.e.
+     `<CTL>-x' followed by an upper case `X'; use this prefix for
+     commands made outside of the Edebug debugging buffer.)
+
+   * In the Edebug debugging buffer, use the `p'
+     (`edebug-bounce-point') command to see where in the region the
+     `count-words-region' is working.
+
+   * Move point to some spot further down function and then type the
+     `h' (`edebug-goto-here') command to jump to that location.
+
+   * Use the `t' (`edebug-trace-mode') command to cause Edebug to walk
+     through the function on its own; use an upper case `T' for
+     `edebug-Trace-fast-mode'.
+
+   * Set a breakpoint, then run Edebug in Trace mode until it reaches
+     the stopping point.
+
+
+File: emacs-lisp-intro.info,  Node: Conclusion,  Next: the-the,  Prev: Debugging,  Up: Top
+
+Conclusion
+**********
+
+   We have now reached the end of this Introduction.  You have now
+learned enough about programming in Emacs Lisp to set values, to write
+simple `.emacs' files for yourself and your friends, and write simple
+customizations and extensions to Emacs.
+
+   This is a place to stop.  Or, if you wish, you can now go onward, and
+teach yourself.
+
+   You have learned some of the basic nuts and bolts of programming.
+But only some.  There are a great many more brackets and hinges that are
+easy to use that we have not touched.
+
+   A path you can follow right now lies among the sources to GNU Emacs
+and in *Note The GNU Emacs Lisp Reference Manual: (elisp)Top.
+
+   The Emacs Lisp sources are an adventure.  When you read the sources
+and come across a function or expression that is unfamiliar, you need to
+figure out or find out what it does.
+
+   Go to the Reference Manual.  It is a thorough, complete, and fairly
+easy-to-read description of Emacs Lisp.  It is written not only for
+experts, but for people who know what you know.  (The `Reference
+Manual' comes with the standard GNU Emacs distribution.  Like this
+introduction, it comes as a Texinfo source file, so you can read it
+on-line and as a typeset, printed book.)
+
+   Go to the other on-line help that is part of GNU Emacs: the on-line
+documentation for all functions, and `find-tags', the program that
+takes you to sources.
+
+   Here is an example of how I explore the sources.  Because of its
+name, `simple.el' is the file I looked at first, a long time ago.  As
+it happens some of the functions in `simple.el' are complicated, or at
+least look complicated at first sight.  The `open-line' function, for
+example, looks complicated.
+
+   You may want to walk through this function slowly, as we did with the
+`forward-sentence' function.  (*Note forward-sentence::.)  Or you may
+want to skip that function and look at another, such as `split-line'.
+You don't need to read all the functions.  According to
+`count-words-in-defun', the `split-line' function contains 27 words and
+symbols.
+
+   Even though it is short, `split-line' contains four expressions we
+have not studied: `skip-chars-forward', `indent-to', `current-column'
+and `?\n'.
+
+   Consider the `skip-chars-forward' function.  (It is part of the
+function definition for `back-to-indentation', which is shown in *Note
+Review: Review.)
+
+   In GNU Emacs, you can find out more about `skip-chars-forward' by
+typing `C-h f' (`describe-function') and the name of the function.
+This gives you the function documentation.
+
+   You may be able to guess what is done by a well named function such
+as `indent-to'; or you can look it up, too.  Incidentally, the
+`describe-function' function itself is in `help.el'; it is one of those
+long, but decipherable functions.  You can look up `describe-function'
+using the `C-h f' command!
+
+   In this instance, since the code is Lisp, the `*Help*' buffer
+contains the name of the library containing the function's source.  You
+can put point over the name of the library and press the RET key, which
+in this situation is bound to `help-follow', and be taken directly to
+the source, in the same way as `M-.' (`find-tag').
+
+   The definition for `describe-function' illustrates how to customize
+the `interactive' expression without using the standard character
+codes; and it shows how to create a temporary buffer.
+
+   (The `indent-to' function is written in C rather than Emacs Lisp; it
+is a `built-in' function.  `help-follow' only provides you with the
+documentation of a built-in function; it does not take you to the
+source.  But `find-tag' will take you to the source, if properly set
+up.)
+
+   You can look at a function's source using `find-tag', which is bound
+to `M-.'  Finally, you can find out what the Reference Manual has to
+say by visiting the manual in Info, and typing `i' (`Info-index') and
+the name of the function, or by looking up `skip-chars-forward' in the
+index to a printed copy of the manual.
+
+   Similarly, you can find out what is meant by `?\n'.  You can try
+using `Info-index' with `?\n'.  It turns out that this action won't
+help; but don't give up.  If you search the index for `\n' without the
+`?', you will be taken directly to the relevant section of the manual.
+(*Note Character Type: (elisp)Character Type.  `?\n' stands for the
+newline character.)
+
+   Other interesting source files include `paragraphs.el',
+`loaddefs.el', and `loadup.el'.  The `paragraphs.el' file includes
+short, easily understood functions as well as longer ones.  The
+`loaddefs.el' file contains the many standard autoloads and many
+keymaps.  I have never looked at it all; only at parts.  `loadup.el' is
+the file that loads the standard parts of Emacs; it tells you a great
+deal about how Emacs is built.  (*Note Building Emacs: (elisp)Building
+Emacs, for more about building.)
+
+   As I said, you have learned some nuts and bolts; however, and very
+importantly, we have hardly touched major aspects of programming; I
+have said nothing about how to sort information, except to use the
+predefined `sort' function; I have said nothing about how to store
+information, except to use variables and lists; I have said nothing
+about how to write programs that write programs.  These are topics for
+another, and different kind of book, a different kind of learning.
+
+   What you have done is learn enough for much practical work with GNU
+Emacs.  What you have done is get started.  This is the end of a
+beginning.
+
+
+File: emacs-lisp-intro.info,  Node: the-the,  Next: Kill Ring,  Prev: Conclusion,  Up: Top
+
+The `the-the' Function
+**********************
+
+   Sometimes when you you write text, you duplicate words--as with "you
+you" near the beginning of this sentence.  I find that most frequently,
+I duplicate "the'; hence, I call the function for detecting duplicated
+words, `the-the'.
+
+   As a first step, you could use the following regular expression to
+search for duplicates:
+
+     \\(\\w+[ \t\n]+\\)\\1
+
+This regexp matches one or more word-constituent characters followed by
+one or more spaces, tabs, or newlines.  However, it does not detect
+duplicated words on different lines, since the ending of the first
+word, the end of the line, is different from the ending of the second
+word, a space.  (For more information about regular expressions, see
+*Note Regular Expression Searches: Regexp Search, as well as *Note
+Syntax of Regular Expressions: (emacs)Regexps, and *Note Regular
+Expressions: (elisp)Regular Expressions.)
+
+   You might try searching just for duplicated word-constituent
+characters but that does not work since the pattern detects doubles
+such as the two occurrences of `th' in `with the'.
+
+   Another possible regexp searches for word-constituent characters
+followed by non-word-constituent characters, reduplicated.  Here,
+`\\w+' matches one or more word-constituent characters and `\\W*'
+matches zero or more non-word-constituent characters.
+
+     \\(\\(\\w+\\)\\W*\\)\\1
+
+Again, not useful.
+
+   Here is the pattern that I use.  It is not perfect, but good enough.
+`\\b' matches the empty string, provided it is at the beginning or end
+of a word; `[^@ \n\t]+' matches one or more occurrences of any
+characters that are _not_ an @-sign, space, newline, or tab.
+
+     \\b\\([^@ \n\t]+\\)[ \n\t]+\\1\\b
+
+   One can write more complicated expressions, but I found that this
+expression is good enough, so I use it.
+
+   Here is the `the-the' function, as I include it in my `.emacs' file,
+along with a handy global key binding:
+
+     (defun the-the ()
+       "Search forward for for a duplicated word."
+       (interactive)
+       (message "Searching for for duplicated words ...")
+       (push-mark)
+       ;; This regexp is not perfect
+       ;; but is fairly good over all:
+       (if (re-search-forward
+            "\\b\\([^@ \n\t]+\\)[ \n\t]+\\1\\b" nil 'move)
+           (message "Found duplicated word.")
+         (message "End of buffer")))
+     
+     ;; Bind `the-the' to  C-c \
+     (global-set-key "\C-c\\" 'the-the)
+
+
+   Here is test text:
+
+     one two two three four five
+     five six seven
+
+   You can substitute the other regular expressions shown above in the
+function definition and try each of them on this list.
+
+
+File: emacs-lisp-intro.info,  Node: Kill Ring,  Next: Full Graph,  Prev: the-the,  Up: Top
+
+Handling the Kill Ring
+**********************
+
+   The kill ring is a list that is transformed into a ring by the
+workings of the `rotate-yank-pointer' function.  The `yank' and
+`yank-pop' commands use the `rotate-yank-pointer' function.  This
+appendix describes the `rotate-yank-pointer' function as well as both
+the `yank' and the `yank-pop' commands.
+
+* Menu:
+
+* rotate-yank-pointer::         Move a pointer along a list and around.
+* yank::                        Paste a copy of a clipped element.
+* yank-pop::                    Insert first element pointed to.
+
+
+File: emacs-lisp-intro.info,  Node: rotate-yank-pointer,  Next: yank,  Prev: Kill Ring,  Up: Kill Ring
+
+The `rotate-yank-pointer' Function
+==================================
+
+   The `rotate-yank-pointer' function changes the element in the kill
+ring to which `kill-ring-yank-pointer' points.  For example, it can
+change  `kill-ring-yank-pointer' from pointing to the second element to
+point to the third element.
+
+   Here is the code for `rotate-yank-pointer':
+
+     (defun rotate-yank-pointer (arg)
+       "Rotate the yanking point in the kill ring."
+       (interactive "p")
+       (let ((length (length kill-ring)))
+         (if (zerop length)
+             ;; then-part
+             (error "Kill ring is empty")
+           ;; else-part
+           (setq kill-ring-yank-pointer
+                 (nthcdr (% (+ arg
+                               (- length
+                                  (length
+                                   kill-ring-yank-pointer)))
+                            length)
+                         kill-ring)))))
+
+* Menu:
+
+* Understanding rotate-yk-ptr::
+* rotate-yk-ptr body::          The body of `rotate-yank-pointer'.
+
+
+File: emacs-lisp-intro.info,  Node: Understanding rotate-yk-ptr,  Next: rotate-yk-ptr body,  Prev: rotate-yank-pointer,  Up: rotate-yank-pointer
+
+`rotate-yank-pointer' in Outline
+--------------------------------
+
+   The `rotate-yank-pointer' function looks complex, but as usual, it
+can be understood by taking it apart piece by piece.  First look at it
+in skeletal form:
+
+     (defun rotate-yank-pointer (arg)
+       "Rotate the yanking point in the kill ring."
+       (interactive "p")
+       (let VARLIST
+         BODY...)
+
+   This function takes one argument, called `arg'.  It has a brief
+documentation string; and it is interactive with a small `p', which
+means that the argument must be a processed prefix passed to the
+function as a number.
+
+   The body of the function definition is a `let' expression, which
+itself has a body as well as a VARLIST.
+
+   The `let' expression declares a variable that will be only usable
+within the bounds of this function.  This variable is called `length'
+and is bound to a value that is equal to the number of items in the
+kill ring.  This is done by using the function called `length'.  (Note
+that this function has the same name as the variable called `length';
+but one use of the word is to name the function and the other is to
+name the variable.  The two are quite distinct.  Similarly, an English
+speaker will distinguish between the meanings of the word `ship' when
+he says: "I must ship this package immediately." and "I must get aboard
+the ship immediately.")
+
+   The function `length' tells the number of items there are in a list,
+so `(length kill-ring)' returns the number of items there are in the
+kill ring.
+
+
+File: emacs-lisp-intro.info,  Node: rotate-yk-ptr body,  Prev: Understanding rotate-yk-ptr,  Up: rotate-yank-pointer
+
+The Body of `rotate-yank-pointer'
+---------------------------------
+
+   The body of `rotate-yank-pointer' is a `let' expression and the body
+of the `let' expression is an `if' expression.
+
+   The purpose of the `if' expression is to find out whether there is
+anything in the kill ring.  If the kill ring is empty, the `error'
+function stops evaluation of the function and prints a message in the
+echo area.  On the other hand, if the kill ring has something in it, the
+work of the function is done.
+
+   Here is the if-part and then-part of the `if' expression:
+
+     (if (zerop length)                      ; if-part
+         (error "Kill ring is empty")        ; then-part
+       ...
+
+If there is not anything in the kill ring, its length must be zero and
+an error message sent to the user: `Kill ring is empty'.  The `if'
+expression uses the function `zerop' which returns true if the value it
+is testing is zero.  When `zerop' tests true, the then-part of the `if'
+is evaluated.  The then-part is a list starting with the function
+`error', which is a function that is similar to the `message' function
+(*note message::), in that it prints a one-line message in the echo
+area.  However, in addition to printing a message, `error' also stops
+evaluation of the function within which it is embedded.  This means
+that the rest of the function will not be evaluated if the length of
+the kill ring is zero.
+
+* Menu:
+
+* Digression concerning error::  How to mislead humans, but not computers.
+* rotate-yk-ptr else-part::     The else-part of the `if' expression.
+* Remainder Function::          The remainder, `%', function.
+* rotate-yk-ptr remainder::     Using `%' in `rotate-yank-pointer'.
+* kill-rng-yk-ptr last elt::    Pointing to the last element.
+
+
+File: emacs-lisp-intro.info,  Node: Digression concerning error,  Next: rotate-yk-ptr else-part,  Prev: rotate-yk-ptr body,  Up: rotate-yk-ptr body
+
+Digression about the word `error'
+.................................
+
+   (In my opinion, it is slightly misleading, at least to humans, to use
+the term `error' as the name of the `error' function.  A better term
+would be `cancel'.  Strictly speaking, of course, you cannot point to,
+much less rotate a pointer to a list that has no length, so from the
+point of view of the computer, the word `error' is correct.  But a
+human expects to attempt this sort of thing, if only to find out
+whether the kill ring is full or empty.  This is an act of exploration.
+
+   (From the human point of view, the act of exploration and discovery
+is not necessarily an error, and therefore should not be labelled as
+one, even in the bowels of a computer.  As it is, the code in Emacs
+implies that a human who is acting virtuously, by exploring his or her
+environment, is making an error.  This is bad.  Even though the computer
+takes the same steps as it does when there is an `error', a term such as
+`cancel' would have a clearer connotation.)
+
+
+File: emacs-lisp-intro.info,  Node: rotate-yk-ptr else-part,  Next: Remainder Function,  Prev: Digression concerning error,  Up: rotate-yk-ptr body
+
+The else-part of the `if' expression
+....................................
+
+   The else-part of the `if' expression is dedicated to setting the
+value of `kill-ring-yank-pointer' when the kill ring has something in
+it.  The code looks like this:
+
+     (setq kill-ring-yank-pointer
+           (nthcdr (% (+ arg
+                         (- length
+                            (length kill-ring-yank-pointer)))
+                      length)
+                   kill-ring)))))
+
+   This needs some examination.  Clearly, `kill-ring-yank-pointer' is
+being set to be equal to some CDR of the kill ring, using the `nthcdr'
+function that is described in an earlier section.  (*Note
+copy-region-as-kill::.)  But exactly how does it do this?
+
+   Before looking at the details of the code let's first consider the
+purpose of the `rotate-yank-pointer' function.
+
+   The `rotate-yank-pointer' function changes what
+`kill-ring-yank-pointer' points to.  If `kill-ring-yank-pointer' starts
+by pointing to the first element of a list, a call to
+`rotate-yank-pointer' causes it to point to the second element; and if
+`kill-ring-yank-pointer' points to the second element, a call to
+`rotate-yank-pointer' causes it to point to the third element.  (And if
+`rotate-yank-pointer' is given an argument greater than 1, it jumps the
+pointer that many elements.)
+
+   The `rotate-yank-pointer' function uses `setq' to reset what the
+`kill-ring-yank-pointer' points to.  If `kill-ring-yank-pointer' points
+to the first element of the kill ring, then, in the simplest case, the
+`rotate-yank-pointer' function must cause it to point to the second
+element.  Put another way, `kill-ring-yank-pointer' must be reset to
+have a value equal to the CDR of the kill ring.
+
+   That is, under these circumstances,
+
+     (setq kill-ring-yank-pointer
+        ("some text" "a different piece of text" "yet more text"))
+     
+     (setq kill-ring
+        ("some text" "a different piece of text" "yet more text"))
+
+the code should do this:
+
+     (setq kill-ring-yank-pointer (cdr kill-ring))
+
+As a result, the `kill-ring-yank-pointer' will look like this:
+
+     kill-ring-yank-pointer
+          => ("a different piece of text" "yet more text"))
+
+   The actual `setq' expression uses the `nthcdr' function to do the
+job.
+
+   As we have seen before (*note nthcdr::), the `nthcdr' function works
+by repeatedly taking the CDR of a list--it takes the CDR of the CDR of
+the CDR ...
+
+   The two following expressions produce the same result:
+
+     (setq kill-ring-yank-pointer (cdr kill-ring))
+     
+     (setq kill-ring-yank-pointer (nthcdr 1 kill-ring))
+
+   In the `rotate-yank-pointer' function, however, the first argument
+to `nthcdr' is a rather complex looking expression with lots of
+arithmetic inside of it:
+
+     (% (+ arg
+           (- length
+              (length kill-ring-yank-pointer)))
+        length)
+
+   As usual, we need to look at the most deeply embedded expression
+first and then work our way towards the light.
+
+   The most deeply embedded expression is `(length
+kill-ring-yank-pointer)'.  This finds the length of the current value of
+the `kill-ring-yank-pointer'.  (Remember that the
+`kill-ring-yank-pointer' is the name of a variable whose value is a
+list.)
+
+   The measurement of the length is inside the expression:
+
+     (- length (length kill-ring-yank-pointer))
+
+In this expression, the first `length' is the variable that was
+assigned the length of the kill ring in the `let' statement at the
+beginning of the function.  (One might think this function would be
+clearer if the variable `length' were named `length-of-kill-ring'
+instead; but if you look at the text of the whole function, you will
+see that it is so short that naming this variable `length' is not a
+bother, unless you are pulling the function apart into very tiny pieces
+as we are doing here.)
+
+   So the line `(- length (length kill-ring-yank-pointer))' tells the
+difference between the length of the kill ring and the length of the
+list whose name is `kill-ring-yank-pointer'.
+
+   To see how all this fits into the `rotate-yank-pointer' function,
+let's begin by analyzing the case where `kill-ring-yank-pointer' points
+to the first element of the kill ring, just as `kill-ring' does, and
+see what happens when `rotate-yank-pointer' is called with an argument
+of 1.
+
+   The variable `length' and the value of the expression `(length
+kill-ring-yank-pointer)' will be the same since the variable `length'
+is the length of the kill ring and the `kill-ring-yank-pointer' is
+pointing to the whole kill ring.  Consequently, the value of
+
+     (- length (length kill-ring-yank-pointer))
+
+will be zero.  Since the value of `arg' will be 1, this will mean that
+the value of the whole expression
+
+     (+ arg (- length (length kill-ring-yank-pointer)))
+
+will be 1.
+
+   Consequently, the argument to `nthcdr' will be found as the result of
+the expression
+
+     (% 1 length)
+
+
+File: emacs-lisp-intro.info,  Node: Remainder Function,  Next: rotate-yk-ptr remainder,  Prev: rotate-yk-ptr else-part,  Up: rotate-yk-ptr body
+
+The `%' remainder function
+..........................
+
+   To understand `(% 1 length)', we need to understand `%'.  According
+to its documentation (which I just found by typing `C-h f % <RET>'),
+the `%' function returns the remainder of its first argument divided by
+its second argument.  For example, the remainder of 5 divided by 2 is
+1.  (2 goes into 5 twice with a remainder of 1.)
+
+   What surprises people who don't often do arithmetic is that a smaller
+number can be divided by a larger number and have a remainder.  In the
+example we just used, 5 was divided by 2.  We can reverse that and ask,
+what is the result of dividing 2 by 5?  If you can use fractions, the
+answer is obviously 2/5 or .4; but if, as here, you can only use whole
+numbers, the result has to be something different.  Clearly, 5 can go
+into 2 zero times, but what of the remainder?  To see what the answer
+is, consider a case that has to be familiar from childhood:
+
+   * 5 divided by 5 is 1 with a remainder of 0;
+
+   * 6 divided by 5 is 1 with a remainder of 1;
+
+   * 7 divided by 5 is 1 with a remainder of 2.
+
+   * Similarly, 10 divided by 5 is 2 with a remainder of 0;
+
+   * 11 divided by 5 is 2 with a remainder of 1;
+
+   * 12 divided by 5 is 1 with a remainder of 2.
+
+By considering the cases as parallel, we can see that
+
+   * zero divided by 5 must be zero with a remainder of zero;
+
+   * 1 divided by 5 must be zero with a remainder of 1;
+
+   * 2 divided by 5 must be zero with a remainder of 2;
+
+and so on.
+
+   So, in this code, if the value of `length' is 5, then the result of
+evaluating
+
+     (% 1 5)
+
+is 1.  (I just checked this by placing the cursor after the expression
+and typing `C-x C-e'.  Indeed, 1 is printed in the echo area.)
+
+
+File: emacs-lisp-intro.info,  Node: rotate-yk-ptr remainder,  Next: kill-rng-yk-ptr last elt,  Prev: Remainder Function,  Up: rotate-yk-ptr body
+
+Using `%' in `rotate-yank-pointer'
+..................................
+
+   When the `kill-ring-yank-pointer' points to the beginning of the
+kill ring, and the argument passed to `rotate-yank-pointer' is 1, the
+`%' expression returns 1:
+
+     (- length (length kill-ring-yank-pointer))
+          => 0
+
+therefore,
+
+     (+ arg (- length (length kill-ring-yank-pointer)))
+          => 1
+
+and consequently:
+
+     (% (+ arg (- length (length kill-ring-yank-pointer)))
+        length)
+          => 1
+
+regardless of the value of `length'.
+
+As a result of this, the `setq kill-ring-yank-pointer' expression
+simplifies to:
+
+     (setq kill-ring-yank-pointer (nthcdr 1 kill-ring))
+
+What it does is now easy to understand.  Instead of pointing as it did
+to the first element of the kill ring, the `kill-ring-yank-pointer' is
+set to point to the second element.
+
+   Clearly, if the argument passed to `rotate-yank-pointer' is two, then
+the `kill-ring-yank-pointer' is set to `(nthcdr 2 kill-ring)'; and so
+on for different values of the argument.
+
+   Similarly, if the `kill-ring-yank-pointer' starts out pointing to
+the second element of the kill ring, its length is shorter than the
+length of the kill ring by 1, so the computation of the remainder is
+based on the expression `(% (+ arg 1) length)'.  This means that the
+`kill-ring-yank-pointer' is moved from the second element of the kill
+ring to the third element if the argument passed to
+`rotate-yank-pointer' is 1.
+
+
+File: emacs-lisp-intro.info,  Node: kill-rng-yk-ptr last elt,  Prev: rotate-yk-ptr remainder,  Up: rotate-yk-ptr body
+
+Pointing to the last element
+............................
+
+   The final question is, what happens if the `kill-ring-yank-pointer'
+is set to the _last_ element of the kill ring?  Will a call to
+`rotate-yank-pointer' mean that nothing more can be taken from the kill
+ring?  The answer is no.  What happens is different and useful.  The
+`kill-ring-yank-pointer' is set to point to the beginning of the kill
+ring instead.
+
+   Let's see how this works by looking at the code, assuming the length
+of the kill ring is 5 and the argument passed to `rotate-yank-pointer'
+is 1.  When the `kill-ring-yank-pointer' points to the last element of
+the kill ring, its length is 1.  The code looks like this:
+
+     (% (+ arg (- length (length kill-ring-yank-pointer))) length)
+
+   When the variables are replaced by their numeric values, the
+expression looks like this:
+
+     (% (+ 1 (- 5 1)) 5)
+
+This expression can be evaluated by looking at the most embedded inner
+expression first and working outwards:  The value of `(- 5 1)' is 4;
+the sum of `(+ 1 4)' is 5; and the remainder of dividing 5 by 5 is
+zero.  So what `rotate-yank-pointer' will do is
+
+     (setq kill-ring-yank-pointer (nthcdr 0 kill-ring))
+
+which will set the `kill-ring-yank-pointer' to point to the beginning
+of the kill ring.
+
+   So what happens with successive calls to `rotate-yank-pointer' is
+that it moves the `kill-ring-yank-pointer' from element to element in
+the kill ring until it reaches the end; then it jumps back to the
+beginning.  And this is why the kill ring is called a ring, since by
+jumping back to the beginning, it is as if the list has no end!  (And
+what is a ring, but an entity with no end?)
+
+
+File: emacs-lisp-intro.info,  Node: yank,  Next: yank-pop,  Prev: rotate-yank-pointer,  Up: Kill Ring
+
+`yank'
+======
+
+   After learning about `rotate-yank-pointer', the code for the `yank'
+function is almost easy.  It has only one tricky part, which is the
+computation of the argument to be passed to `rotate-yank-pointer'.
+
+   The code looks like this:
+
+     (defun yank (&optional arg)
+       "Reinsert the last stretch of killed text.
+     More precisely, reinsert the stretch of killed text most
+     recently killed OR yanked.
+     With just C-U as argument, same but put point in front
+     (and mark at end).  With argument n, reinsert the nth
+     most recently killed stretch of killed text.
+     See also the command \\[yank-pop]."
+     
+       (interactive "*P")
+       (rotate-yank-pointer (if (listp arg) 0
+                              (if (eq arg '-) -1
+                                (1- arg))))
+       (push-mark (point))
+       (insert (car kill-ring-yank-pointer))
+       (if (consp arg)
+           (exchange-point-and-mark)))
+
+   Glancing over this code, we can understand the last few lines readily
+enough.  The mark is pushed, that is, remembered; then the first element
+(the CAR) of what the `kill-ring-yank-pointer' points to is inserted;
+and then, if the argument passed the function is a `cons', point and
+mark are exchanged so the point is put in the front of the inserted
+text rather than at the end.  This option is explained in the
+documentation.  The function itself is interactive with `"*P"'.  This
+means it will not work on a read-only buffer, and that the unprocessed
+prefix argument is passed to the function.
+
+* Menu:
+
+* rotate-yk-ptr arg::           Pass the argument to `rotate-yank-pointer'.
+* rotate-yk-ptr negative arg::  Pass a negative argument.
+
+
+File: emacs-lisp-intro.info,  Node: rotate-yk-ptr arg,  Next: rotate-yk-ptr negative arg,  Prev: yank,  Up: yank
+
+Passing the argument
+....................
+
+   The hard part of `yank' is understanding the computation that
+determines the value of the argument passed to `rotate-yank-pointer'.
+Fortunately, it is not so difficult as it looks at first sight.
+
+   What happens is that the result of evaluating one or both of the
+`if' expressions will be a number and that number will be the argument
+passed to `rotate-yank-pointer'.
+
+   Laid out with comments, the code looks like this:
+
+     (if (listp arg)                         ; if-part
+         0                                   ; then-part
+       (if (eq arg '-)                       ; else-part, inner if
+           -1                                ; inner if's then-part
+         (1- arg))))                         ; inner if's else-part
+
+This code consists of two `if' expression, one the else-part of the
+other.
+
+   The first or outer `if' expression tests whether the argument passed
+to `yank' is a list.  Oddly enough, this will be true if `yank' is
+called without an argument--because then it will be passed the value of
+`nil' for the optional argument and an evaluation of `(listp nil)'
+returns true!  So, if no argument is passed to `yank', the argument
+passed to `rotate-yank-pointer' inside of `yank' is zero.  This means
+the pointer is not moved and the first element to which
+`kill-ring-yank-pointer' points is inserted, as we expect.  Similarly,
+if the argument for `yank' is `C-u', this will be read as a list, so
+again, a zero will be passed to `rotate-yank-pointer'.  (`C-u' produces
+an unprocessed prefix argument of `(4)', which is a list of one
+element.)  At the same time, later in the function, this argument will
+be read as a `cons' so point will be put in the front and mark at the
+end of the insertion.  (The `P' argument to `interactive' is designed
+to provide these values for the case when an optional argument is not
+provided or when it is `C-u'.)
+
+   The then-part of the outer `if' expression handles the case when
+there is no argument or when it is `C-u'.  The else-part handles the
+other situations.  The else-part is itself another `if' expression.
+
+   The inner `if' expression tests whether the argument is a minus
+sign.  (This is done by pressing the <META> and `-' keys at the same
+time, or the <ESC> key and then the `-' key).  In this case, the
+`rotate-yank-pointer' function is passed `-1' as an argument.  This
+moves the `kill-ring-yank-pointer' backwards, which is what is desired.
+
+   If the true-or-false-test of the inner `if' expression is false
+(that is, if the argument is not a minus sign), the else-part of the
+expression is evaluated.  This is the expression `(1- arg)'.  Because
+of the two `if' expressions, it will only occur when the argument is a
+positive number or when it is a negative number (not just a minus sign
+on its own).  What `(1- arg)' does is decrement the number and return
+it.  (The `1-' function subtracts one from its argument.)  This means
+that if the argument to `rotate-yank-pointer' is 1, it is reduced to
+zero, which means the first element to which `kill-ring-yank-pointer'
+points is yanked back, as you would expect.
+

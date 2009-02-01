@@ -1,0 +1,1261 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Overlay Properties,  Next: Managing Overlays,  Up: Overlays
+
+Overlay Properties
+------------------
+
+   Overlay properties are like text properties in that the properties
+that alter how a character is displayed can come from either source.
+But in most respects they are different.  Text properties are
+considered a part of the text; overlays are specifically considered not
+to be part of the text.  Thus, copying text between various buffers and
+strings preserves text properties, but does not try to preserve
+overlays.  Changing a buffer's text properties marks the buffer as
+modified, while moving an overlay or changing its properties does not.
+Unlike text property changes, overlay changes are not recorded in the
+buffer's undo list.  *Note Text Properties::, for comparison.
+
+   These functions are used for reading and writing the properties of an
+overlay:
+
+ - Function: overlay-get overlay prop
+     This function returns the value of property PROP recorded in
+     OVERLAY, if any.  If OVERLAY does not record any value for that
+     property, but it does have a `category' property which is a
+     symbol, that symbol's PROP property is used.  Otherwise, the value
+     is `nil'.
+
+ - Function: overlay-put overlay prop value
+     This function sets the value of property PROP recorded in OVERLAY
+     to VALUE.  It returns VALUE.
+
+   See also the function `get-char-property' which checks both overlay
+properties and text properties for a given character.  *Note Examining
+Properties::.
+
+   Many overlay properties have special meanings; here is a table of
+them:
+
+`priority'
+     This property's value (which should be a nonnegative number)
+     determines the priority of the overlay.  The priority matters when
+     two or more overlays cover the same character and both specify a
+     face for display; the one whose `priority' value is larger takes
+     priority over the other, and its face attributes override the face
+     attributes of the lower priority overlay.
+
+     Currently, all overlays take priority over text properties.  Please
+     avoid using negative priority values, as we have not yet decided
+     just what they should mean.
+
+`window'
+     If the `window' property is non-`nil', then the overlay applies
+     only on that window.
+
+`category'
+     If an overlay has a `category' property, we call it the "category"
+     of the overlay.  It should be a symbol.  The properties of the
+     symbol serve as defaults for the properties of the overlay.
+
+`face'
+     This property controls the way text is displayed--for example,
+     which font and which colors.  *Note Faces::, for more information.
+
+     In the simplest case, the value is a face name.  It can also be a
+     list; then each element can be any of these possibilities:
+
+        * A face name (a symbol or string).
+
+        * Starting in Emacs 21, a property list of face attributes.
+          This has the form (KEYWORD VALUE ...), where each KEYWORD is a
+          face attribute name and VALUE is a meaningful value for that
+          attribute.  With this feature, you do not need to create a
+          face each time you want to specify a particular attribute for
+          certain text.  *Note Face Attributes::.
+
+        * A cons cell of the form `(foreground-color . COLOR-NAME)' or
+          `(background-color . COLOR-NAME)'.  These elements specify
+          just the foreground color or just the background color.
+
+          `(foreground-color . COLOR-NAME)' is equivalent to
+          `(:foreground COLOR-NAME)', and likewise for the background.
+
+`mouse-face'
+     This property is used instead of `face' when the mouse is within
+     the range of the overlay.
+
+`display'
+     This property activates various features that change the way text
+     is displayed.  For example, it can make text appear taller or
+     shorter, higher or lower, wider or narrower, or replaced with an
+     image.  *Note Display Property::.
+
+`help-echo'
+     If an overlay has a `help-echo' property, then when you move the
+     mouse onto the text in the overlay, Emacs displays a help string
+     in the echo area, or in the tooltip window.  For details see *Note
+     Text help-echo::.  This feature is available starting in Emacs 21.
+
+`modification-hooks'
+     This property's value is a list of functions to be called if any
+     character within the overlay is changed or if text is inserted
+     strictly within the overlay.
+
+     The hook functions are called both before and after each change.
+     If the functions save the information they receive, and compare
+     notes between calls, they can determine exactly what change has
+     been made in the buffer text.
+
+     When called before a change, each function receives four
+     arguments: the overlay, `nil', and the beginning and end of the
+     text range to be modified.
+
+     When called after a change, each function receives five arguments:
+     the overlay, `t', the beginning and end of the text range just
+     modified, and the length of the pre-change text replaced by that
+     range.  (For an insertion, the pre-change length is zero; for a
+     deletion, that length is the number of characters deleted, and the
+     post-change beginning and end are equal.)
+
+`insert-in-front-hooks'
+     This property's value is a list of functions to be called before
+     and after inserting text right at the beginning of the overlay.
+     The calling conventions are the same as for the
+     `modification-hooks' functions.
+
+`insert-behind-hooks'
+     This property's value is a list of functions to be called before
+     and after inserting text right at the end of the overlay.  The
+     calling conventions are the same as for the `modification-hooks'
+     functions.
+
+`invisible'
+     The `invisible' property can make the text in the overlay
+     invisible, which means that it does not appear on the screen.
+     *Note Invisible Text::, for details.
+
+`intangible'
+     The `intangible' property on an overlay works just like the
+     `intangible' text property.  *Note Special Properties::, for
+     details.
+
+`isearch-open-invisible'
+     This property tells incremental search how to make an invisible
+     overlay visible, permanently, if the final match overlaps it.
+     *Note Invisible Text::.
+
+`isearch-open-invisible-temporary'
+     This property tells incremental search how to make an invisible
+     overlay visible, temporarily, during the search.  *Note Invisible
+     Text::.
+
+`before-string'
+     This property's value is a string to add to the display at the
+     beginning of the overlay.  The string does not appear in the
+     buffer in any sense--only on the screen.
+
+`after-string'
+     This property's value is a string to add to the display at the end
+     of the overlay.  The string does not appear in the buffer in any
+     sense--only on the screen.
+
+`evaporate'
+     If this property is non-`nil', the overlay is deleted automatically
+     if it ever becomes empty (i.e., if it spans no characters).
+
+`local-map'
+     If this property is non-`nil', it specifies a keymap for a portion
+     of the text.  The property's value replaces the buffer's local
+     map, when the character after point is within the overlay.  *Note
+     Active Keymaps::.
+
+`keymap'
+     The `keymap' property is similar to `local-map' but overrides the
+     buffer's local map (and the map specified by the `local-map'
+     property) rather than replacing it.
+
+
+File: elisp,  Node: Managing Overlays,  Next: Finding Overlays,  Prev: Overlay Properties,  Up: Overlays
+
+Managing Overlays
+-----------------
+
+   This section describes the functions to create, delete and move
+overlays, and to examine their contents.
+
+ - Function: make-overlay start end &optional buffer front-advance
+          rear-advance
+     This function creates and returns an overlay that belongs to
+     BUFFER and ranges from START to END.  Both START and END must
+     specify buffer positions; they may be integers or markers.  If
+     BUFFER is omitted, the overlay is created in the current buffer.
+
+     The arguments FRONT-ADVANCE and REAR-ADVANCE specify the insertion
+     type for the start of the overlay and for the end of the overlay,
+     respectively.  *Note Marker Insertion Types::.
+
+ - Function: overlay-start overlay
+     This function returns the position at which OVERLAY starts, as an
+     integer.
+
+ - Function: overlay-end overlay
+     This function returns the position at which OVERLAY ends, as an
+     integer.
+
+ - Function: overlay-buffer overlay
+     This function returns the buffer that OVERLAY belongs to.
+
+ - Function: delete-overlay overlay
+     This function deletes OVERLAY.  The overlay continues to exist as
+     a Lisp object, and its property list is unchanged, but it ceases
+     to be attached to the buffer it belonged to, and ceases to have
+     any effect on display.
+
+     A deleted overlay is not permanently disconnected.  You can give
+     it a position in a buffer again by calling `move-overlay'.
+
+ - Function: move-overlay overlay start end &optional buffer
+     This function moves OVERLAY to BUFFER, and places its bounds at
+     START and END.  Both arguments START and END must specify buffer
+     positions; they may be integers or markers.
+
+     If BUFFER is omitted, OVERLAY stays in the same buffer it was
+     already associated with; if OVERLAY was deleted, it goes into the
+     current buffer.
+
+     The return value is OVERLAY.
+
+     This is the only valid way to change the endpoints of an overlay.
+     Do not try modifying the markers in the overlay by hand, as that
+     fails to update other vital data structures and can cause some
+     overlays to be "lost".
+
+   Here are some examples:
+
+     ;; Create an overlay.
+     (setq foo (make-overlay 1 10))
+          => #<overlay from 1 to 10 in display.texi>
+     (overlay-start foo)
+          => 1
+     (overlay-end foo)
+          => 10
+     (overlay-buffer foo)
+          => #<buffer display.texi>
+     ;; Give it a property we can check later.
+     (overlay-put foo 'happy t)
+          => t
+     ;; Verify the property is present.
+     (overlay-get foo 'happy)
+          => t
+     ;; Move the overlay.
+     (move-overlay foo 5 20)
+          => #<overlay from 5 to 20 in display.texi>
+     (overlay-start foo)
+          => 5
+     (overlay-end foo)
+          => 20
+     ;; Delete the overlay.
+     (delete-overlay foo)
+          => nil
+     ;; Verify it is deleted.
+     foo
+          => #<overlay in no buffer>
+     ;; A deleted overlay has no position.
+     (overlay-start foo)
+          => nil
+     (overlay-end foo)
+          => nil
+     (overlay-buffer foo)
+          => nil
+     ;; Undelete the overlay.
+     (move-overlay foo 1 20)
+          => #<overlay from 1 to 20 in display.texi>
+     ;; Verify the results.
+     (overlay-start foo)
+          => 1
+     (overlay-end foo)
+          => 20
+     (overlay-buffer foo)
+          => #<buffer display.texi>
+     ;; Moving and deleting the overlay does not change its properties.
+     (overlay-get foo 'happy)
+          => t
+
+
+File: elisp,  Node: Finding Overlays,  Prev: Managing Overlays,  Up: Overlays
+
+Searching for Overlays
+----------------------
+
+ - Function: overlays-at pos
+     This function returns a list of all the overlays that cover the
+     character at position POS in the current buffer.  The list is in
+     no particular order.  An overlay contains position POS if it
+     begins at or before POS, and ends after POS.
+
+     To illustrate usage, here is a Lisp function that returns a list
+     of the overlays that specify property PROP for the character at
+     point:
+
+          (defun find-overlays-specifying (prop)
+            (let ((overlays (overlays-at (point)))
+                  found)
+              (while overlays
+                (let ((overlay (car overlays)))
+                  (if (overlay-get overlay prop)
+                      (setq found (cons overlay found))))
+                (setq overlays (cdr overlays)))
+              found))
+
+ - Function: overlays-in beg end
+     This function returns a list of the overlays that overlap the
+     region BEG through END.  "Overlap" means that at least one
+     character is contained within the overlay and also contained
+     within the specified region; however, empty overlays are included
+     in the result if they are located at BEG, or strictly between BEG
+     and END.
+
+ - Function: next-overlay-change pos
+     This function returns the buffer position of the next beginning or
+     end of an overlay, after POS.
+
+ - Function: previous-overlay-change pos
+     This function returns the buffer position of the previous
+     beginning or end of an overlay, before POS.
+
+   Here's an easy way to use `next-overlay-change' to search for the
+next character which gets a non-`nil' `happy' property from either its
+overlays or its text properties (*note Property Search::):
+
+     (defun find-overlay-prop (prop)
+       (save-excursion
+         (while (and (not (eobp))
+                     (not (get-char-property (point) 'happy)))
+           (goto-char (min (next-overlay-change (point))
+                           (next-single-property-change (point) 'happy))))
+         (point)))
+
+
+File: elisp,  Node: Width,  Next: Faces,  Prev: Overlays,  Up: Display
+
+Width
+=====
+
+   Since not all characters have the same width, these functions let you
+check the width of a character.  *Note Primitive Indent::, and *Note
+Screen Lines::, for related functions.
+
+ - Function: char-width char
+     This function returns the width in columns of the character CHAR,
+     if it were displayed in the current buffer and the selected window.
+
+ - Function: string-width string
+     This function returns the width in columns of the string STRING,
+     if it were displayed in the current buffer and the selected window.
+
+ - Function: truncate-string-to-width string width &optional
+          start-column padding
+     This function returns the part of STRING that fits within WIDTH
+     columns, as a new string.
+
+     If STRING does not reach WIDTH, then the result ends where STRING
+     ends.  If one multi-column character in STRING extends across the
+     column WIDTH, that character is not included in the result.  Thus,
+     the result can fall short of WIDTH but cannot go beyond it.
+
+     The optional argument START-COLUMN specifies the starting column.
+     If this is non-`nil', then the first START-COLUMN columns of the
+     string are omitted from the value.  If one multi-column character
+     in STRING extends across the column START-COLUMN, that character
+     is not included.
+
+     The optional argument PADDING, if non-`nil', is a padding
+     character added at the beginning and end of the result string, to
+     extend it to exactly WIDTH columns.  The padding character is used
+     at the end of the result if it falls short of WIDTH.  It is also
+     used at the beginning of the result if one multi-column character
+     in STRING extends across the column START-COLUMN.
+
+          (truncate-string-to-width "\tab\t" 12 4)
+               => "ab"
+          (truncate-string-to-width "\tab\t" 12 4 ?\ )
+               => "    ab  "
+
+
+File: elisp,  Node: Faces,  Next: Display Property,  Prev: Width,  Up: Display
+
+Faces
+=====
+
+   A "face" is a named collection of graphical attributes: font family,
+foreground color, background color, optional underlining, and many
+others.  Faces are used in Emacs to control the style of display of
+particular parts of the text or the frame.
+
+   Each face has its own "face number", which distinguishes faces at
+low levels within Emacs.  However, for most purposes, you refer to
+faces in Lisp programs by their names.
+
+ - Function: facep object
+     This function returns `t' if OBJECT is a face name symbol (or if
+     it is a vector of the kind used internally to record face data).
+     It returns `nil' otherwise.
+
+   Each face name is meaningful for all frames, and by default it has
+the same meaning in all frames.  But you can arrange to give a
+particular face name a special meaning in one frame if you wish.
+
+* Menu:
+
+* Standard Faces::      The faces Emacs normally comes with.
+* Defining Faces::      How to define a face with `defface'.
+* Face Attributes::     What is in a face?
+* Attribute Functions:: Functions to examine and set face attributes.
+* Merging Faces::	How Emacs combines the faces specified for a character.
+* Font Selection::      Finding the best available font for a face.
+* Face Functions::	How to define and examine faces.
+* Auto Faces::          Hook for automatic face assignment.
+* Font Lookup::         Looking up the names of available fonts
+                          and information about them.
+* Fontsets::            A fontset is a collection of fonts
+                          that handle a range of character sets.
+
+
+File: elisp,  Node: Standard Faces,  Next: Defining Faces,  Up: Faces
+
+Standard Faces
+--------------
+
+   This table lists all the standard faces and their uses.  Most of them
+are used for displaying certain parts of the frames or certain kinds of
+text; you can control how those places look by customizing these faces.
+
+`default'
+     This face is used for ordinary text.
+
+`mode-line'
+     This face is used for mode lines, and for menu bars when toolkit
+     menus are not used--but only if `mode-line-inverse-video' is
+     non-`nil'.
+
+`modeline'
+     This is an alias for the `mode-line' face, for compatibility with
+     old Emacs versions.
+
+`header-line'
+     This face is used for the header lines of windows that have them.
+
+`menu'
+     This face controls the display of menus, both their colors and
+     their font.  (This works only on certain systems.)
+
+`fringe'
+     This face controls the colors of window fringes, the thin areas on
+     either side that are used to display continuation and truncation
+     glyphs.
+
+`scroll-bar'
+     This face controls the colors for display of scroll bars.
+
+`tool-bar'
+     This face is used for display of the tool bar, if any.
+
+`region'
+     This face is used for highlighting the region in Transient Mark
+     mode.
+
+`secondary-selection'
+     This face is used to show any secondary selection you have made.
+
+`highlight'
+     This face is meant to be used for highlighting for various
+     purposes.
+
+`trailing-whitespace'
+     This face is used to display excess whitespace at the end of a
+     line, if `show-trailing-whitespace' is non-`nil'.
+
+   In contrast, these faces are provided to change the appearance of
+text in specific ways.  You can use them on specific text, when you want
+the effects they produce.
+
+`bold'
+     This face uses a bold font, if possible.  It uses the bold variant
+     of the frame's font, if it has one.  It's up to you to choose a
+     default font that has a bold variant, if you want to use one.
+
+`italic'
+     This face uses the italic variant of the frame's font, if it has
+     one.
+
+`bold-italic'
+     This face uses the bold italic variant of the frame's font, if it
+     has one.
+
+`underline'
+     This face underlines text.
+
+`fixed-pitch'
+     This face forces use of a particular fixed-width font.
+
+`variable-pitch'
+     This face forces use of a particular variable-width font.  It's
+     reasonable to customize this to use a different variable-width
+     font, if you like, but you should not make it a fixed-width font.
+
+ - Variable: show-trailing-whitespace
+     If this variable is non-`nil', Emacs uses the
+     `trailing-whitespace' face to display any spaces and tabs at the
+     end of a line.
+
+
+File: elisp,  Node: Defining Faces,  Next: Face Attributes,  Prev: Standard Faces,  Up: Faces
+
+Defining Faces
+--------------
+
+   The way to define a new face is with `defface'.  This creates a kind
+of customization item (*note Customization::) which the user can
+customize using the Customization buffer (*note Easy Customization:
+(emacs)Easy Customization.).
+
+ - Macro: defface face spec doc [keyword value]...
+     This declares FACE as a customizable face that defaults according
+     to SPEC.  You should not quote the symbol FACE.  The argument DOC
+     specifies the face documentation.  The keywords you can use in
+     `defface' are the same ones that are meaningful in both `defgroup'
+     and `defcustom' (*note Common Keywords::).
+
+     When `defface' executes, it defines the face according to SPEC,
+     then uses any customizations that were read from the init file
+     (*note Init File::) to override that specification.
+
+     The purpose of SPEC is to specify how the face should appear on
+     different kinds of terminals.  It should be an alist whose
+     elements have the form `(DISPLAY ATTS)'.  Each element's CAR,
+     DISPLAY, specifies a class of terminals.  The element's second
+     element, ATTS, is a list of face attributes and their values; it
+     specifies what the face should look like on that kind of terminal.
+     The possible attributes are defined in the value of
+     `custom-face-attributes'.
+
+     The DISPLAY part of an element of SPEC determines which frames the
+     element applies to.  If more than one element of SPEC matches a
+     given frame, the first matching element is the only one used for
+     that frame.  There are two possibilities for DISPLAY:
+
+    `t'
+          This element of SPEC matches all frames.  Therefore, any
+          subsequent elements of SPEC are never used.  Normally `t' is
+          used in the last (or only) element of SPEC.
+
+    a list
+          If DISPLAY is a list, each element should have the form
+          `(CHARACTERISTIC VALUE...)'.  Here CHARACTERISTIC specifies a
+          way of classifying frames, and the VALUEs are possible
+          classifications which DISPLAY should apply to.  Here are the
+          possible values of CHARACTERISTIC:
+
+         `type'
+               The kind of window system the frame uses--either
+               `graphic' (any graphics-capable display), `x', `pc' (for
+               the MS-DOS console), `w32' (for MS Windows 9X/NT), or
+               `tty' (a non-graphics-capable display).
+
+         `class'
+               What kinds of colors the frame supports--either `color',
+               `grayscale', or `mono'.
+
+         `background'
+               The kind of background--either `light' or `dark'.
+
+          If an element of DISPLAY specifies more than one VALUE for a
+          given CHARACTERISTIC, any of those values is acceptable.  If
+          DISPLAY has more than one element, each element should
+          specify a different CHARACTERISTIC; then _each_
+          characteristic of the frame must match one of the VALUEs
+          specified for it in DISPLAY.
+
+   Here's how the standard face `region' is defined:
+
+     (defface region
+       `((((type tty) (class color))
+          (:background "blue" :foreground "white"))
+         (((type tty) (class mono))
+          (:inverse-video t))
+         (((class color) (background dark))
+          (:background "blue"))
+         (((class color) (background light))
+          (:background "lightblue"))
+         (t (:background "gray")))
+       "Basic face for highlighting the region."
+       :group 'basic-faces)
+
+   Internally, `defface' uses the symbol property `face-defface-spec'
+to record the face attributes specified in `defface', `saved-face' for
+the attributes saved by the user with the customization buffer, and
+`face-documentation' for the documentation string.
+
+ - User Option: frame-background-mode
+     This option, if non-`nil', specifies the background type to use for
+     interpreting face definitions.  If it is `dark', then Emacs treats
+     all frames as if they had a dark background, regardless of their
+     actual background colors.  If it is `light', then Emacs treats all
+     frames as if they had a light background.
+
+
+File: elisp,  Node: Face Attributes,  Next: Attribute Functions,  Prev: Defining Faces,  Up: Faces
+
+Face Attributes
+---------------
+
+   The effect of using a face is determined by a fixed set of "face
+attributes".  This table lists all the face attributes, and what they
+mean.  Note that in general, more than one face can be specified for a
+given piece of text; when that happens, the attributes of all the faces
+are merged to specify how to display the text.  *Note Merging Faces::.
+
+   In Emacs 21, any attribute in a face can have the value
+`unspecified'.  This means the face doesn't specify that attribute.  In
+face merging, when the first face fails to specify a particular
+attribute, that means the next face gets a chance.  However, the
+`default' face must specify all attributes.
+
+   Some of these font attributes are meaningful only on certain kinds of
+displays--if your display cannot handle a certain attribute, the
+attribute is ignored.  (The attributes `:family', `:width', `:height',
+`:weight', and `:slant' correspond to parts of an X Logical Font
+Descriptor.)
+
+`:family'
+     Font family name, or fontset name (*note Fontsets::).  If you
+     specify a font family name, the wild-card characters `*' and `?'
+     are allowed.
+
+`:width'
+     Relative proportionate width, also known as the character set
+     width or set width.  This should be one of the symbols
+     `ultra-condensed', `extra-condensed', `condensed',
+     `semi-condensed', `normal', `semi-expanded', `expanded',
+     `extra-expanded', or `ultra-expanded'.
+
+`:height'
+     Either the font height, an integer in units of 1/10 point, a
+     floating point number specifying the amount by which to scale the
+     height of any underlying face, or a function, which is called with
+     the old height (from the underlying face), and should return the
+     new height.
+
+`:weight'
+     Font weight--a symbol from this series (from most dense to most
+     faint): `ultra-bold', `extra-bold', `bold', `semi-bold', `normal',
+     `semi-light', `light', `extra-light', or `ultra-light'.
+
+     On a text-only terminal, any weight greater than normal is
+     displayed as extra bright, and any weight less than normal is
+     displayed as half-bright (provided the terminal supports the
+     feature).
+
+`:slant'
+     Font slant--one of the symbols `italic', `oblique', `normal',
+     `reverse-italic', or `reverse-oblique'.
+
+     On a text-only terminal, slanted text is displayed as half-bright,
+     if the terminal supports the feature.
+
+`:foreground'
+     Foreground color, a string.
+
+`:background'
+     Background color, a string.
+
+`:inverse-video'
+     Whether or not characters should be displayed in inverse video.
+     The value should be `t' (yes) or `nil' (no).
+
+`:stipple'
+     The background stipple, a bitmap.
+
+     The value can be a string; that should be the name of a file
+     containing external-format X bitmap data.  The file is found in
+     the directories listed in the variable `x-bitmap-file-path'.
+
+     Alternatively, the value can specify the bitmap directly, with a
+     list of the form `(WIDTH HEIGHT DATA)'.  Here, WIDTH and HEIGHT
+     specify the size in pixels, and DATA is a string containing the
+     raw bits of the bitmap, row by row.  Each row occupies (WIDTH + 7)
+     / 8 consecutie bytes in the string (which should be a unibyte
+     string for best results).
+
+     If the value is `nil', that means use no stipple pattern.
+
+     Normally you do not need to set the stipple attribute, because it
+     is used automatically to handle certain shades of gray.
+
+`:underline'
+     Whether or not characters should be underlined, and in what color.
+     If the value is `t', underlining uses the foreground color of the
+     face.  If the value is a string, underlining uses that color.  The
+     value `nil' means do not underline.
+
+`:overline'
+     Whether or not characters should be overlined, and in what color.
+     The value is used like that of `:underline'.
+
+`:strike-through'
+     Whether or not characters should be strike-through, and in what
+     color.  The value is used like that of `:underline'.
+
+`:inherit'
+     The name of a face from which to inherit attributes, or a list of
+     face names.  Attributes from inherited faces are merged into the
+     face like an underlying face would be, with higher priority than
+     underlying faces.
+
+`:box'
+     Whether or not a box should be drawn around characters, its color,
+     the width of the box lines, and 3D appearance.
+
+   Here are the possible values of the `:box' attribute, and what they
+mean:
+
+`nil'
+     Don't draw a box.
+
+`t'
+     Draw a box with lines of width 1, in the foreground color.
+
+COLOR
+     Draw a box with lines of width 1, in color COLOR.
+
+`(:line-width WIDTH :color COLOR :style STYLE)'
+     This way you can explicitly specify all aspects of the box.  The
+     value WIDTH specifies the width of the lines to draw; it defaults
+     to 1.
+
+     The value COLOR specifies the color to draw with.  The default is
+     the foreground color of the face for simple boxes, and the
+     background color of the face for 3D boxes.
+
+     The value STYLE specifies whether to draw a 3D box.  If it is
+     `released-button', the box looks like a 3D button that is not being
+     pressed.  If it is `pressed-button', the box looks like a 3D button
+     that is being pressed.  If it is `nil' or omitted, a plain 2D box
+     is used.
+
+   The attributes `:overline', `:strike-through' and `:box' are new in
+Emacs 21.  The attributes `:family', `:height', `:width', `:weight',
+`:slant' are also new; previous versions used the following attributes,
+now semi-obsolete, to specify some of the same information:
+
+`:font'
+     This attribute specifies the font name.
+
+`:bold'
+     A non-`nil' value specifies a bold font.
+
+`:italic'
+     A non-`nil' value specifies an italic font.
+
+   For compatibility, you can still set these "attributes" in Emacs 21,
+even though they are not real face attributes.  Here is what that does:
+
+`:font'
+     You can specify an X font name as the "value" of this "attribute";
+     that sets the `:family', `:width', `:height', `:weight', and
+     `:slant' attributes according to the font name.
+
+     If the value is a pattern with wildcards, the first font that
+     matches the pattern is used to set these attributes.
+
+`:bold'
+     A non-`nil' makes the face bold; `nil' makes it normal.  This
+     actually works by setting the `:weight' attribute.
+
+`:italic'
+     A non-`nil' makes the face italic; `nil' makes it normal.  This
+     actually works by setting the `:slant' attribute.
+
+ - Variable: x-bitmap-file-path
+     This variable specifies a list of directories for searching for
+     bitmap files, for the `:stipple' attribute.
+
+ - Function: bitmap-spec-p object
+     This returns `t' if OBJECT is a valid bitmap specification,
+     suitable for use with `:stipple'.  It returns `nil' otherwise.
+
+
+File: elisp,  Node: Attribute Functions,  Next: Merging Faces,  Prev: Face Attributes,  Up: Faces
+
+Face Attribute Functions
+------------------------
+
+   You can modify the attributes of an existing face with the following
+functions.  If you specify FRAME, they affect just that frame;
+otherwise, they affect all frames as well as the defaults that apply to
+new frames.
+
+ - Function: set-face-attribute face frame &rest arguments
+     This function sets one or more attributes of face FACE for frame
+     FRAME.  If FRAME is `nil', it sets the attribute for all frames,
+     and the defaults for new frames.
+
+     The extra arguments ARGUMENTS specify the attributes to set, and
+     the values for them.  They should consist of alternating attribute
+     names (such as `:family' or `:underline') and corresponding values.
+     Thus,
+
+          (set-face-attribute 'foo nil
+                              :width :extended
+                              :weight :bold
+                              :underline "red")
+
+     sets the attributes `:width', `:weight' and `:underline' to the
+     corresponding values.
+
+ - Function: face-attribute face attribute &optional frame
+     This returns the value of the ATTRIBUTE attribute of face FACE on
+     FRAME.  If FRAME is `nil', that means the selected frame (*note
+     Input Focus::).
+
+     If FRAME is `t', the value is the default for FACE for new frames.
+
+     For example,
+
+          (face-attribute 'bold :weight)
+               => bold
+
+   The functions above did not exist before Emacs 21.  For compatibility
+with older Emacs versions, you can use the following functions to set
+and examine the face attributes which existed in those versions.
+
+ - Function: set-face-foreground face color &optional frame
+ - Function: set-face-background face color &optional frame
+     These functions set the foreground (or background, respectively)
+     color of face FACE to COLOR.  The argument COLOR should be a
+     string, the name of a color.
+
+     Certain shades of gray are implemented by stipple patterns on
+     black-and-white screens.
+
+ - Function: set-face-stipple face pattern &optional frame
+     This function sets the background stipple pattern of face FACE to
+     PATTERN.  The argument PATTERN should be the name of a stipple
+     pattern defined by the X server, or `nil' meaning don't use
+     stipple.
+
+     Normally there is no need to pay attention to stipple patterns,
+     because they are used automatically to handle certain shades of
+     gray.
+
+ - Function: set-face-font face font &optional frame
+     This function sets the font of face FACE.
+
+     In Emacs 21, this actually sets the attributes `:family',
+     `:width', `:height', `:weight', and `:slant' according to the font
+     name FONT.
+
+     In Emacs 20, this sets the font attribute.  Once you set the font
+     explicitly, the bold and italic attributes cease to have any
+     effect, because the precise font that you specified is used.
+
+ - Function: set-face-bold-p face bold-p &optional frame
+     This function specifies whether FACE should be bold.  If BOLD-P is
+     non-`nil', that means yes; `nil' means no.
+
+     In Emacs 21, this sets the `:weight' attribute.  In Emacs 20, it
+     sets the `:bold' attribute.
+
+ - Function: set-face-italic-p face italic-p &optional frame
+     This function specifies whether FACE should be italic.  If
+     ITALIC-P is non-`nil', that means yes; `nil' means no.
+
+     In Emacs 21, this sets the `:slant' attribute.  In Emacs 20, it
+     sets the `:italic' attribute.
+
+ - Function: set-face-underline-p face underline-p &optional frame
+     This function sets the underline attribute of face FACE.
+     Non-`nil' means do underline; `nil' means don't.
+
+ - Function: invert-face face &optional frame
+     This function inverts the `:inverse-video' attribute of face FACE.
+     If the attribute is `nil', this function sets it to `t', and vice
+     versa.
+
+   These functions examine the attributes of a face.  If you don't
+specify FRAME, they refer to the default data for new frames.  They
+return the symbol `unspecified' if the face doesn't define any value
+for that attribute.
+
+ - Function: face-foreground face &optional frame
+ - Function: face-background face &optional frame
+     These functions return the foreground color (or background color,
+     respectively) of face FACE, as a string.
+
+ - Function: face-stipple face &optional frame
+     This function returns the name of the background stipple pattern
+     of face FACE, or `nil' if it doesn't have one.
+
+ - Function: face-font face &optional frame
+     This function returns the name of the font of face FACE.
+
+ - Function: face-bold-p face &optional frame
+     This function returns `t' if FACE is bold--that is, if it is
+     bolder than normal.  It returns `nil' otherwise.
+
+ - Function: face-italic-p face &optional frame
+     This function returns `t' if FACE is italic or oblique, `nil'
+     otherwise.
+
+ - Function: face-underline-p face &optional frame
+     This function returns the `:underline' attribute of face FACE.
+
+ - Function: face-inverse-video-p face &optional frame
+     This function returns the `:inverse-video' attribute of face FACE.
+
+
+File: elisp,  Node: Merging Faces,  Next: Font Selection,  Prev: Attribute Functions,  Up: Faces
+
+Merging Faces for Display
+-------------------------
+
+   Here are the ways to specify which faces to use for display of text:
+
+   * With defaults.  The `default' face is used as the ultimate default
+     for all text.  (In Emacs 19 and 20, the `default' face is used
+     only when no other face is specified.)
+
+     For a mode line or header line, the face `modeline' or
+     `header-line' is used just before `default'.
+
+   * With text properties.  A character can have a `face' property; if
+     so, the faces and face attributes specified there apply.  *Note
+     Special Properties::.
+
+     If the character has a `mouse-face' property, that is used instead
+     of the `face' property when the mouse is "near enough" to the
+     character.
+
+   * With overlays.  An overlay can have `face' and `mouse-face'
+     properties too; they apply to all the text covered by the overlay.
+
+   * With a region that is active.  In Transient Mark mode, the region
+     is highlighted with the face `region' (*note Standard Faces::).
+
+   * With special glyphs.  Each glyph can specify a particular face
+     number.  *Note Glyphs::.
+
+   If these various sources together specify more than one face for a
+particular character, Emacs merges the attributes of the various faces
+specified.  The attributes of the faces of special glyphs come first;
+then comes the face for region highlighting, if appropriate; then come
+attributes of faces from overlays, followed by those from text
+properties, and last the default face.
+
+   When multiple overlays cover one character, an overlay with higher
+priority overrides those with lower priority.  *Note Overlays::.
+
+   In Emacs 20, if an attribute such as the font or a color is not
+specified in any of the above ways, the frame's own font or color is
+used.  In newer Emacs versions, this cannot happen, because the
+`default' face specifies all attributes--in fact, the frame's own font
+and colors are synonymous with those of the default face.
+
+
+File: elisp,  Node: Font Selection,  Next: Face Functions,  Prev: Merging Faces,  Up: Faces
+
+Font Selection
+--------------
+
+   "Selecting a font" means mapping the specified face attributes for a
+character to a font that is available on a particular display.  The
+face attributes, as determined by face merging, specify most of the
+font choice, but not all.  Part of the choice depends on what character
+it is.
+
+   For multibyte characters, typically each font covers only one
+character set.  So each character set (*note Character Sets::) specifies
+a registry and encoding to use, with the character set's
+`x-charset-registry' property.  Its value is a string containing the
+registry and the encoding, with a dash between them:
+
+     (plist-get (charset-plist 'latin-iso8859-1)
+                'x-charset-registry)
+          => "ISO8859-1"
+
+   Unibyte text does not have character sets, so displaying a unibyte
+character takes the registry and encoding from the variable
+`face-default-registry'.
+
+ - Variable: face-default-registry
+     This variable specifies which registry and encoding to use in
+     choosing fonts for unibyte characters.  The value is initialized
+     at Emacs startup time from the font the user specified for Emacs.
+
+   If the face specifies a fontset name, that fontset determines a
+pattern for fonts of the given charset.  If the face specifies a font
+family, a font pattern is constructed.
+
+   Emacs tries to find an available font for the given face attributes
+and character's registry and encoding.  If there is a font that matches
+exactly, it is used, of course.  The hard case is when no available font
+exactly fits the specification.  Then Emacs looks for one that is
+"close"--one attribute at a time.  You can specify the order to
+consider the attributes.  In the case where a specified font family is
+not available, you can specify a set of mappings for alternatives to
+try.
+
+ - Variable: face-font-selection-order
+     This variable specifies the order of importance of the face
+     attributes `:width', `:height', `:weight', and `:slant'.  The
+     value should be a list containing those four symbols, in order of
+     decreasing importance.
+
+     Font selection first finds the best available matches for the first
+     attribute listed; then, among the fonts which are best in that
+     way, it searches for the best matches in the second attribute, and
+     so on.
+
+     The attributes `:weight' and `:width' have symbolic values in a
+     range centered around `normal'.  Matches that are more extreme
+     (farther from `normal') are somewhat preferred to matches that are
+     less extreme (closer to `normal'); this is designed to ensure that
+     non-normal faces contrast with normal ones, whenever possible.
+
+     The default is `(:width :height :weight :slant)', which means first
+     find the fonts closest to the specified `:width', then--among the
+     fonts with that width--find a best match for the specified font
+     height, and so on.
+
+     One example of a case where this variable makes a difference is
+     when the default font has no italic equivalent.  With the default
+     ordering, the `italic' face will use a non-italic font that is
+     similar to the default one.  But if you put `:slant' before
+     `:height', the `italic' face will use an italic font, even if its
+     height is not quite right.
+
+ - Variable: face-font-family-alternatives
+     This variable lets you specify alternative font families to try,
+     if a given family is specified and doesn't exist.  Each element
+     should have this form:
+
+          (FAMILY ALTERNATE-FAMILIES...)
+
+     If FAMILY is specified but not available, Emacs will try the other
+     families given in ALTERNATE-FAMILIES, one by one, until it finds a
+     family that does exist.
+
+ - Variable: face-font-registry-alternatives
+     This variable lets you specify alternative font registries to try,
+     if a given registry is specified and doesn't exist.  Each element
+     should have this form:
+
+          (REGISTRY ALTERNATE-REGISTRIES...)
+
+     If REGISTRY is specified but not available, Emacs will try the
+     other registries given in ALTERNATE-REGISTRIES, one by one, until
+     it finds a registry that does exist.
+
+   Emacs can make use of scalable fonts, but by default it does not use
+them, since the use of too many or too big scalable fonts can crash
+XFree86 servers.
+
+ - Variable: scalable-fonts-allowed
+     This variable controls which scalable fonts to use.  A value of
+     `nil', the default, means do not use scalable fonts.  `t' means to
+     use any scalable font that seems appropriate for the text.
+
+     Otherwise, the value must be a list of regular expressions.  Then a
+     scalable font is enabled for use if its name matches any regular
+     expression in the list.  For example,
+
+          (setq scalable-fonts-allowed '("muleindian-2$"))
+
+     allows the use of scalable fonts with registry `muleindian-2'.
+
+ - Function: clear-face-cache &optional unload-p
+     This function clears the face cache for all frames.  If UNLOAD-P
+     is non-`nil', that means to unload all unused fonts as well.
+
+
+File: elisp,  Node: Face Functions,  Next: Auto Faces,  Prev: Font Selection,  Up: Faces
+
+Functions for Working with Faces
+--------------------------------
+
+   Here are additional functions for creating and working with faces.
+
+ - Function: make-face name
+     This function defines a new face named NAME, initially with all
+     attributes `nil'.  It does nothing if there is already a face named
+     NAME.
+
+ - Function: face-list
+     This function returns a list of all defined face names.
+
+ - Function: copy-face old-face new-name &optional frame new-frame
+     This function defines the face NEW-NAME as a copy of the existing
+     face named OLD-FACE.  It creates the face NEW-NAME if that doesn't
+     already exist.
+
+     If the optional argument FRAME is given, this function applies
+     only to that frame.  Otherwise it applies to each frame
+     individually, copying attributes from OLD-FACE in each frame to
+     NEW-FACE in the same frame.
+
+     If the optional argument NEW-FRAME is given, then `copy-face'
+     copies the attributes of OLD-FACE in FRAME to NEW-NAME in
+     NEW-FRAME.
+
+ - Function: face-id face
+     This function returns the face number of face FACE.
+
+ - Function: face-documentation face
+     This function returns the documentation string of face FACE, or
+     `nil' if none was specified for it.
+
+ - Function: face-equal face1 face2 &optional frame
+     This returns `t' if the faces FACE1 and FACE2 have the same
+     attributes for display.
+
+ - Function: face-differs-from-default-p face &optional frame
+     This returns `t' if the face FACE displays differently from the
+     default face.  A face is considered to be "the same" as the
+     default face if each attribute is either the same as that of the
+     default face, or unspecified (meaning to inherit from the default).
+
+
+File: elisp,  Node: Auto Faces,  Next: Font Lookup,  Prev: Face Functions,  Up: Faces
+
+Automatic Face Assignment
+-------------------------
+
+   Starting with Emacs 21, a hook is available for automatically
+assigning faces to text in the buffer.  This hook is used for part of
+the implementation of Font-Lock mode.
+
+ - Variable: fontification-functions
+     This variable holds a list of functions that are called by Emacs
+     redisplay as needed to assign faces automatically to text in the
+     buffer.
+
+     The functions are called in the order listed, with one argument, a
+     buffer position POS.  Each function should attempt to assign faces
+     to the text in the current buffer starting at POS.
+
+     Each function should record the faces they assign by setting the
+     `face' property.  It should also add a non-`nil' `fontified'
+     property for all the text it has assigned faces to.  That property
+     tells redisplay that faces have been assigned to that text already.
+
+     It is probably a good idea for each function to do nothing if the
+     character after POS already has a non-`nil' `fontified' property,
+     but this is not required.  If one function overrides the
+     assignments made by a previous one, the properties as they are
+     after the last function finishes are the ones that really matter.
+
+     For efficiency, we recommend writing these functions so that they
+     usually assign faces to around 400 to 600 characters at each call.
+
+
+File: elisp,  Node: Font Lookup,  Next: Fontsets,  Prev: Auto Faces,  Up: Faces
+
+Looking Up Fonts
+----------------
+
+ - Function: x-list-fonts pattern &optional face frame maximum
+     This function returns a list of available font names that match
+     PATTERN.  If the optional arguments FACE and FRAME are specified,
+     then the list is limited to fonts that are the same size as FACE
+     currently is on FRAME.
+
+     The argument PATTERN should be a string, perhaps with wildcard
+     characters: the `*' character matches any substring, and the `?'
+     character matches any single character.  Pattern matching of font
+     names ignores case.
+
+     If you specify FACE and FRAME, FACE should be a face name (a
+     symbol) and FRAME should be a frame.
+
+     The optional argument MAXIMUM sets a limit on how many fonts to
+     return.  If this is non-`nil', then the return value is truncated
+     after the first MAXIMUM matching fonts.  Specifying a small value
+     for MAXIMUM can make this function much faster, in cases where
+     many fonts match the pattern.
+
+   These additional functions are available starting in Emacs 21.
+
+ - Function: x-family-fonts &optional family frame
+     This function returns a list describing the available fonts for
+     family FAMILY on FRAME.  If FAMILY is omitted or `nil', this list
+     applies to all families, and therefore, it contains all available
+     fonts.  Otherwise, FAMILY must be a string; it may contain the
+     wildcards `?' and `*'.
+
+     The list describes the display that FRAME is on; if FRAME is
+     omitted or `nil', it applies to the selected frame's display
+     (*note Input Focus::).
+
+     The list contains a vector of the following form for each font:
+
+          [FAMILY WIDTH POINT-SIZE WEIGHT SLANT
+           FIXED-P FULL REGISTRY-AND-ENCODING]
+
+     The first five elements correspond to face attributes; if you
+     specify these attributes for a face, it will use this font.
+
+     The last three elements give additional information about the font.
+     FIXED-P is non-nil if the font is fixed-pitch.  FULL is the full
+     name of the font, and REGISTRY-AND-ENCODING is a string giving the
+     registry and encoding of the font.
+
+     The result list is sorted according to the current face font sort
+     order.
+
+ - Function: x-font-family-list &optional frame
+     This function returns a list of the font families available for
+     FRAME's display.  If FRAME is omitted or `nil', it describes the
+     selected frame's display (*note Input Focus::).
+
+     The value is a list of elements of this form:
+
+          (FAMILY . FIXED-P)
+
+     Here FAMILY is a font family, and FIXED-P is non-`nil' if fonts of
+     that family are fixed-pitch.
+
+ - Variable: font-list-limit
+     This variable specifies maximum number of fonts to consider in font
+     matching.  The function `x-family-fonts' will not return more than
+     that many fonts, and font selection will consider only that many
+     fonts when searching a matching font for face attributes.  The
+     default is currently 100.
+

@@ -1,0 +1,1167 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Input Focus,  Next: Visibility of Frames,  Prev: Minibuffers and Frames,  Up: Frames
+
+Input Focus
+===========
+
+   At any time, one frame in Emacs is the "selected frame".  The
+selected window always resides on the selected frame.
+
+   When Emacs displays its frames on several terminals (*note Multiple
+Displays::), each terminal has its own selected frame.  But only one of
+these is "_the_ selected frame": it's the frame that belongs to the
+terminal from which the most recent input came.  That is, when Emacs
+runs a command that came from a certain terminal, the selected frame is
+the one of that terminal.  Since Emacs runs only a single command at any
+given time, it needs to consider only one selected frame at a time; this
+frame is what we call "the selected frame" in this manual.  The display
+on which the selected frame is displayed is the "selected frame's
+display".
+
+ - Function: selected-frame
+     This function returns the selected frame.
+
+   Some window systems and window managers direct keyboard input to the
+window object that the mouse is in; others require explicit clicks or
+commands to "shift the focus" to various window objects.  Either way,
+Emacs automatically keeps track of which frame has the focus.
+
+   Lisp programs can also switch frames "temporarily" by calling the
+function `select-frame'.  This does not alter the window system's
+concept of focus; rather, it escapes from the window manager's control
+until that control is somehow reasserted.
+
+   When using a text-only terminal, only the selected terminal frame is
+actually displayed on the terminal.  `switch-frame' is the only way to
+switch frames, and the change lasts until overridden by a subsequent
+call to `switch-frame'.  Each terminal screen except for the initial
+one has a number, and the number of the selected frame appears in the
+mode line before the buffer name (*note Mode Line Variables::).
+
+ - Function: select-frame frame
+     This function selects frame FRAME, temporarily disregarding the
+     focus of the X server if any.  The selection of FRAME lasts until
+     the next time the user does something to select a different frame,
+     or until the next time this function is called.  The specified
+     FRAME becomes the selected frame, as explained above, and the
+     terminal that FRAME is on becomes the selected terminal.
+
+     In general, you should never use `select-frame' in a way that could
+     switch to a different terminal without switching back when you're
+     done.
+
+   Emacs cooperates with the window system by arranging to select
+frames as the server and window manager request.  It does so by
+generating a special kind of input event, called a "focus" event, when
+appropriate.  The command loop handles a focus event by calling
+`handle-switch-frame'.  *Note Focus Events::.
+
+ - Command: handle-switch-frame frame
+     This function handles a focus event by selecting frame FRAME.
+
+     Focus events normally do their job by invoking this command.
+     Don't call it for any other reason.
+
+ - Function: redirect-frame-focus frame focus-frame
+     This function redirects focus from FRAME to FOCUS-FRAME.  This
+     means that FOCUS-FRAME will receive subsequent keystrokes and
+     events intended for FRAME.  After such an event, the value of
+     `last-event-frame' will be FOCUS-FRAME.  Also, switch-frame events
+     specifying FRAME will instead select FOCUS-FRAME.
+
+     If FOCUS-FRAME is `nil', that cancels any existing redirection for
+     FRAME, which therefore once again receives its own events.
+
+     One use of focus redirection is for frames that don't have
+     minibuffers.  These frames use minibuffers on other frames.
+     Activating a minibuffer on another frame redirects focus to that
+     frame.  This puts the focus on the minibuffer's frame, where it
+     belongs, even though the mouse remains in the frame that activated
+     the minibuffer.
+
+     Selecting a frame can also change focus redirections.  Selecting
+     frame `bar', when `foo' had been selected, changes any redirections
+     pointing to `foo' so that they point to `bar' instead.  This
+     allows focus redirection to work properly when the user switches
+     from one frame to another using `select-window'.
+
+     This means that a frame whose focus is redirected to itself is
+     treated differently from a frame whose focus is not redirected.
+     `select-frame' affects the former but not the latter.
+
+     The redirection lasts until `redirect-frame-focus' is called to
+     change it.
+
+ - User Option: focus-follows-mouse
+     This option is how you inform Emacs whether the window manager
+     transfers focus when the user moves the mouse.  Non-`nil' says
+     that it does.  When this is so, the command `other-frame' moves
+     the mouse to a position consistent with the new selected frame.
+
+
+File: elisp,  Node: Visibility of Frames,  Next: Raising and Lowering,  Prev: Input Focus,  Up: Frames
+
+Visibility of Frames
+====================
+
+   A window frame may be "visible", "invisible", or "iconified".  If it
+is visible, you can see its contents.  If it is iconified, the frame's
+contents do not appear on the screen, but an icon does.  If the frame
+is invisible, it doesn't show on the screen, not even as an icon.
+
+   Visibility is meaningless for terminal frames, since only the
+selected one is actually displayed in any case.
+
+ - Command: make-frame-visible &optional frame
+     This function makes frame FRAME visible.  If you omit FRAME, it
+     makes the selected frame visible.
+
+ - Command: make-frame-invisible &optional frame
+     This function makes frame FRAME invisible.  If you omit FRAME, it
+     makes the selected frame invisible.
+
+ - Command: iconify-frame &optional frame
+     This function iconifies frame FRAME.  If you omit FRAME, it
+     iconifies the selected frame.
+
+ - Function: frame-visible-p frame
+     This returns the visibility status of frame FRAME.  The value is
+     `t' if FRAME is visible, `nil' if it is invisible, and `icon' if
+     it is iconified.
+
+   The visibility status of a frame is also available as a frame
+parameter.  You can read or change it as such.  *Note Window Frame
+Parameters::.
+
+   The user can iconify and deiconify frames with the window manager.
+This happens below the level at which Emacs can exert any control, but
+Emacs does provide events that you can use to keep track of such
+changes.  *Note Misc Events::.
+
+
+File: elisp,  Node: Raising and Lowering,  Next: Frame Configurations,  Prev: Visibility of Frames,  Up: Frames
+
+Raising and Lowering Frames
+===========================
+
+   Most window systems use a desktop metaphor.  Part of this metaphor is
+the idea that windows are stacked in a notional third dimension
+perpendicular to the screen surface, and thus ordered from "highest" to
+"lowest".  Where two windows overlap, the one higher up covers the one
+underneath.  Even a window at the bottom of the stack can be seen if no
+other window overlaps it.
+
+   A window's place in this ordering is not fixed; in fact, users tend
+to change the order frequently.  "Raising" a window means moving it
+"up", to the top of the stack.  "Lowering" a window means moving it to
+the bottom of the stack.  This motion is in the notional third
+dimension only, and does not change the position of the window on the
+screen.
+
+   You can raise and lower Emacs frame Windows with these functions:
+
+ - Command: raise-frame &optional frame
+     This function raises frame FRAME (default, the selected frame).
+
+ - Command: lower-frame &optional frame
+     This function lowers frame FRAME (default, the selected frame).
+
+ - User Option: minibuffer-auto-raise
+     If this is non-`nil', activation of the minibuffer raises the frame
+     that the minibuffer window is in.
+
+   You can also enable auto-raise (raising automatically when a frame is
+selected) or auto-lower (lowering automatically when it is deselected)
+for any frame using frame parameters.  *Note Window Frame Parameters::.
+
+
+File: elisp,  Node: Frame Configurations,  Next: Mouse Tracking,  Prev: Raising and Lowering,  Up: Frames
+
+Frame Configurations
+====================
+
+   A "frame configuration" records the current arrangement of frames,
+all their properties, and the window configuration of each one.  (*Note
+Window Configurations::.)
+
+ - Function: current-frame-configuration
+     This function returns a frame configuration list that describes
+     the current arrangement of frames and their contents.
+
+ - Function: set-frame-configuration configuration &optional nodelete
+     This function restores the state of frames described in
+     CONFIGURATION.
+
+     Ordinarily, this function deletes all existing frames not listed in
+     CONFIGURATION.  But if NODELETE is non-`nil', the unwanted frames
+     are iconified instead.
+
+
+File: elisp,  Node: Mouse Tracking,  Next: Mouse Position,  Prev: Frame Configurations,  Up: Frames
+
+Mouse Tracking
+==============
+
+   Sometimes it is useful to "track" the mouse, which means to display
+something to indicate where the mouse is and move the indicator as the
+mouse moves.  For efficient mouse tracking, you need a way to wait until
+the mouse actually moves.
+
+   The convenient way to track the mouse is to ask for events to
+represent mouse motion.  Then you can wait for motion by waiting for an
+event.  In addition, you can easily handle any other sorts of events
+that may occur.  That is useful, because normally you don't want to
+track the mouse forever--only until some other event, such as the
+release of a button.
+
+ - Special Form: track-mouse body...
+     This special form executes BODY, with generation of mouse motion
+     events enabled.  Typically BODY would use `read-event' to read the
+     motion events and modify the display accordingly.  *Note Motion
+     Events::, for the format of mouse motion events.
+
+     The value of `track-mouse' is that of the last form in BODY.  You
+     should design BODY to return when it sees the up-event that
+     indicates the release of the button, or whatever kind of event
+     means it is time to stop tracking.
+
+   The usual purpose of tracking mouse motion is to indicate on the
+screen the consequences of pushing or releasing a button at the current
+position.
+
+   In many cases, you can avoid the need to track the mouse by using
+the `mouse-face' text property (*note Special Properties::).  That
+works at a much lower level and runs more smoothly than Lisp-level
+mouse tracking.
+
+
+File: elisp,  Node: Mouse Position,  Next: Pop-Up Menus,  Prev: Mouse Tracking,  Up: Frames
+
+Mouse Position
+==============
+
+   The functions `mouse-position' and `set-mouse-position' give access
+to the current position of the mouse.
+
+ - Function: mouse-position
+     This function returns a description of the position of the mouse.
+     The value looks like `(FRAME X . Y)', where X and Y are integers
+     giving the position in characters relative to the top left corner
+     of the inside of FRAME.
+
+ - Variable: mouse-position-function
+     If non-`nil', the value of this variable is a function for
+     `mouse-position' to call.  `mouse-position' calls this function
+     just before returning, with its normal return value as the sole
+     argument, and it returns whatever this function returns to it.
+
+     This abnormal hook exists for the benefit of packages like
+     `xt-mouse.el' that need to do mouse handling at the Lisp level.
+
+ - Function: set-mouse-position frame x y
+     This function "warps the mouse" to position X, Y in frame FRAME.
+     The arguments X and Y are integers, giving the position in
+     characters relative to the top left corner of the inside of FRAME.
+     If FRAME is not visible, this function does nothing.  The return
+     value is not significant.
+
+ - Function: mouse-pixel-position
+     This function is like `mouse-position' except that it returns
+     coordinates in units of pixels rather than units of characters.
+
+ - Function: set-mouse-pixel-position frame x y
+     This function warps the mouse like `set-mouse-position' except that
+     X and Y are in units of pixels rather than units of characters.
+     These coordinates are not required to be within the frame.
+
+     If FRAME is not visible, this function does nothing.  The return
+     value is not significant.
+
+
+File: elisp,  Node: Pop-Up Menus,  Next: Dialog Boxes,  Prev: Mouse Position,  Up: Frames
+
+Pop-Up Menus
+============
+
+   When using a window system, a Lisp program can pop up a menu so that
+the user can choose an alternative with the mouse.
+
+ - Function: x-popup-menu position menu
+     This function displays a pop-up menu and returns an indication of
+     what selection the user makes.
+
+     The argument POSITION specifies where on the screen to put the
+     menu.  It can be either a mouse button event (which says to put
+     the menu where the user actuated the button) or a list of this
+     form:
+
+          ((XOFFSET YOFFSET) WINDOW)
+
+     where XOFFSET and YOFFSET are coordinates, measured in pixels,
+     counting from the top left corner of WINDOW's frame.
+
+     If POSITION is `t', it means to use the current mouse position.
+     If POSITION is `nil', it means to precompute the key binding
+     equivalents for the keymaps specified in MENU, without actually
+     displaying or popping up the menu.
+
+     The argument MENU says what to display in the menu.  It can be a
+     keymap or a list of keymaps (*note Menu Keymaps::).
+     Alternatively, it can have the following form:
+
+          (TITLE PANE1 PANE2...)
+
+     where each pane is a list of form
+
+          (TITLE (LINE . ITEM)...)
+
+     Each LINE should be a string, and each ITEM should be the value to
+     return if that LINE is chosen.
+
+   *Usage note:* Don't use `x-popup-menu' to display a menu if you
+could do the job with a prefix key defined with a menu keymap.  If you
+use a menu keymap to implement a menu, `C-h c' and `C-h a' can see the
+individual items in that menu and provide help for them.  If instead
+you implement the menu by defining a command that calls `x-popup-menu',
+the help facilities cannot know what happens inside that command, so
+they cannot give any help for the menu's items.
+
+   The menu bar mechanism, which lets you switch between submenus by
+moving the mouse, cannot look within the definition of a command to see
+that it calls `x-popup-menu'.  Therefore, if you try to implement a
+submenu using `x-popup-menu', it cannot work with the menu bar in an
+integrated fashion.  This is why all menu bar submenus are implemented
+with menu keymaps within the parent menu, and never with
+`x-popup-menu'.  *Note Menu Bar::,
+
+   If you want a menu bar submenu to have contents that vary, you should
+still use a menu keymap to implement it.  To make the contents vary, add
+a hook function to `menu-bar-update-hook' to update the contents of the
+menu keymap as necessary.
+
+
+File: elisp,  Node: Dialog Boxes,  Next: Pointer Shapes,  Prev: Pop-Up Menus,  Up: Frames
+
+Dialog Boxes
+============
+
+   A dialog box is a variant of a pop-up menu--it looks a little
+different, it always appears in the center of a frame, and it has just
+one level and one pane.  The main use of dialog boxes is for asking
+questions that the user can answer with "yes", "no", and a few other
+alternatives.  The functions `y-or-n-p' and `yes-or-no-p' use dialog
+boxes instead of the keyboard, when called from commands invoked by
+mouse clicks.
+
+ - Function: x-popup-dialog position contents
+     This function displays a pop-up dialog box and returns an
+     indication of what selection the user makes.  The argument
+     CONTENTS specifies the alternatives to offer; it has this format:
+
+          (TITLE (STRING . VALUE)...)
+
+     which looks like the list that specifies a single pane for
+     `x-popup-menu'.
+
+     The return value is VALUE from the chosen alternative.
+
+     An element of the list may be just a string instead of a cons cell
+     `(STRING . VALUE)'.  That makes a box that cannot be selected.
+
+     If `nil' appears in the list, it separates the left-hand items from
+     the right-hand items; items that precede the `nil' appear on the
+     left, and items that follow the `nil' appear on the right.  If you
+     don't include a `nil' in the list, then approximately half the
+     items appear on each side.
+
+     Dialog boxes always appear in the center of a frame; the argument
+     POSITION specifies which frame.  The possible values are as in
+     `x-popup-menu', but the precise coordinates don't matter; only the
+     frame matters.
+
+     In some configurations, Emacs cannot display a real dialog box; so
+     instead it displays the same items in a pop-up menu in the center
+     of the frame.
+
+
+File: elisp,  Node: Pointer Shapes,  Next: Window System Selections,  Prev: Dialog Boxes,  Up: Frames
+
+Pointer Shapes
+==============
+
+   These variables specify which shape to use for the mouse pointer in
+various situations, when using the X Window System:
+
+`x-pointer-shape'
+     This variable specifies the pointer shape to use ordinarily in the
+     Emacs frame.
+
+`x-sensitive-text-pointer-shape'
+     This variable specifies the pointer shape to use when the mouse is
+     over mouse-sensitive text.
+
+   These variables affect newly created frames.  They do not normally
+affect existing frames; however, if you set the mouse color of a frame,
+that also updates its pointer shapes based on the current values of
+these variables.  *Note Window Frame Parameters::.
+
+   The values you can use, to specify either of these pointer shapes,
+are defined in the file `lisp/term/x-win.el'.  Use `M-x apropos <RET>
+x-pointer <RET>' to see a list of them.
+
+
+File: elisp,  Node: Window System Selections,  Next: Color Names,  Prev: Pointer Shapes,  Up: Frames
+
+Window System Selections
+========================
+
+   The X server records a set of "selections" which permit transfer of
+data between application programs.  The various selections are
+distinguished by "selection types", represented in Emacs by symbols.  X
+clients including Emacs can read or set the selection for any given
+type.
+
+ - Function: x-set-selection type data
+     This function sets a "selection" in the X server.  It takes two
+     arguments: a selection type TYPE, and the value to assign to it,
+     DATA.  If DATA is `nil', it means to clear out the selection.
+     Otherwise, DATA may be a string, a symbol, an integer (or a cons
+     of two integers or list of two integers), an overlay, or a cons of
+     two markers pointing to the same buffer.  An overlay or a pair of
+     markers stands for text in the overlay or between the markers.
+
+     The argument DATA may also be a vector of valid non-vector
+     selection values.
+
+     Each possible TYPE has its own selection value, which changes
+     independently.  The usual values of TYPE are `PRIMARY' and
+     `SECONDARY'; these are symbols with upper-case names, in accord
+     with X Window System conventions.  The default is `PRIMARY'.
+
+ - Function: x-get-selection &optional type data-type
+     This function accesses selections set up by Emacs or by other X
+     clients.  It takes two optional arguments, TYPE and DATA-TYPE.
+     The default for TYPE, the selection type, is `PRIMARY'.
+
+     The DATA-TYPE argument specifies the form of data conversion to
+     use, to convert the raw data obtained from another X client into
+     Lisp data.  Meaningful values include `TEXT', `STRING', `TARGETS',
+     `LENGTH', `DELETE', `FILE_NAME', `CHARACTER_POSITION',
+     `LINE_NUMBER', `COLUMN_NUMBER', `OWNER_OS', `HOST_NAME', `USER',
+     `CLASS', `NAME', `ATOM', and `INTEGER'.  (These are symbols with
+     upper-case names in accord with X conventions.)  The default for
+     DATA-TYPE is `STRING'.
+
+   The X server also has a set of numbered "cut buffers" which can
+store text or other data being moved between applications.  Cut buffers
+are considered obsolete, but Emacs supports them for the sake of X
+clients that still use them.
+
+ - Function: x-get-cut-buffer n
+     This function returns the contents of cut buffer number N.
+
+ - Function: x-set-cut-buffer string &optional push
+     This function stores STRING into the first cut buffer (cut buffer
+     0).  If PUSH is `nil', only the first cut buffer is changed.  If
+     PUSH is non-`nil', that says to move the values down through the
+     series of cut buffers, much like the way successive kills in Emacs
+     move down the kill ring.  In other words, the previous value of
+     the first cut buffer moves into the second cut buffer, and the
+     second to the third, and so on through all eight cut buffers.
+
+ - Variable: selection-coding-system
+     This variable specifies the coding system to use when reading and
+     writing selections, the clipboard, or a cut buffer.  *Note Coding
+     Systems::.  The default is `compound-text', which converts to the
+     text representation that X11 normally uses.
+
+   When Emacs runs on MS-Windows, it does not implement X selections in
+general, but it does support the clipboard.  `x-get-selection' and
+`x-set-selection' on MS-Windows support the text data type only; if the
+clipboard holds other types of data, Emacs treats the clipboard as
+empty.
+
+ - User Option: x-select-enable-clipboard
+     If this is non-`nil', the Emacs yank functions consult the
+     clipboard before the primary selection, and the kill functions
+     store in the clipboard as well as the primary selection.
+     Otherwise they do not access the clipboard at all.  The default is
+     `nil' on most systems, but `t' on MS-Windows.
+
+
+File: elisp,  Node: Color Names,  Next: Text Terminal Colors,  Prev: Window System Selections,  Up: Frames
+
+Color Names
+===========
+
+   These functions provide a way to determine which color names are
+valid, and what they look like.  In some cases, the value depends on the
+"selected frame", as described below; see *Note Input Focus::, for the
+meaning of the term "selected frame".
+
+ - Function: color-defined-p color &optional frame
+     This function reports whether a color name is meaningful.  It
+     returns `t' if so; otherwise, `nil'.  The argument FRAME says
+     which frame's display to ask about; if FRAME is omitted or `nil',
+     the selected frame is used.
+
+     Note that this does not tell you whether the display you are using
+     really supports that color.  When using X, you can ask for any
+     defined color on any kind of display, and you will get some
+     result--typically, the closest it can do.  To determine whether a
+     frame can really display a certain color, use `color-supported-p'
+     (see below).
+
+     This function used to be called `x-color-defined-p', and that name
+     is still supported as an alias.
+
+ - Function: defined-colors &optional frame
+     This function returns a list of the color names that are defined
+     and supported on frame FRAME (default, the selected frame).
+
+     This function used to be called `x-defined-colors', and that name
+     is still supported as an alias.
+
+ - Function: color-supported-p color &optional frame background-p
+     This returns `t' if FRAME can really display the color COLOR (or
+     at least something close to it).  If FRAME is omitted or `nil',
+     the question applies to the selected frame.
+
+     Some terminals support a different set of colors for foreground and
+     background.  If BACKGROUND-P is non-`nil', that means you are
+     asking whether COLOR can be used as a background; otherwise you
+     are asking whether it can be used as a foreground.
+
+     The argument COLOR must be a valid color name.
+
+ - Function: color-gray-p color &optional frame
+     This returns `t' if COLOR is a shade of gray, as defined on
+     FRAME's display.  If FRAME is omitted or `nil', the question
+     applies to the selected frame.  The argument COLOR must be a valid
+     color name.
+
+ - Function: color-values color &optional frame
+     This function returns a value that describes what COLOR should
+     ideally look like.  If COLOR is defined, the value is a list of
+     three integers, which give the amount of red, the amount of green,
+     and the amount of blue.  Each integer ranges in principle from 0
+     to 65535, but in practice no value seems to be above 65280.  This
+     kind of three-element list is called an "rgb value".
+
+     If COLOR is not defined, the value is `nil'.
+
+          (color-values "black")
+               => (0 0 0)
+          (color-values "white")
+               => (65280 65280 65280)
+          (color-values "red")
+               => (65280 0 0)
+          (color-values "pink")
+               => (65280 49152 51968)
+          (color-values "hungry")
+               => nil
+
+     The color values are returned for FRAME's display.  If FRAME is
+     omitted or `nil', the information is returned for the selected
+     frame's display.
+
+     This function used to be called `x-color-values', and that name is
+     still supported as an alias.
+
+
+File: elisp,  Node: Text Terminal Colors,  Next: Resources,  Prev: Color Names,  Up: Frames
+
+Text Terminal Colors
+====================
+
+   Emacs can display color on text-only terminals, starting with version
+21.  These terminals support only a small number of colors, and the
+computer uses small integers to select colors on the terminal.  This
+means that the computer cannot reliably tell what the selected color
+looks like; instead, you have to inform your application which small
+integers correspond to which colors.  However, Emacs does know the
+standard set of colors and will try to use them automatically.
+
+   Several of these functions use or return "rgb values".  An rgb value
+is a list of three integers, which give the amount of red, the amount
+of green, and the amount of blue.  Each integer ranges in principle
+from 0 to 65535, but in practice the largest value used is 65280.
+
+   These functions accept a display (either a frame or the name of a
+terminal) as an optional argument.  We hope in the future to make Emacs
+support more than one text-only terminal at one time; then this argument
+will specify which terminal to operate on (the default being the
+selected frame's terminal; *note Input Focus::).  At present, though,
+the DISPLAY argument has no effect.
+
+ - Function: tty-color-define name number &optional rgb display
+     This function associates the color name NAME with color number
+     NUMBER on the terminal.
+
+     The optional argument RGB, if specified, is an rgb value; it says
+     what the color actually looks like.  If you do not specify RGB,
+     then this color cannot be used by `tty-color-approximate' to
+     approximate other colors, because Emacs does not know what it looks
+     like.
+
+ - Function: tty-color-clear &optional display
+     This function clears the table of defined colors for a text-only
+     terminal.
+
+ - Function: tty-color-alist &optional display
+     This function returns an alist recording the known colors
+     supported by a text-only terminal.
+
+     Each element has the form `(NAME NUMBER . RGB)' or `(NAME
+     NUMBER)'.  Here, NAME is the color name, NUMBER is the number used
+     to specify it to the terminal.  If present, RGB is an rgb value
+     that says what the color actually looks like.
+
+ - Function: tty-color-approximate rgb &optional display
+     This function finds the closest color, among the known colors
+     supported for DISPLAY, to that described by the rgb value RGB.
+
+ - Function: tty-color-translate color &optional display
+     This function finds the closest color to COLOR among the known
+     colors supported for DISPLAY.  If the name COLOR is not defined,
+     the value is `nil'.
+
+     COLOR can be an X-style `"#XXXYYYZZZ"' specification instead of an
+     actual name.  The format `"RGB:XX/YY/ZZ"' is also supported.
+
+
+File: elisp,  Node: Resources,  Next: Display Feature Testing,  Prev: Text Terminal Colors,  Up: Frames
+
+X Resources
+===========
+
+ - Function: x-get-resource attribute class &optional component subclass
+     The function `x-get-resource' retrieves a resource value from the X
+     Windows defaults database.
+
+     Resources are indexed by a combination of a "key" and a "class".
+     This function searches using a key of the form
+     `INSTANCE.ATTRIBUTE' (where INSTANCE is the name under which Emacs
+     was invoked), and using `Emacs.CLASS' as the class.
+
+     The optional arguments COMPONENT and SUBCLASS add to the key and
+     the class, respectively.  You must specify both of them or neither.
+     If you specify them, the key is `INSTANCE.COMPONENT.ATTRIBUTE',
+     and the class is `Emacs.CLASS.SUBCLASS'.
+
+ - Variable: x-resource-class
+     This variable specifies the application name that `x-get-resource'
+     should look up.  The default value is `"Emacs"'.  You can examine X
+     resources for application names other than "Emacs" by binding this
+     variable to some other string, around a call to `x-get-resource'.
+
+   *Note X Resources: (emacs)Resources X.
+
+
+File: elisp,  Node: Display Feature Testing,  Prev: Resources,  Up: Frames
+
+Display Feature Testing
+=======================
+
+   The functions in this section describe the basic capabilities of a
+particular display.  Lisp programs can use them to adapt their behavior
+to what the display can do.  For example, a program that ordinarly uses
+a popup menu could use the minibuffer if popup menus are not supported.
+
+   The optional argument DISPLAY in these functions specifies which
+display to ask the question about.  It can be a display name, a frame
+(which designates the display that frame is on), or `nil' (which refers
+to the selected frame's display, *note Input Focus::).
+
+   *Note Color Names::, *Note Text Terminal Colors::, for other
+functions to obtain information about displays.
+
+ - Function: display-popup-menus-p &optional display
+     This function returns `t' if popup menus are supported on DISPLAY,
+     `nil' if not.  Support for popup menus requires that the mouse be
+     available, since the user cannot choose menu items without a mouse.
+
+ - Function: display-graphic-p &optional display
+     This function returns `t' if DISPLAY is a graphic display capable
+     of displaying several frames and several different fonts at once.
+     This is true for displays that use a window system such as X, and
+     false for text-only terminals.
+
+ - Function: display-mouse-p &optional display
+     This function returns `t' if DISPLAY has a mouse available, `nil'
+     if not.
+
+ - Function: display-color-p &optional display
+     This function returns `t' if the screen is a color screen.  It
+     used to be called `x-display-color-p', and that name is still
+     supported as an alias.
+
+ - Function: display-grayscale-p &optional display
+     This function returns `t' if the screen can display shades of gray.
+     (All color displays can do this.)
+
+ - Function: display-selections-p &optional display
+     This function returns `t' if DISPLAY supports selections.
+     Windowed displays normally support selections, but they may also be
+     supported in some other cases.
+
+ - Function: display-images-p &optional display
+     This function returns `t' if DISPLAY can display images.  Windowed
+     displays ought in principle to handle images, but some systems
+     lack the support for that.  On a display that does not support
+     images, Emacs cannot display a tool bar.
+
+ - Function: display-screens &optional display
+     This function returns the number of screens associated with the
+     display.
+
+ - Function: display-pixel-height &optional display
+     This function returns the height of the screen in pixels.
+
+ - Function: display-mm-height &optional display
+     This function returns the height of the screen in millimeters, or
+     `nil' if Emacs cannot get that information.
+
+ - Function: display-pixel-width &optional display
+     This function returns the width of the screen in pixels.
+
+ - Function: display-mm-width &optional display
+     This function returns the width of the screen in millimeters, or
+     `nil' if Emacs cannot get that information.
+
+ - Function: display-backing-store &optional display
+     This function returns the backing store capability of the display.
+     Backing store means recording the pixels of windows (and parts of
+     windows) that are not exposed, so that when exposed they can be
+     displayed very quickly.
+
+     Values can be the symbols `always', `when-mapped', or
+     `not-useful'.  The function can also return `nil' when the
+     question is inapplicable to a certain kind of display.
+
+ - Function: display-save-under &optional display
+     This function returns non-`nil' if the display supports the
+     SaveUnder feature.  That feature is used by pop-up windows to save
+     the pixels they obscure, so that they can pop down quickly.
+
+ - Function: display-planes &optional display
+     This function returns the number of planes the display supports.
+     This is typically the number of bits per pixel.  For a tty
+     display, it is log to base two of the number of colours supported.
+
+ - Function: display-visual-class &optional display
+     This function returns the visual class for the screen.  The value
+     is one of the symbols `static-gray', `gray-scale', `static-color',
+     `pseudo-color', `true-color', and `direct-color'.
+
+ - Function: display-color-cells &optional display
+     This function returns the number of color cells the screen
+     supports.
+
+   These functions obtain additional information specifically about X
+displays.
+
+ - Function: x-server-version &optional display
+     This function returns the list of version numbers of the X server
+     running the display.
+
+ - Function: x-server-vendor &optional display
+     This function returns the vendor that provided the X server
+     software.
+
+
+File: elisp,  Node: Positions,  Next: Markers,  Prev: Frames,  Up: Top
+
+Positions
+*********
+
+   A "position" is the index of a character in the text of a buffer.
+More precisely, a position identifies the place between two characters
+(or before the first character, or after the last character), so we can
+speak of the character before or after a given position.  However, we
+often speak of the character "at" a position, meaning the character
+after that position.
+
+   Positions are usually represented as integers starting from 1, but
+can also be represented as "markers"--special objects that relocate
+automatically when text is inserted or deleted so they stay with the
+surrounding characters.  *Note Markers::.
+
+   See also the "field" feature (*note Fields::), which provides
+functions that are used by many cursur-motion commands.
+
+* Menu:
+
+* Point::         The special position where editing takes place.
+* Motion::        Changing point.
+* Excursions::    Temporary motion and buffer changes.
+* Narrowing::     Restricting editing to a portion of the buffer.
+
+
+File: elisp,  Node: Point,  Next: Motion,  Up: Positions
+
+Point
+=====
+
+   "Point" is a special buffer position used by many editing commands,
+including the self-inserting typed characters and text insertion
+functions.  Other commands move point through the text to allow editing
+and insertion at different places.
+
+   Like other positions, point designates a place between two characters
+(or before the first character, or after the last character), rather
+than a particular character.  Usually terminals display the cursor over
+the character that immediately follows point; point is actually before
+the character on which the cursor sits.
+
+   The value of point is a number no less than 1, and no greater than
+the buffer size plus 1.  If narrowing is in effect (*note Narrowing::),
+then point is constrained to fall within the accessible portion of the
+buffer (possibly at one end of it).
+
+   Each buffer has its own value of point, which is independent of the
+value of point in other buffers.  Each window also has a value of point,
+which is independent of the value of point in other windows on the same
+buffer.  This is why point can have different values in various windows
+that display the same buffer.  When a buffer appears in only one window,
+the buffer's point and the window's point normally have the same value,
+so the distinction is rarely important.  *Note Window Point::, for more
+details.
+
+ - Function: point
+     This function returns the value of point in the current buffer, as
+     an integer.
+
+          (point)
+               => 175
+
+ - Function: point-min
+     This function returns the minimum accessible value of point in the
+     current buffer.  This is normally 1, but if narrowing is in
+     effect, it is the position of the start of the region that you
+     narrowed to.  (*Note Narrowing::.)
+
+ - Function: point-max
+     This function returns the maximum accessible value of point in the
+     current buffer.  This is `(1+ (buffer-size))', unless narrowing is
+     in effect, in which case it is the position of the end of the
+     region that you narrowed to.  (*Note Narrowing::.)
+
+ - Function: buffer-end flag
+     This function returns `(point-min)' if FLAG is less than 1,
+     `(point-max)' otherwise.  The argument FLAG must be a number.
+
+ - Function: buffer-size &optional buffer
+     This function returns the total number of characters in the current
+     buffer.  In the absence of any narrowing (*note Narrowing::),
+     `point-max' returns a value one larger than this.
+
+     If you specify a buffer, BUFFER, then the value is the size of
+     BUFFER.
+
+          (buffer-size)
+               => 35
+          (point-max)
+               => 36
+
+
+File: elisp,  Node: Motion,  Next: Excursions,  Prev: Point,  Up: Positions
+
+Motion
+======
+
+   Motion functions change the value of point, either relative to the
+current value of point, relative to the beginning or end of the buffer,
+or relative to the edges of the selected window.  *Note Point::.
+
+* Menu:
+
+* Character Motion::       Moving in terms of characters.
+* Word Motion::            Moving in terms of words.
+* Buffer End Motion::      Moving to the beginning or end of the buffer.
+* Text Lines::             Moving in terms of lines of text.
+* Screen Lines::           Moving in terms of lines as displayed.
+* List Motion::            Moving by parsing lists and sexps.
+* Skipping Characters::    Skipping characters belonging to a certain set.
+
+
+File: elisp,  Node: Character Motion,  Next: Word Motion,  Up: Motion
+
+Motion by Characters
+--------------------
+
+   These functions move point based on a count of characters.
+`goto-char' is the fundamental primitive; the other functions use that.
+
+ - Command: goto-char position
+     This function sets point in the current buffer to the value
+     POSITION.  If POSITION is less than 1, it moves point to the
+     beginning of the buffer.  If POSITION is greater than the length
+     of the buffer, it moves point to the end.
+
+     If narrowing is in effect, POSITION still counts from the
+     beginning of the buffer, but point cannot go outside the accessible
+     portion.  If POSITION is out of range, `goto-char' moves point to
+     the beginning or the end of the accessible portion.
+
+     When this function is called interactively, POSITION is the
+     numeric prefix argument, if provided; otherwise it is read from the
+     minibuffer.
+
+     `goto-char' returns POSITION.
+
+ - Command: forward-char &optional count
+     This function moves point COUNT characters forward, towards the
+     end of the buffer (or backward, towards the beginning of the
+     buffer, if COUNT is negative).  If the function attempts to move
+     point past the beginning or end of the buffer (or the limits of
+     the accessible portion, when narrowing is in effect), an error is
+     signaled with error code `beginning-of-buffer' or `end-of-buffer'.
+
+     In an interactive call, COUNT is the numeric prefix argument.
+
+ - Command: backward-char &optional count
+     This function moves point COUNT characters backward, towards the
+     beginning of the buffer (or forward, towards the end of the
+     buffer, if COUNT is negative).  If the function attempts to move
+     point past the beginning or end of the buffer (or the limits of
+     the accessible portion, when narrowing is in effect), an error is
+     signaled with error code `beginning-of-buffer' or `end-of-buffer'.
+
+     In an interactive call, COUNT is the numeric prefix argument.
+
+
+File: elisp,  Node: Word Motion,  Next: Buffer End Motion,  Prev: Character Motion,  Up: Motion
+
+Motion by Words
+---------------
+
+   These functions for parsing words use the syntax table to decide
+whether a given character is part of a word.  *Note Syntax Tables::.
+
+ - Command: forward-word count
+     This function moves point forward COUNT words (or backward if
+     COUNT is negative).  "Moving one word" means moving until point
+     crosses a word-constituent character and then encounters a
+     word-separator character.  However, this function cannot move
+     point past the boundary of the accessible portion of the buffer,
+     or across a field boundary (*note Fields::).  The most common case
+     of a field boundary is the end of the prompt in the minibuffer.
+
+     If it is possible to move COUNT words, without being stopped
+     prematurely by the buffer boundary or a field boundary, the value
+     is `t'.  Otherwise, the return value is `nil' and point stops at
+     the buffer boundary or field boundary.
+
+     If `inhibit-field-text-motion' is non-`nil', this function ignores
+     field boundaries.
+
+     In an interactive call, COUNT is specified by the numeric prefix
+     argument.
+
+ - Command: backward-word count
+     This function is just like `forward-word', except that it moves
+     backward until encountering the front of a word, rather than
+     forward.
+
+     In an interactive call, COUNT is set to the numeric prefix
+     argument.
+
+
+ - Variable: words-include-escapes
+     This variable affects the behavior of `forward-word' and everything
+     that uses it.  If it is non-`nil', then characters in the "escape"
+     and "character quote" syntax classes count as part of words.
+     Otherwise, they do not.
+
+ - Variable: inhibit-field-text-motion
+     If this variable is non-`nil', certain motion functions including
+     `forward-word', `forward-sentence', and `forward-paragraph' ignore
+     field boundaries.
+
+
+File: elisp,  Node: Buffer End Motion,  Next: Text Lines,  Prev: Word Motion,  Up: Motion
+
+Motion to an End of the Buffer
+------------------------------
+
+   To move point to the beginning of the buffer, write:
+
+     (goto-char (point-min))
+
+Likewise, to move to the end of the buffer, use:
+
+     (goto-char (point-max))
+
+   Here are two commands that users use to do these things.  They are
+documented here to warn you not to use them in Lisp programs, because
+they set the mark and display messages in the echo area.
+
+ - Command: beginning-of-buffer &optional n
+     This function moves point to the beginning of the buffer (or the
+     limits of the accessible portion, when narrowing is in effect),
+     setting the mark at the previous position.  If N is non-`nil',
+     then it puts point N tenths of the way from the beginning of the
+     accessible portion of the buffer.
+
+     In an interactive call, N is the numeric prefix argument, if
+     provided; otherwise N defaults to `nil'.
+
+     *Warning:* Don't use this function in Lisp programs!
+
+ - Command: end-of-buffer &optional n
+     This function moves point to the end of the buffer (or the limits
+     of the accessible portion, when narrowing is in effect), setting
+     the mark at the previous position.  If N is non-`nil', then it
+     puts point N tenths of the way from the end of the accessible
+     portion of the buffer.
+
+     In an interactive call, N is the numeric prefix argument, if
+     provided; otherwise N defaults to `nil'.
+
+     *Warning:* Don't use this function in Lisp programs!
+
+
+File: elisp,  Node: Text Lines,  Next: Screen Lines,  Prev: Buffer End Motion,  Up: Motion
+
+Motion by Text Lines
+--------------------
+
+   Text lines are portions of the buffer delimited by newline
+characters, which are regarded as part of the previous line.  The first
+text line begins at the beginning of the buffer, and the last text line
+ends at the end of the buffer whether or not the last character is a
+newline.  The division of the buffer into text lines is not affected by
+the width of the window, by line continuation in display, or by how
+tabs and control characters are displayed.
+
+ - Command: goto-line line
+     This function moves point to the front of the LINEth line,
+     counting from line 1 at beginning of the buffer.  If LINE is less
+     than 1, it moves point to the beginning of the buffer.  If LINE is
+     greater than the number of lines in the buffer, it moves point to
+     the end of the buffer--that is, the _end of the last line_ of the
+     buffer.  This is the only case in which `goto-line' does not
+     necessarily move to the beginning of a line.
+
+     If narrowing is in effect, then LINE still counts from the
+     beginning of the buffer, but point cannot go outside the accessible
+     portion.  So `goto-line' moves point to the beginning or end of the
+     accessible portion, if the line number specifies an inaccessible
+     position.
+
+     The return value of `goto-line' is the difference between LINE and
+     the line number of the line to which point actually was able to
+     move (in the full buffer, before taking account of narrowing).
+     Thus, the value is positive if the scan encounters the real end of
+     the buffer before finding the specified line.  The value is zero
+     if scan encounters the end of the accessible portion but not the
+     real end of the buffer.
+
+     In an interactive call, LINE is the numeric prefix argument if one
+     has been provided.  Otherwise LINE is read in the minibuffer.
+
+ - Command: beginning-of-line &optional count
+     This function moves point to the beginning of the current line.
+     With an argument COUNT not `nil' or 1, it moves forward COUNT-1
+     lines and then to the beginning of the line.
+
+     This function does not move point across a field boundary (*note
+     Fields::) unless doing so would move beyond there to a different
+     line; therefore, if COUNT is `nil' or 1, and point starts at a
+     field boundary, point does not move.  To ignore field boundaries,
+     either bind `inhibit-field-text-motion' to `t', or use the
+     `forward-line' function instead.  For instance, `(forward-line 0)'
+     does the same thing as `(beginning-of-line)', except that it
+     ignores field boundaries.
+
+     If this function reaches the end of the buffer (or of the
+     accessible portion, if narrowing is in effect), it positions point
+     there.  No error is signaled.
+
+ - Function: line-beginning-position &optional count
+     Return the position that `(beginning-of-line COUNT)' would move to.
+
+ - Command: end-of-line &optional count
+     This function moves point to the end of the current line.  With an
+     argument COUNT not `nil' or 1, it moves forward COUNT-1 lines and
+     then to the end of the line.
+
+     This function does not move point across a field boundary (*note
+     Fields::) unless doing so would move beyond there to a different
+     line; therefore, if COUNT is `nil' or 1, and point starts at a
+     field boundary, point does not move.  To ignore field boundaries,
+     bind `inhibit-field-text-motion' to `t'.
+
+     If this function reaches the end of the buffer (or of the
+     accessible portion, if narrowing is in effect), it positions point
+     there.  No error is signaled.
+
+ - Function: line-end-position &optional count
+     Return the position that `(end-of-line COUNT)' would move to.
+
+ - Command: forward-line &optional count
+     This function moves point forward COUNT lines, to the beginning of
+     the line.  If COUNT is negative, it moves point -COUNT lines
+     backward, to the beginning of a line.  If COUNT is zero, it moves
+     point to the beginning of the current line.
+
+     If `forward-line' encounters the beginning or end of the buffer (or
+     of the accessible portion) before finding that many lines, it sets
+     point there.  No error is signaled.
+
+     `forward-line' returns the difference between COUNT and the number
+     of lines actually moved.  If you attempt to move down five lines
+     from the beginning of a buffer that has only three lines, point
+     stops at the end of the last line, and the value will be 2.
+
+     In an interactive call, COUNT is the numeric prefix argument.
+
+ - Function: count-lines start end
+     This function returns the number of lines between the positions
+     START and END in the current buffer.  If START and END are equal,
+     then it returns 0.  Otherwise it returns at least 1, even if START
+     and END are on the same line.  This is because the text between
+     them, considered in isolation, must contain at least one line
+     unless it is empty.
+
+     Here is an example of using `count-lines':
+
+          (defun current-line ()
+            "Return the vertical position of point..."
+            (+ (count-lines (window-start) (point))
+               (if (= (current-column) 0) 1 0)
+               -1))
+
+   Also see the functions `bolp' and `eolp' in *Note Near Point::.
+These functions do not move point, but test whether it is already at the
+beginning or end of a line.
+

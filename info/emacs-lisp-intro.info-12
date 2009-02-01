@@ -1,0 +1,1143 @@
+This is emacs-lisp-intro.info, produced by makeinfo version 4.0b from
+emacs-lisp-intro.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Emacs Lisp Intro: (eintr).
+  			A simple introduction to Emacs Lisp programming.
+END-INFO-DIR-ENTRY
+
+   This is an introduction to `Programming in Emacs Lisp', for people
+who are not programmers.
+
+   Edition 2.04, 2001 Dec 17
+
+   Copyright (C) 1990, '91, '92, '93, '94, '95, '97, 2001 Free Software
+Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Section being the Preface, with the Front-Cover Texts being
+no Front-Cover Texts, and with the Back-Cover Texts being no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: emacs-lisp-intro.info,  Node: graph-body-print,  Next: recursive-graph-body-print,  Prev: Columns of a graph,  Up: Readying a Graph
+
+The `graph-body-print' Function
+===============================
+
+   After our preparation in the preceding section, the
+`graph-body-print' function is straightforward.  The function will
+print column after column of asterisks and blanks, using the elements
+of a numbers' list to specify the number of asterisks in each column.
+This is a repetitive act, which means we can use a decrementing `while'
+loop or recursive function for the job.  In this section, we will write
+the definition using a `while' loop.
+
+   The `column-of-graph' function requires the height of the graph as
+an argument, so we should determine and record that as a local variable.
+
+   This leads us to the following template for the `while' loop version
+of this function:
+
+     (defun graph-body-print (numbers-list)
+       "DOCUMENTATION..."
+       (let ((height  ...
+              ...))
+     
+         (while numbers-list
+           INSERT-COLUMNS-AND-REPOSITION-POINT
+           (setq numbers-list (cdr numbers-list)))))
+
+We need to fill in the slots of the template.
+
+   Clearly, we can use the `(apply 'max numbers-list)' expression to
+determine the height of the graph.
+
+   The `while' loop will cycle through the `numbers-list' one element
+at a time.  As it is shortened by the `(setq numbers-list (cdr
+numbers-list))' expression, the CAR of each instance of the list is the
+value of the argument for `column-of-graph'.
+
+   At each cycle of the `while' loop, the `insert-rectangle' function
+inserts the list returned by `column-of-graph'.  Since the
+`insert-rectangle' function moves point to the lower right of the
+inserted rectangle, we need to save the location of point at the time
+the rectangle is inserted, move back to that position after the
+rectangle is inserted, and then move horizontally to the next place
+from which `insert-rectangle' is called.
+
+   If the inserted columns are one character wide, as they will be if
+single blanks and asterisks are used, the repositioning command is
+simply `(forward-char 1)'; however, the width of a column may be
+greater than one.  This means that the repositioning command should be
+written `(forward-char symbol-width)'.  The `symbol-width' itself is
+the length of a `graph-blank' and can be found using the expression
+`(length graph-blank)'.  The best place to bind the `symbol-width'
+variable to the value of the width of graph column is in the varlist of
+the `let' expression.
+
+   These considerations lead to the following function definition:
+
+     (defun graph-body-print (numbers-list)
+       "Print a bar graph of the NUMBERS-LIST.
+     The numbers-list consists of the Y-axis values."
+     
+       (let ((height (apply 'max numbers-list))
+             (symbol-width (length graph-blank))
+             from-position)
+     
+         (while numbers-list
+           (setq from-position (point))
+           (insert-rectangle
+            (column-of-graph height (car numbers-list)))
+           (goto-char from-position)
+           (forward-char symbol-width)
+           ;; Draw graph column by column.
+           (sit-for 0)
+           (setq numbers-list (cdr numbers-list)))
+         ;; Place point for X axis labels.
+         (forward-line height)
+         (insert "\n")
+     ))
+
+The one unexpected expression in this function is the `(sit-for 0)'
+expression in the `while' loop.  This expression makes the graph
+printing operation more interesting to watch than it would be
+otherwise.  The expression causes Emacs to `sit' or do nothing for a
+zero length of time and then redraw the screen.  Placed here, it causes
+Emacs to redraw the screen column by column.  Without it, Emacs would
+not redraw the screen until the function exits.
+
+   We can test `graph-body-print' with a short list of numbers.
+
+  1. Install `graph-symbol', `graph-blank', `column-of-graph', which
+     are in *Note Columns of a graph::, and `graph-body-print'.
+
+  2. Copy the following expression:
+
+          (graph-body-print '(1 2 3 4 6 4 3 5 7 6 5 2 3))
+
+  3. Switch to the `*scratch*' buffer and place the cursor where you
+     want the graph to start.
+
+  4. Type `M-:' (`eval-expression').
+
+  5. Yank the `graph-body-print' expression into the minibuffer with
+     `C-y' (`yank)'.
+
+  6. Press <RET> to evaluate the `graph-body-print' expression.
+
+   Emacs will print a graph like this:
+
+                         *
+                     *   **
+                     *  ****
+                    *** ****
+                   ********* *
+                  ************
+                 *************
+
+
+File: emacs-lisp-intro.info,  Node: recursive-graph-body-print,  Next: Printed Axes,  Prev: graph-body-print,  Up: Readying a Graph
+
+The `recursive-graph-body-print' Function
+=========================================
+
+   The `graph-body-print' function may also be written recursively.
+The recursive solution is divided into two parts: an outside `wrapper'
+that uses a `let' expression to determine the values of several
+variables that need only be found once, such as the maximum height of
+the graph, and an inside function that is called recursively to print
+the graph.
+
+   The `wrapper' is uncomplicated:
+
+     (defun recursive-graph-body-print (numbers-list)
+       "Print a bar graph of the NUMBERS-LIST.
+     The numbers-list consists of the Y-axis values."
+       (let ((height (apply 'max numbers-list))
+             (symbol-width (length graph-blank))
+             from-position)
+         (recursive-graph-body-print-internal
+          numbers-list
+          height
+          symbol-width)))
+
+   The recursive function is a little more difficult.  It has four
+parts: the `do-again-test', the printing code, the recursive call, and
+the `next-step-expression'.  The `do-again-test' is an `if' expression
+that determines whether the `numbers-list' contains any remaining
+elements; if it does, the function prints one column of the graph using
+the printing code and calls itself again.  The function calls itself
+again according to the value produced by the `next-step-expression'
+which causes the call to act on a shorter version of the `numbers-list'.
+
+     (defun recursive-graph-body-print-internal
+       (numbers-list height symbol-width)
+       "Print a bar graph.
+     Used within recursive-graph-body-print function."
+     
+       (if numbers-list
+           (progn
+             (setq from-position (point))
+             (insert-rectangle
+              (column-of-graph height (car numbers-list)))
+             (goto-char from-position)
+             (forward-char symbol-width)
+             (sit-for 0)     ; Draw graph column by column.
+             (recursive-graph-body-print-internal
+              (cdr numbers-list) height symbol-width))))
+
+   After installation, this expression can be tested; here is a sample:
+
+     (recursive-graph-body-print '(3 2 5 6 7 5 3 4 6 4 3 2 1))
+
+   Here is what `recursive-graph-body-print' produces:
+
+                     *
+                    **   *
+                   ****  *
+                   **** ***
+                 * *********
+                 ************
+                 *************
+
+   Either of these two functions, `graph-body-print' or
+`recursive-graph-body-print', create the body of a graph.
+
+
+File: emacs-lisp-intro.info,  Node: Printed Axes,  Next: Line Graph Exercise,  Prev: recursive-graph-body-print,  Up: Readying a Graph
+
+Need for Printed Axes
+=====================
+
+   A graph needs printed axes, so you can orient yourself.  For a
+do-once project, it may be reasonable to draw the axes by hand using
+Emacs' Picture mode; but a graph drawing function may be used more than
+once.
+
+   For this reason, I have written enhancements to the basic
+`print-graph-body' function that automatically print labels for the
+horizontal and vertical axes.  Since the label printing functions do
+not contain much new material, I have placed their description in an
+appendix.  *Note A Graph with Labelled Axes: Full Graph.
+
+
+File: emacs-lisp-intro.info,  Node: Line Graph Exercise,  Prev: Printed Axes,  Up: Readying a Graph
+
+Exercise
+========
+
+   Write a line graph version of the graph printing functions.
+
+
+File: emacs-lisp-intro.info,  Node: Emacs Initialization,  Next: Debugging,  Prev: Readying a Graph,  Up: Top
+
+Your `.emacs' File
+******************
+
+   "You don't have to like Emacs to like it" - this seemingly
+paradoxical statement is the secret of GNU Emacs.  The plain, `out of
+the box' Emacs is a generic tool.  Most people who use it, customize it
+to suit themselves.
+
+   GNU Emacs is mostly written in Emacs Lisp; this means that by writing
+expressions in Emacs Lisp you can change or extend Emacs.
+
+* Menu:
+
+* Default Configuration::
+* Site-wide Init::              You can write site-wide init files.
+* defcustom::                   Emacs will write code for you.
+* Beginning a .emacs File::     How to write a `.emacs file'.
+* Text and Auto-fill::          Automatically wrap lines.
+* Mail Aliases::                Use abbreviations for email addresses.
+* Indent Tabs Mode::            Don't use tabs with TeX
+* Keybindings::                 Create some personal keybindings.
+* Keymaps::                     More about key binding.
+* Loading Files::               Load (i.e., evaluate) files automatically.
+* Autoload::                    Make functions available.
+* Simple Extension::            Define a function; bind it to a key.
+* X11 Colors::                  Colors in version 19 in X.
+* Miscellaneous::
+* Mode Line::                   How to customize your mode line.
+
+
+File: emacs-lisp-intro.info,  Node: Default Configuration,  Next: Site-wide Init,  Prev: Emacs Initialization,  Up: Emacs Initialization
+
+Emacs' Default Configuration
+============================
+
+   There are those who appreciate Emacs' default configuration.  After
+all, Emacs starts you in C mode when you edit a C file, starts you in
+Fortran mode when you edit a Fortran file, and starts you in
+Fundamental mode when you edit an unadorned file.  This all makes
+sense, if you do not know who is going to use Emacs.  Who knows what a
+person hopes to do with an unadorned file?  Fundamental mode is the
+right default for such a file, just as C mode is the right default for
+editing C code.  But when you do know who is going to use Emacs--you,
+yourself--then it makes sense to customize Emacs.
+
+   For example, I seldom want Fundamental mode when I edit an otherwise
+undistinguished file; I want Text mode.  This is why I customize Emacs:
+so it suits me.
+
+   You can customize and extend Emacs by writing or adapting a
+`~/.emacs' file.  This is your personal initialization file; its
+contents, written in Emacs Lisp, tell Emacs what to do.(1)
+
+   A `~/.emacs' file contains Emacs Lisp code.  You can write this code
+yourself; or you can use Emacs' `customize' feature to write the code
+for you.  You can combine your own expressions and auto-written
+Customize expressions in your `.emacs' file.
+
+   (I myself prefer to write my own expressions, except for those,
+particularly fonts, that I find easier to manipulate using the
+`customize' command.  I combine the two methods.)
+
+   Most of this chapter is about writing expressions yourself.  It
+describes a simple `.emacs' file; for more information, see *Note The
+Init File: (emacs)Init File, and *Note The Init File: (elisp)Init File.
+
+   ---------- Footnotes ----------
+
+   (1) You may also add `.el' to `~/.emacs' and call it a `~/.emacs.el'
+file.  In the past, you were forbidden to type the extra keystrokes
+that the name `~/.emacs.el' requires, but now you may.  The new format
+is consistent with the Emacs Lisp file naming conventions; the old
+format saves typing.
+
+
+File: emacs-lisp-intro.info,  Node: Site-wide Init,  Next: defcustom,  Prev: Default Configuration,  Up: Emacs Initialization
+
+Site-wide Initialization Files
+==============================
+
+   In addition to your personal initialization file, Emacs automatically
+loads various site-wide initialization files, if they exist.  These
+have the same form as your `.emacs' file, but are loaded by everyone.
+
+   Two site-wide initialization files, `site-load.el' and
+`site-init.el', are loaded into Emacs and then `dumped' if a `dumped'
+version of Emacs is created, as is most common.  (Dumped copies of
+Emacs load more quickly.  However, once a file is loaded and dumped, a
+change to it does not lead to a change in Emacs unless you load it
+yourself or re-dump Emacs.  *Note Building Emacs: (elisp)Building
+Emacs, and the `INSTALL' file.)
+
+   Three other site-wide initialization files are loaded automatically
+each time you start Emacs, if they exist.  These are `site-start.el',
+which is loaded _before_ your `.emacs' file, and `default.el', and the
+terminal type file, which are both loaded _after_ your `.emacs' file.
+
+   Settings and definitions in your `.emacs' file will overwrite
+conflicting settings and definitions in a `site-start.el' file, if it
+exists; but the settings and definitions in a `default.el' or terminal
+type file will overwrite those in your `.emacs' file.  (You can prevent
+interference from a terminal type file by setting `term-file-prefix' to
+`nil'.  *Note A Simple Extension: Simple Extension.)
+
+   The `INSTALL' file that comes in the distribution contains
+descriptions of the `site-init.el' and `site-load.el' files.
+
+   The `loadup.el', `startup.el', and `loaddefs.el' files control
+loading.  These files are in the `lisp' directory of the Emacs
+distribution and are worth perusing.
+
+   The `loaddefs.el' file contains a good many suggestions as to what
+to put into your own `.emacs' file, or into a site-wide initialization
+file.
+
+
+File: emacs-lisp-intro.info,  Node: defcustom,  Next: Beginning a .emacs File,  Prev: Site-wide Init,  Up: Emacs Initialization
+
+Specifying Variables using `defcustom'
+======================================
+
+   You can specify variables using `defcustom' so that you and others
+can then can use Emacs' `customize' feature to set their values.  (You
+cannot use `customize' to write function definitions; but you can write
+`defuns' in your `.emacs' file.  Indeed, you can write any Lisp
+expression in your `.emacs' file.)
+
+   The `customize' feature depends on the `defcustom' special form.
+Although you can use `defvar' or `setq' for variables that users set,
+the `defcustom' special form is designed for the job.
+
+   You can use your knowledge of `defvar' for writing the first three
+arguments for `defcustom'.  The first argument to `defcustom' is the
+name of the variable.  The second argument is the variable's initial
+value, if any; and this value is set only if the value has not already
+been set.  The third argument is the documentation.
+
+   The fourth and subsequent arguments to `defcustom' specify types and
+options; these are not featured in `defvar'.  (These arguments are
+optional.)
+
+   Each of these arguments consists of a keyword followed by a value.
+Each keyword starts with the character `:'.
+
+   For example, the customizable user option variable `text-mode-hook'
+looks like this:
+
+     (defcustom text-mode-hook nil
+       "Normal hook run when entering Text mode and many related modes."
+       :type 'hook
+       :options '(turn-on-auto-fill flyspell-mode)
+       :group 'data)
+
+The name of the variable is `text-mode-hook'; it has no default value;
+and its documentation string tells you what it does.
+
+   The `:type' keyword tells Emacs what kind of data `text-mode-hook'
+should be set to and how to display the value in a Customization buffer.
+
+   The `:options' keyword specifies a suggested list of values for the
+variable.  Currently, you can use `:options' only for a hook.  The list
+is only a suggestion; it is not exclusive; a person who sets the
+variable may set it to other values; the list shown following the
+`:options' keyword is intended to offer convenient choices to a user.
+
+   Finally, the `:group' keyword tells the Emacs Customization command
+in which group the variable is located.  This tells where to find it.
+
+   For more information, see *Note Writing Customization Definitions:
+(elisp)Customization.
+
+   Consider `text-mode-hook' as an example.
+
+   There are two ways to customize this variable.  You can use the
+customization command or write the appropriate expressions yourself.
+
+   Using the customization command,  you can type:
+
+     M-x customize
+
+and find that the group for editing files of data is called `data'.
+Enter that group.  Text Mode Hook is the first member.  You can click
+on its various options to set the values.  After you click on the
+button to
+
+     Save for Future Sessions
+
+Emacs will write an expression into your `.emacs' file.  It will look
+like this:
+
+     (custom-set-variables
+       ;; custom-set-variables was added by Custom --
+       ;;                           don't edit or cut/paste it!
+       ;; Your init file should contain only one such instance.
+      '(text-mode-hook (quote (turn-on-auto-fill text-mode-hook-identify))))
+
+(The `text-mode-hook-identify' function tells
+`toggle-text-mode-auto-fill' which buffers are in Text mode.)
+
+   In spite of the warning, you certainly may edit, cut, and paste the
+expression!  I do all time.  The purpose of the warning is to scare
+those who do not know what they are doing, so they do not inadvertently
+generate an error.
+
+   The `custom-set-variables' works somewhat differently than a `setq'.
+While I have never learned the differences, I do modify the
+`custom-set-variables' expressions in my `.emacs' file by hand:  I make
+the changes in what appears to me to be a reasonable manner and have
+not had any problems.  Others prefer to use the Customization command
+and let Emacs do the work for them.
+
+   Another `custom-set-...' function is `custom-set-faces'.  This
+function sets the various font faces.  Over time, I have set a
+considerable number of faces.  Some of the time, I re-set them using
+`customize'; other times, I simply edit the `custom-set-faces'
+expression in my `.emacs' file itself.
+
+   The second way to customize your `text-mode-hook' is to set it
+yourself in your `.emacs' file using code that has nothing to do with
+the `custom-set-...' functions.
+
+   When you do this, and later use `customize', you will see a message
+that says
+
+     this option has been changed outside the customize buffer.
+
+   This message is only a warning.  If you click on the button to
+
+     Save for Future Sessions
+
+Emacs will write a `custom-set-...' expression near the end of your
+`.emacs' file that will be evaluated after your hand-written
+expression.  It will, therefore, overrule your hand-written expression.
+No harm will be done.  When you do this, however, be careful to
+remember which expression is active; if you forget, you may confuse
+yourself.
+
+   So long as you remember where the values are set, you will have no
+trouble.  In any event, the values are always set in your
+initialization file, which is usually called `.emacs'.
+
+   I myself use `customize' for hardly anything.  Mostly, I write
+expressions myself.
+
+
+File: emacs-lisp-intro.info,  Node: Beginning a .emacs File,  Next: Text and Auto-fill,  Prev: defcustom,  Up: Emacs Initialization
+
+Beginning a `.emacs' File
+=========================
+
+   When you start Emacs, it loads your `.emacs' file unless you tell it
+not to by specifying `-q' on the command line.  (The `emacs -q' command
+gives you a plain, out-of-the-box Emacs.)
+
+   A `.emacs' file contains Lisp expressions.  Often, these are no more
+than expressions to set values; sometimes they are function definitions.
+
+   *Note The Init File `~/.emacs': (emacs)Init File, for a short
+description of initialization files.
+
+   This chapter goes over some of the same ground, but is a walk among
+extracts from a complete, long-used `.emacs' file--my own.
+
+   The first part of the file consists of comments: reminders to myself.
+By now, of course, I remember these things, but when I started, I did
+not.
+
+     ;;;; Bob's .emacs file
+     ; Robert J. Chassell
+     ; 26 September 1985
+
+Look at that date!  I started this file a long time ago.  I have been
+adding to it ever since.
+
+     ; Each section in this file is introduced by a
+     ; line beginning with four semicolons; and each
+     ; entry is introduced by a line beginning with
+     ; three semicolons.
+
+This describes the usual conventions for comments in Emacs Lisp.
+Everything on a line that follows a semicolon is a comment.  Two,
+three, and four semicolons are used as section and subsection markers.
+(*Note Comments: (elisp)Comments, for more about comments.)
+
+     ;;;; The Help Key
+     ; Control-h is the help key;
+     ; after typing control-h, type a letter to
+     ; indicate the subject about which you want help.
+     ; For an explanation of the help facility,
+     ; type control-h two times in a row.
+
+Just remember: type `C-h' two times for help.
+
+     ; To find out about any mode, type control-h m
+     ; while in that mode.  For example, to find out
+     ; about mail mode, enter mail mode and then type
+     ; control-h m.
+
+`Mode help', as I call this, is very helpful.  Usually, it tells you
+all you need to know.
+
+   Of course, you don't need to include comments like these in your
+`.emacs' file.  I included them in mine because I kept forgetting about
+Mode help or the conventions for comments--but I was able to remember
+to look here to remind myself.
+
+
+File: emacs-lisp-intro.info,  Node: Text and Auto-fill,  Next: Mail Aliases,  Prev: Beginning a .emacs File,  Up: Emacs Initialization
+
+Text and Auto Fill Mode
+=======================
+
+   Now we come to the part that `turns on' Text mode and Auto Fill mode.
+
+     ;;; Text mode and Auto Fill mode
+     ; The next three lines put Emacs into Text mode
+     ; and Auto Fill mode, and are for writers who
+     ; want to start writing prose rather than code.
+     
+     (setq default-major-mode 'text-mode)
+     (add-hook 'text-mode-hook 'text-mode-hook-identify)
+     (add-hook 'text-mode-hook 'turn-on-auto-fill)
+
+   Here is the first part of this `.emacs' file that does something
+besides remind a forgetful human!
+
+   The first of the two lines in parentheses tells Emacs to turn on Text
+mode when you find a file, _unless_ that file should go into some other
+mode, such as C mode.
+
+   When Emacs reads a file, it looks at the extension to the file name,
+if any.  (The extension is the part that comes after a `.'.)  If the
+file ends with a `.c' or `.h' extension then Emacs turns on C mode.
+Also, Emacs looks at first nonblank line of the file; if the line says
+`-*- C -*-', Emacs turns on C mode.  Emacs possesses a list of
+extensions and specifications that it uses automatically.  In addition,
+Emacs looks near the last page for a per-buffer, "local variables
+list", if any.
+
+   *Note How Major Modes are Chosen: (emacs)Choosing Modes.
+
+   *Note Local Variables in Files: (emacs)File Variables.
+
+   Now, back to the `.emacs' file.
+
+   Here is the line again; how does it work?
+
+     (setq default-major-mode 'text-mode)
+
+This line is a short, but complete Emacs Lisp expression.
+
+   We are already familiar with `setq'.  It sets the following variable,
+`default-major-mode', to the subsequent value, which is `text-mode'.
+The single quote mark before `text-mode' tells Emacs to deal directly
+with the `text-mode' variable, not with whatever it might stand for.
+*Note Setting the Value of a Variable: set & setq, for a reminder of
+how `setq' works.  The main point is that there is no difference
+between the procedure you use to set a value in your `.emacs' file and
+the procedure you use anywhere else in Emacs.
+
+   Here are the next two lines:
+
+     (add-hook 'text-mode-hook 'text-mode-hook-identify)
+     (add-hook 'text-mode-hook 'turn-on-auto-fill)
+
+In these two lines, the `add-hook' command first adds
+`text-mode-hook-identify' to the variable called `text-mode-hook' and
+then adds `turn-on-auto-fill' to the variable.
+
+   `turn-on-auto-fill' is the name of a program, that, you guessed it!,
+turns on Auto Fill mode.  `text-mode-hook-identify' is a function that
+tells `toggle-text-mode-auto-fill' which buffers are in Text mode.
+
+   Every time Emacs turns on Text mode, Emacs runs the commands `hooked'
+onto Text mode.  So every time Emacs turns on Text mode, Emacs also
+turns on Auto Fill mode.
+
+   In brief, the first line causes Emacs to enter Text mode when you
+edit a file, unless the file name extension, first non-blank line, or
+local variables tell Emacs otherwise.
+
+   Text mode among other actions, sets the syntax table to work
+conveniently for writers.  In Text mode, Emacs considers an apostrophe
+as part of a word like a letter; but Emacs does not consider a period
+or a space as part of a word.  Thus, `M-f' moves you over `it's'.  On
+the other hand, in C mode, `M-f' stops just after the `t' of `it's'.
+
+   The second and third lines causes Emacs to turn on Auto Fill mode
+when it turns on Text mode.  In Auto Fill mode, Emacs automatically
+breaks a line that is too wide and brings the excessively wide part of
+the line down to the next line.  Emacs breaks lines between words, not
+within them.
+
+   When Auto Fill mode is turned off, lines continue to the right as you
+type them.  Depending on how you set the value of `truncate-lines', the
+words you type either disappear off the right side of the screen, or
+else are shown, in a rather ugly and unreadable manner, as a
+continuation line on the screen.
+
+   In addition, in this part of my `.emacs' file, I tell the Emacs fill
+commands to insert two spaces after a colon:
+
+     (setq colon-double-space t)
+
+
+File: emacs-lisp-intro.info,  Node: Mail Aliases,  Next: Indent Tabs Mode,  Prev: Text and Auto-fill,  Up: Emacs Initialization
+
+Mail Aliases
+============
+
+   Here is a `setq' that `turns on' mail aliases, along with more
+reminders.
+
+     ;;; Mail mode
+     ; To enter mail mode, type `C-x m'
+     ; To enter RMAIL (for reading mail),
+     ; type `M-x rmail'
+     
+     (setq mail-aliases t)
+
+This `setq' command sets the value of the variable `mail-aliases' to
+`t'.  Since `t' means true, the line says, in effect, "Yes, use mail
+aliases."
+
+   Mail aliases are convenient short names for long email addresses or
+for lists of email addresses.  The file where you keep your `aliases'
+is `~/.mailrc'.  You write an alias like this:
+
+     alias geo george@foobar.wiz.edu
+
+When you write a message to George, address it to `geo'; the mailer
+will automatically expand `geo' to the full address.
+
+
+File: emacs-lisp-intro.info,  Node: Indent Tabs Mode,  Next: Keybindings,  Prev: Mail Aliases,  Up: Emacs Initialization
+
+Indent Tabs Mode
+================
+
+   By default, Emacs inserts tabs in place of multiple spaces when it
+formats a region.  (For example, you might indent many lines of text
+all at once with the `indent-region' command.)  Tabs look fine on a
+terminal or with ordinary printing, but they produce badly indented
+output when you use TeX or Texinfo since TeX ignores tabs.
+
+   The following turns off Indent Tabs mode:
+
+     ;;; Prevent Extraneous Tabs
+     (setq-default indent-tabs-mode nil)
+
+   Note that this line uses `setq-default' rather than the `setq'
+command that we have seen before.  The `setq-default' command sets
+values only in buffers that do not have their own local values for the
+variable.
+
+   *Note Tabs vs. Spaces: (emacs)Just Spaces.
+
+   *Note Local Variables in Files: (emacs)File Variables.
+
+
+File: emacs-lisp-intro.info,  Node: Keybindings,  Next: Keymaps,  Prev: Indent Tabs Mode,  Up: Emacs Initialization
+
+Some Keybindings
+================
+
+   Now for some personal keybindings:
+
+     ;;; Compare windows
+     (global-set-key "\C-cw" 'compare-windows)
+
+   `compare-windows' is a nifty command that compares the text in your
+current window with text in the next window.  It makes the comparison
+by starting at point in each window, moving over text in each window as
+far as they match.  I use this command all the time.
+
+   This also shows how to set a key globally, for all modes.
+
+   The command is `global-set-key'.  It is followed by the keybinding.
+In a `.emacs' file, the keybinding is written as shown: `\C-c' stands
+for `control-c', which means `press the control key and the `c' key at
+the same time'.  The `w' means `press the `w' key'.  The keybinding is
+surrounded by double quotation marks.  In documentation, you would
+write this as `C-c w'.  (If you were binding a <META> key, such as
+`M-c', rather than a <CTL> key, you would write `\M-c'.  *Note
+Rebinding Keys in Your Init File: (emacs)Init Rebinding, for details.)
+
+   The command invoked by the keys is `compare-windows'.  Note that
+`compare-windows' is preceded by a single quote; otherwise, Emacs would
+first try to evaluate the symbol to determine its value.
+
+   These three things, the double quotation marks, the backslash before
+the `C', and the single quote mark are necessary parts of keybinding
+that I tend to forget.  Fortunately, I have come to remember that I
+should look at my existing `.emacs' file, and adapt what is there.
+
+   As for the keybinding itself: `C-c w'.  This combines the prefix
+key, `C-c', with a single character, in this case, `w'.  This set of
+keys, `C-c' followed by a single character, is strictly reserved for
+individuals' own use.  (I call these `own' keys, since these are for my
+own use.)  You should always be able to create such a keybinding for
+your own use without stomping on someone else's keybinding.  If you
+ever write an extension to Emacs, please avoid taking any of these keys
+for public use.  Create a key like `C-c C-w' instead.  Otherwise, we
+will run out of `own' keys.
+
+   Here is another keybinding, with a comment:
+
+     ;;; Keybinding for `occur'
+     ; I use occur a lot, so let's bind it to a key:
+     (global-set-key "\C-co" 'occur)
+
+   The `occur' command shows all the lines in the current buffer that
+contain a match for a regular expression.  Matching lines are shown in
+a buffer called `*Occur*'.  That buffer serves as a menu to jump to
+occurrences.
+
+   Here is how to unbind a key, so it does not work:
+
+     ;;; Unbind `C-x f'
+     (global-unset-key "\C-xf")
+
+   There is a reason for this unbinding: I found I inadvertently typed
+`C-x f' when I meant to type `C-x C-f'.  Rather than find a file, as I
+intended, I accidentally set the width for filled text, almost always
+to a width I did not want.  Since I hardly ever reset my default width,
+I simply unbound the key.
+
+   The following rebinds an existing key:
+
+     ;;; Rebind `C-x C-b' for `buffer-menu'
+     (global-set-key "\C-x\C-b" 'buffer-menu)
+
+   By default, `C-x C-b' runs the `list-buffers' command.  This command
+lists your buffers in _another_ window.  Since I almost always want to
+do something in that window, I prefer the  `buffer-menu' command, which
+not only lists the buffers, but moves point into that window.
+
+
+File: emacs-lisp-intro.info,  Node: Keymaps,  Next: Loading Files,  Prev: Keybindings,  Up: Emacs Initialization
+
+Keymaps
+=======
+
+   Emacs uses "keymaps" to record which keys call which commands.  When
+you use `global-set-key' to set the keybinding for a single command in
+all parts of Emacs, you are specifying the keybinding in
+`current-global-map'.
+
+   Specific modes, such as C mode or Text mode, have their own keymaps;
+the mode-specific keymaps override the global map that is shared by all
+buffers.
+
+   The `global-set-key' function binds, or rebinds, the global keymap.
+For example, the following binds the key `C-x C-b' to the function
+`buffer-menu':
+
+     (global-set-key "\C-x\C-b" 'buffer-menu)
+
+   Mode-specific keymaps are bound using the `define-key' function,
+which takes a specific keymap as an argument, as well as the key and
+the command.  For example, my `.emacs' file contains the following
+expression to bind the `texinfo-insert-@group' command to `C-c C-c g':
+
+     (define-key texinfo-mode-map "\C-c\C-cg" 'texinfo-insert-@group)
+
+The `texinfo-insert-@group' function itself is a little extension to
+Texinfo mode that inserts `@group' into a Texinfo file.  I use this
+command all the time and prefer to type the three strokes `C-c C-c g'
+rather than the six strokes `@ g r o u p'.  (`@group' and its matching
+`@end group' are commands that keep all enclosed text together on one
+page; many multi-line examples in this book are surrounded by `@group
+... @end group'.)
+
+   Here is the `texinfo-insert-@group' function definition:
+
+     (defun texinfo-insert-@group ()
+       "Insert the string @group in a Texinfo buffer."
+       (interactive)
+       (beginning-of-line)
+       (insert "@group\n"))
+
+   (Of course, I could have used Abbrev mode to save typing, rather than
+write a function to insert a word; but I prefer key strokes consistent
+with other Texinfo mode key bindings.)
+
+   You will see numerous `define-key' expressions in `loaddefs.el' as
+well as in the various mode libraries, such as `cc-mode.el' and
+`lisp-mode.el'.
+
+   *Note Customizing Key Bindings: (emacs)Key Bindings, and *Note
+Keymaps: (elisp)Keymaps, for more information about keymaps.
+
+
+File: emacs-lisp-intro.info,  Node: Loading Files,  Next: Autoload,  Prev: Keymaps,  Up: Emacs Initialization
+
+Loading Files
+=============
+
+   Many people in the GNU Emacs community have written extensions to
+Emacs.  As time goes by, these extensions are often included in new
+releases.  For example, the Calendar and Diary packages are now part of
+the standard GNU Emacs.
+
+   (Calc, which I consider a vital part of Emacs, would be part of the
+standard distribution except that it was so large it was packaged
+separately and no one has changed that.)
+
+   You can use a `load' command to evaluate a complete file and thereby
+install all the functions and variables in the file into Emacs.  For
+example:
+
+     (load "~/emacs/slowsplit")
+
+   This evaluates, i.e. loads, the `slowsplit.el' file or if it exists,
+the faster, byte compiled `slowsplit.elc' file from the `emacs'
+sub-directory of your home directory.  The file contains the function
+`split-window-quietly', which John Robinson wrote in 1989.
+
+   The `split-window-quietly' function splits a window with the minimum
+of redisplay.  I installed it in 1989 because it worked well with the
+slow 1200 baud terminals I was then using.  Nowadays, I only
+occasionally come across such a slow connection, but I continue to use
+the function because I like the way it leaves the bottom half of a
+buffer in the lower of the new windows and the top half in the upper
+window.
+
+   To replace the key binding for the default
+`split-window-vertically', you must also unset that key and bind the
+keys to `split-window-quietly', like this:
+
+     (global-unset-key "\C-x2")
+     (global-set-key "\C-x2" 'split-window-quietly)
+
+   If you load many extensions, as I do, then instead of specifying the
+exact location of the extension file, as shown above, you can specify
+that directory as part of Emacs' `load-path'.  Then, when Emacs loads a
+file, it will search that directory as well as its default list of
+directories.  (The default list is specified in `paths.h' when Emacs is
+built.)
+
+   The following command adds your `~/emacs' directory to the existing
+load path:
+
+     ;;; Emacs Load Path
+     (setq load-path (cons "~/emacs" load-path))
+
+   Incidentally, `load-library' is an interactive interface to the
+`load' function.  The complete function looks like this:
+
+     (defun load-library (library)
+       "Load the library named LIBRARY.
+     This is an interface to the function `load'."
+       (interactive "sLoad library: ")
+       (load library))
+
+   The name of the function, `load-library', comes from the use of
+`library' as a conventional synonym for `file'.  The source for the
+`load-library' command is in the `files.el' library.
+
+   Another interactive command that does a slightly different job is
+`load-file'.  *Note Libraries of Lisp Code for Emacs: (emacs)Lisp
+Libraries, for information on the distinction between `load-library'
+and this command.
+
+
+File: emacs-lisp-intro.info,  Node: Autoload,  Next: Simple Extension,  Prev: Loading Files,  Up: Emacs Initialization
+
+Autoloading
+===========
+
+   Instead of installing a function by loading the file that contains
+it, or by evaluating the function definition, you can make the function
+available but not actually install it until it is first called.  This
+is called "autoloading".
+
+   When you execute an autoloaded function, Emacs automatically
+evaluates the file that contains the definition, and then calls the
+function.
+
+   Emacs starts quicker with autoloaded functions, since their libraries
+are not loaded right away; but you need to wait a moment when you first
+use such a function, while its containing file is evaluated.
+
+   Rarely used functions are frequently autoloaded.  The `loaddefs.el'
+library contains hundreds of autoloaded functions, from `bookmark-set'
+to `wordstar-mode'.  Of course, you may come to use a `rare' function
+frequently.  When you do, you should load that function's file with a
+`load' expression in your `.emacs' file.
+
+   In my `.emacs' file for Emacs version 21, I load 12 libraries that
+contain functions that would otherwise be autoloaded.  (Actually, it
+would have been better to include these files in my `dumped' Emacs when
+I built it, but I forgot.  *Note Building Emacs: (elisp)Building Emacs,
+and the `INSTALL' file for more about dumping.)
+
+   You may also want to include autoloaded expressions in your `.emacs'
+file.  `autoload' is a built-in function that takes up to five
+arguments, the final three of which are optional.  The first argument
+is the name of the function to be autoloaded; the second is the name of
+the file to be loaded.  The third argument is documentation for the
+function, and the fourth tells whether the function can be called
+interactively.  The fifth argument tells what type of
+object--`autoload' can handle a keymap or macro as well as a function
+(the default is a function).
+
+   Here is a typical example:
+
+     (autoload 'html-helper-mode
+       "html-helper-mode" "Edit HTML documents" t)
+
+(`html-helper-mode' is an alternative to `html-mode', which is a
+standard part of the distribution).
+
+This expression autoloads the `html-helper-mode' function.  It takes it
+from the `html-helper-mode.el' file (or from the byte compiled file
+`html-helper-mode.elc', if it exists.)  The file must be located in a
+directory specified by `load-path'.  The documentation says that this
+is a mode to help you edit documents written in the HyperText Markup
+Language.  You can call this mode interactively by typing `M-x
+html-helper-mode'.  (You need to duplicate the function's regular
+documentation in the autoload expression because the regular function
+is not yet loaded, so its documentation is not available.)
+
+   *Note Autoload: (elisp)Autoload, for more information.
+
+
+File: emacs-lisp-intro.info,  Node: Simple Extension,  Next: X11 Colors,  Prev: Autoload,  Up: Emacs Initialization
+
+A Simple Extension: `line-to-top-of-window'
+===========================================
+
+   Here is a simple extension to Emacs that moves the line point is on
+to the top of the window.  I use this all the time, to make text easier
+to read.
+
+   You can put the following code into a separate file and then load it
+from your `.emacs' file, or you can include it within your `.emacs'
+file.
+
+   Here is the definition:
+
+     ;;; Line to top of window;
+     ;;; replace three keystroke sequence  C-u 0 C-l
+     (defun line-to-top-of-window ()
+       "Move the line point is on to top of window."
+       (interactive)
+       (recenter 0))
+
+   Now for the keybinding.
+
+   Nowadays, function keys as well as mouse button events and non-ASCII
+characters are written within square brackets, without quotation marks.
+(In Emacs version 18 and before, you had to write different function
+key bindings for each different make of terminal.)
+
+   I bind `line-to-top-of-window' to my <F6> function key like this:
+
+     (global-set-key [f6] 'line-to-top-of-window)
+
+   For more information, see *Note Rebinding Keys in Your Init File:
+(emacs)Init Rebinding.
+
+   If you run two versions of GNU Emacs, such as versions 20 and 21, and
+use one `.emacs' file, you can select which code to evaluate with the
+following conditional:
+
+     (cond
+      ((string-equal (number-to-string 20) (substring (emacs-version) 10 12))
+       ;; evaluate version 20 code
+       ( ... ))
+      ((string-equal (number-to-string 21) (substring (emacs-version) 10 12))
+       ;; evaluate version 21 code
+       ( ... )))
+
+   For example, in contrast to version 20, version 21 blinks its cursor
+by default.  I hate such blinking, as well as some other features in
+version 21, so I placed the following in my `.emacs' file(1):
+
+     (if (string-equal "21" (substring (emacs-version) 10 12))
+         (progn
+           (blink-cursor-mode 0)
+           ;; Insert newline when you press `C-n' (next-line)
+           ;; at the end of the buffer
+           (setq next-line-add-newlines t)
+           ;; Turn on image viewing
+           (auto-image-file-mode t)
+           ;; Turn on menu bar (this bar has text)
+           ;; (Use numeric argument to turn on)
+           (menu-bar-mode 1)
+           ;; Turn off tool bar (this bar has icons)
+           ;; (Use numeric argument to turn on)
+           (tool-bar-mode nil)
+           ;; Turn off tooltip mode for tool bar
+           ;; (This mode causes icon explanations to pop up)
+           ;; (Use numeric argument to turn on)
+           (tooltip-mode nil)
+           ;; If tooltips turned on, make tips appear promptly
+           (setq tooltip-delay 0.1)  ; default is one second
+            ))
+
+(You will note that instead of typing `(number-to-string 21)', I
+decided to save typing and wrote `21' as a string, `"21"', rather than
+convert it from an integer to a string.  In this instance, this
+expression is better than the longer, but more general
+`(number-to-string 21)'.  However, if you do not know ahead of time
+what type of information will be returned, then the `number-to-string'
+function will be needed.)
+
+   ---------- Footnotes ----------
+
+   (1) When I start instances of Emacs that do not load my `.emacs'
+file or any site file, I also turn off blinking:
+
+     emacs -q --no-site-file -eval '(blink-cursor-mode nil)'
+
+
+File: emacs-lisp-intro.info,  Node: X11 Colors,  Next: Miscellaneous,  Prev: Simple Extension,  Up: Emacs Initialization
+
+X11 Colors
+==========
+
+   You can specify colors when you use Emacs with the MIT X Windowing
+system.
+
+   I dislike the default colors and specify my own.
+
+   Here are the expressions in my `.emacs' file that set values:
+
+     ;; Set cursor color
+     (set-cursor-color "white")
+     
+     ;; Set mouse color
+     (set-mouse-color "white")
+     
+     ;; Set foreground and background
+     (set-foreground-color "white")
+     (set-background-color "darkblue")
+     
+     ;;; Set highlighting colors for isearch and drag
+     (set-face-foreground 'highlight "white")
+     (set-face-background 'highlight "blue")
+     
+     (set-face-foreground 'region "cyan")
+     (set-face-background 'region "blue")
+     
+     (set-face-foreground 'secondary-selection "skyblue")
+     (set-face-background 'secondary-selection "darkblue")
+     
+     ;; Set calendar highlighting colors
+     (setq calendar-load-hook
+           '(lambda ()
+              (set-face-foreground 'diary-face   "skyblue")
+              (set-face-background 'holiday-face "slate blue")
+              (set-face-foreground 'holiday-face "white")))
+
+   The various shades of blue soothe my eye and prevent me from seeing
+the screen flicker.
+
+   Alternatively, I could have set my specifications in various X
+initialization files.  For example, I could set the foreground,
+background, cursor, and pointer (i.e., mouse) colors in my
+`~/.Xresources' file like this:
+
+     Emacs*foreground:   white
+     Emacs*background:   darkblue
+     Emacs*cursorColor:  white
+     Emacs*pointerColor: white
+
+   In any event, since it is not part of Emacs, I set the root color of
+my X window in my `~/.xinitrc' file, like this(1):
+
+     # I use TWM for window manager.
+     xsetroot -solid Navy -fg white &
+
+   ---------- Footnotes ----------
+
+   (1) I occasionally run more modern window managers, such as Sawfish
+with GNOME, Enlightenment, SCWM, or KDE; in those cases, I often
+specify an image rather than a plain color.
+
+
+File: emacs-lisp-intro.info,  Node: Miscellaneous,  Next: Mode Line,  Prev: X11 Colors,  Up: Emacs Initialization
+
+Miscellaneous Settings for a `.emacs' File
+==========================================
+
+   Here are a few miscellaneous settings:
+
+
+   - Set the shape and color of the mouse cursor:
+          ; Cursor shapes are defined in
+          ; `/usr/include/X11/cursorfont.h';
+          ; for example, the `target' cursor is number 128;
+          ; the `top_left_arrow' cursor is number 132.
+          
+          (let ((mpointer (x-get-resource "*mpointer"
+                                          "*emacs*mpointer")))
+            ;; If you have not set your mouse pointer
+            ;;     then set it, otherwise leave as is:
+            (if (eq mpointer nil)
+                (setq mpointer "132")) ; top_left_arrow
+            (setq x-pointer-shape (string-to-int mpointer))
+            (set-mouse-color "white"))
+

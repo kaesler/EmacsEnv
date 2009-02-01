@@ -1,0 +1,1138 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Simple Advice,  Next: Defining Advice,  Up: Advising Functions
+
+A Simple Advice Example
+=======================
+
+   The command `next-line' moves point down vertically one or more
+lines; it is the standard binding of `C-n'.  When used on the last line
+of the buffer, this command inserts a newline to create a line to move
+to if `next-line-add-newlines' is non-`nil' (its default is `nil'.)
+
+   Suppose you wanted to add a similar feature to `previous-line',
+which would insert a new line at the beginning of the buffer for the
+command to move to.  How could you do this?
+
+   You could do it by redefining the whole function, but that is not
+modular.  The advice feature provides a cleaner alternative: you can
+effectively add your code to the existing function definition, without
+actually changing or even seeing that definition.  Here is how to do
+this:
+
+     (defadvice previous-line (before next-line-at-end (arg))
+       "Insert an empty line when moving up from the top line."
+       (if (and next-line-add-newlines (= arg 1)
+                (save-excursion (beginning-of-line) (bobp)))
+           (progn
+             (beginning-of-line)
+             (newline))))
+
+   This expression defines a "piece of advice" for the function
+`previous-line'.  This piece of advice is named `next-line-at-end', and
+the symbol `before' says that it is "before-advice" which should run
+before the regular definition of `previous-line'.  `(arg)' specifies
+how the advice code can refer to the function's arguments.
+
+   When this piece of advice runs, it creates an additional line, in the
+situation where that is appropriate, but does not move point to that
+line.  This is the correct way to write the advice, because the normal
+definition will run afterward and will move back to the newly inserted
+line.
+
+   Defining the advice doesn't immediately change the function
+`previous-line'.  That happens when you "activate" the advice, like
+this:
+
+     (ad-activate 'previous-line)
+
+This is what actually begins to use the advice that has been defined so
+far for the function `previous-line'.  Henceforth, whenever that
+function is run, whether invoked by the user with `C-p' or `M-x', or
+called from Lisp, it runs the advice first, and its regular definition
+second.
+
+   This example illustrates before-advice, which is one "class" of
+advice: it runs before the function's base definition.  There are two
+other advice classes: "after-advice", which runs after the base
+definition, and "around-advice", which lets you specify an expression
+to wrap around the invocation of the base definition.
+
+
+File: elisp,  Node: Defining Advice,  Next: Around-Advice,  Prev: Simple Advice,  Up: Advising Functions
+
+Defining Advice
+===============
+
+   To define a piece of advice, use the macro `defadvice'.  A call to
+`defadvice' has the following syntax, which is based on the syntax of
+`defun' and `defmacro', but adds more:
+
+     (defadvice FUNCTION (CLASS NAME
+                              [POSITION] [ARGLIST]
+                              FLAGS...)
+       [DOCUMENTATION-STRING]
+       [INTERACTIVE-FORM]
+       BODY-FORMS...)
+
+Here, FUNCTION is the name of the function (or macro or special form)
+to be advised.  From now on, we will write just "function" when
+describing the entity being advised, but this always includes macros and
+special forms.
+
+   CLASS specifies the "class" of the advice--one of `before', `after',
+or `around'.  Before-advice runs before the function itself;
+after-advice runs after the function itself; around-advice is wrapped
+around the execution of the function itself.  After-advice and
+around-advice can override the return value by setting
+`ad-return-value'.
+
+ - Variable: ad-return-value
+     While advice is executing, after the function's original
+     definition has been executed, this variable holds its return
+     value, which will ultimately be returned to the caller after
+     finishing all the advice.  After-advice and around-advice can
+     arrange to return some other value by storing it in this variable.
+
+   The argument NAME is the name of the advice, a non-`nil' symbol.
+The advice name uniquely identifies one piece of advice, within all the
+pieces of advice in a particular class for a particular FUNCTION.  The
+name allows you to refer to the piece of advice--to redefine it, or to
+enable or disable it.
+
+   In place of the argument list in an ordinary definition, an advice
+definition calls for several different pieces of information.
+
+   The optional POSITION specifies where, in the current list of advice
+of the specified CLASS, this new advice should be placed.  It should be
+either `first', `last' or a number that specifies a zero-based position
+(`first' is equivalent to 0).  If no position is specified, the default
+is `first'.  Position values outside the range of existing positions in
+this class are mapped to the beginning or the end of the range,
+whichever is closer.  The POSITION value is ignored when redefining an
+existing piece of advice.
+
+   The optional ARGLIST can be used to define the argument list for the
+sake of advice.  This becomes the argument list of the combined
+definition that is generated in order to run the advice (*note Combined
+Definition::).  Therefore, the advice expressions can use the argument
+variables in this list to access argument values.
+
+   The argument list used in advice need not be the same as the argument
+list used in the original function, but must be compatible with it, so
+that it can handle the ways the function is actually called.  If two
+pieces of advice for a function both specify an argument list, they must
+specify the same argument list.
+
+   *Note Argument Access in Advice::, for more information about
+argument lists and advice, and a more flexible way for advice to access
+the arguments.
+
+   The remaining elements, FLAGS, are symbols that specify further
+information about how to use this piece of advice.  Here are the valid
+symbols and their meanings:
+
+`activate'
+     Activate the advice for FUNCTION now.  Changes in a function's
+     advice always take effect the next time you activate advice for the
+     function; this flag says to do so, for FUNCTION, immediately after
+     defining this piece of advice.
+
+     This flag has no immediate effect if FUNCTION itself is not
+     defined yet (a situation known as "forward advice"), because it is
+     impossible to activate an undefined function's advice.  However,
+     defining FUNCTION will automatically activate its advice.
+
+`protect'
+     Protect this piece of advice against non-local exits and errors in
+     preceding code and advice.  Protecting advice places it as a
+     cleanup in an `unwind-protect' form, so that it will execute even
+     if the previous code gets an error or uses `throw'.  *Note
+     Cleanups::.
+
+`compile'
+     Compile the combined definition that is used to run the advice.
+     This flag is ignored unless `activate' is also specified.  *Note
+     Combined Definition::.
+
+`disable'
+     Initially disable this piece of advice, so that it will not be used
+     unless subsequently explicitly enabled.  *Note Enabling Advice::.
+
+`preactivate'
+     Activate advice for FUNCTION when this `defadvice' is compiled or
+     macroexpanded.  This generates a compiled advised definition
+     according to the current advice state, which will be used during
+     activation if appropriate.  *Note Preactivation::.
+
+     This is useful only if this `defadvice' is byte-compiled.
+
+   The optional DOCUMENTATION-STRING serves to document this piece of
+advice.  When advice is active for FUNCTION, the documentation for
+FUNCTION (as returned by `documentation') combines the documentation
+strings of all the advice for FUNCTION with the documentation string of
+its original function definition.
+
+   The optional INTERACTIVE-FORM form can be supplied to change the
+interactive behavior of the original function.  If more than one piece
+of advice has an INTERACTIVE-FORM, then the first one (the one with the
+smallest position) found among all the advice takes precedence.
+
+   The possibly empty list of BODY-FORMS specifies the body of the
+advice.  The body of an advice can access or change the arguments, the
+return value, the binding environment, and perform any other kind of
+side effect.
+
+   *Warning:* When you advise a macro, keep in mind that macros are
+expanded when a program is compiled, not when a compiled program is run.
+All subroutines used by the advice need to be available when the byte
+compiler expands the macro.
+
+ - Command: ad-unadvise function
+     This command deletes the advice from FUNCTION.
+
+ - Command: ad-unadvise-all
+     This command deletes all pieces of advice from all functions.
+
+
+File: elisp,  Node: Around-Advice,  Next: Computed Advice,  Prev: Defining Advice,  Up: Advising Functions
+
+Around-Advice
+=============
+
+   Around-advice lets you "wrap" a Lisp expression "around" the
+original function definition.  You specify where the original function
+definition should go by means of the special symbol `ad-do-it'.  Where
+this symbol occurs inside the around-advice body, it is replaced with a
+`progn' containing the forms of the surrounded code.  Here is an
+example:
+
+     (defadvice foo (around foo-around)
+       "Ignore case in `foo'."
+       (let ((case-fold-search t))
+         ad-do-it))
+
+Its effect is to make sure that case is ignored in searches when the
+original definition of `foo' is run.
+
+ - Variable: ad-do-it
+     This is not really a variable, but it is somewhat used like one in
+     around-advice.  It specifies the place to run the function's
+     original definition and other "earlier" around-advice.
+
+   If the around-advice does not use `ad-do-it', then it does not run
+the original function definition.  This provides a way to override the
+original definition completely.  (It also overrides lower-positioned
+pieces of around-advice).
+
+   If the around-advice uses `ad-do-it' more than once, the original
+definition is run at each place.  In this way, around-advice can execute
+the original definition (and lower-positioned pieces of around-advice)
+several times.  Another way to do that is by using `ad-do-it' inside of
+a loop.
+
+
+File: elisp,  Node: Computed Advice,  Next: Activation of Advice,  Prev: Around-Advice,  Up: Advising Functions
+
+Computed Advice
+===============
+
+   The macro `defadvice' resembles `defun' in that the code for the
+advice, and all other information about it, are explicitly stated in
+the source code.  You can also create advice whose details are computed,
+using the function `ad-add-advice'.
+
+ - Function: ad-add-advice function advice class position
+     Calling `ad-add-advice' adds ADVICE as a piece of advice to
+     FUNCTION in class CLASS.  The argument ADVICE  has this form:
+
+          (NAME PROTECTED ENABLED DEFINITION)
+
+     Here PROTECTED and ENABLED are flags, and DEFINITION is the
+     expression that says what the advice should do.  If ENABLED is
+     `nil', this piece of advice is initially disabled (*note Enabling
+     Advice::).
+
+     If FUNCTION already has one or more pieces of advice in the
+     specified CLASS, then POSITION specifies where in the list to put
+     the new piece of advice.  The value of POSITION can either be
+     `first', `last', or a number (counting from 0 at the beginning of
+     the list).  Numbers outside the range are mapped to the beginning
+     or the end of the range, whichever is closer.  The POSITION value
+     is ignored when redefining an existing piece of advice.
+
+     If FUNCTION already has a piece of ADVICE with the same name, then
+     the position argument is ignored and the old advice is replaced
+     with the new one.
+
+
+File: elisp,  Node: Activation of Advice,  Next: Enabling Advice,  Prev: Computed Advice,  Up: Advising Functions
+
+Activation of Advice
+====================
+
+   By default, advice does not take effect when you define it--only when
+you "activate" advice for the function that was advised.  You can
+request the activation of advice for a function when you define the
+advice, by specifying the `activate' flag in the `defadvice'.  But
+normally you activate the advice for a function by calling the function
+`ad-activate' or one of the other activation commands listed below.
+
+   Separating the activation of advice from the act of defining it
+permits you to add several pieces of advice to one function
+efficiently, without redefining the function over and over as each
+advice is added.  More importantly, it permits defining advice for a
+function before that function is actually defined.
+
+   When a function's advice is first activated, the function's original
+definition is saved, and all enabled pieces of advice for that function
+are combined with the original definition to make a new definition.
+(Pieces of advice that are currently disabled are not used; see *Note
+Enabling Advice::.)  This definition is installed, and optionally
+byte-compiled as well, depending on conditions described below.
+
+   In all of the commands to activate advice, if COMPILE is `t', the
+command also compiles the combined definition which implements the
+advice.
+
+ - Command: ad-activate function &optional compile
+     This command activates all the advice defined for FUNCTION.
+
+   To activate advice for a function whose advice is already active is
+not a no-op.  It is a useful operation which puts into effect any
+changes in that function's advice since the previous activation of
+advice for that function.
+
+ - Command: ad-deactivate function
+     This command deactivates the advice for FUNCTION.
+
+ - Command: ad-update function &optional compile
+     This command activates the advice for FUNCTION if its advice is
+     already activated.  This is useful if you change the advice.
+
+ - Command: ad-activate-all &optional compile
+     This command activates the advice for all functions.
+
+ - Command: ad-deactivate-all
+     This command deactivates the advice for all functions.
+
+ - Command: ad-update-all &optional compile
+     This command activates the advice for all functions whose advice
+     is already activated.  This is useful if you change the advice of
+     some functions.
+
+ - Command: ad-activate-regexp regexp &optional compile
+     This command activates all pieces of advice whose names match
+     REGEXP.  More precisely, it activates all advice for any function
+     which has at least one piece of advice that matches REGEXP.
+
+ - Command: ad-deactivate-regexp regexp
+     This command deactivates all pieces of advice whose names match
+     REGEXP.  More precisely, it deactivates all advice for any
+     function which has at least one piece of advice that matches
+     REGEXP.
+
+ - Command: ad-update-regexp regexp &optional compile
+     This command activates pieces of advice whose names match REGEXP,
+     but only those for functions whose advice is already activated.
+
+     Reactivating a function's advice is useful for putting into effect
+     all the changes that have been made in its advice (including
+     enabling and disabling specific pieces of advice; *note Enabling
+     Advice::) since the last time it was activated.
+
+ - Command: ad-start-advice
+     Turn on automatic advice activation when a function is defined or
+     redefined.  If you turn on this mode, then advice takes effect
+     immediately when defined.
+
+ - Command: ad-stop-advice
+     Turn off automatic advice activation when a function is defined or
+     redefined.
+
+ - User Option: ad-default-compilation-action
+     This variable controls whether to compile the combined definition
+     that results from activating advice for a function.
+
+     A value of `always' specifies to compile unconditionally.  A value
+     of `nil' specifies never compile the advice.
+
+     A value of `maybe' specifies to compile if the byte-compiler is
+     already loaded.  A value of `like-original' specifies to compile
+     the advice if the original definition of the advised function is
+     compiled or a built-in function.
+
+     This variable takes effect only if the COMPILE argument of
+     `ad-activate' (or any of the above functions) was supplied as
+     `nil'.  If that argument is non-`nil', that means to compile the
+     advice regardless.
+
+   If the advised definition was constructed during "preactivation"
+(*note Preactivation::), then that definition must already be compiled,
+because it was constructed during byte-compilation of the file that
+contained the `defadvice' with the `preactivate' flag.
+
+
+File: elisp,  Node: Enabling Advice,  Next: Preactivation,  Prev: Activation of Advice,  Up: Advising Functions
+
+Enabling and Disabling Advice
+=============================
+
+   Each piece of advice has a flag that says whether it is enabled or
+not.  By enabling or disabling a piece of advice, you can turn it on
+and off without having to undefine and redefine it.  For example, here
+is how to disable a particular piece of advice named `my-advice' for
+the function `foo':
+
+     (ad-disable-advice 'foo 'before 'my-advice)
+
+   This function by itself only changes the enable flag for a piece of
+advice.  To make the change take effect in the advised definition, you
+must activate the advice for `foo' again:
+
+     (ad-activate 'foo)
+
+ - Command: ad-disable-advice function class name
+     This command disables the piece of advice named NAME in class
+     CLASS on FUNCTION.
+
+ - Command: ad-enable-advice function class name
+     This command enables the piece of advice named NAME in class CLASS
+     on FUNCTION.
+
+   You can also disable many pieces of advice at once, for various
+functions, using a regular expression.  As always, the changes take real
+effect only when you next reactivate advice for the functions in
+question.
+
+ - Command: ad-disable-regexp regexp
+     This command disables all pieces of advice whose names match
+     REGEXP, in all classes, on all functions.
+
+ - Command: ad-enable-regexp regexp
+     This command enables all pieces of advice whose names match
+     REGEXP, in all classes, on all functions.
+
+
+File: elisp,  Node: Preactivation,  Next: Argument Access in Advice,  Prev: Enabling Advice,  Up: Advising Functions
+
+Preactivation
+=============
+
+   Constructing a combined definition to execute advice is moderately
+expensive.  When a library advises many functions, this can make loading
+the library slow.  In that case, you can use "preactivation" to
+construct suitable combined definitions in advance.
+
+   To use preactivation, specify the `preactivate' flag when you define
+the advice with `defadvice'.  This `defadvice' call creates a combined
+definition which embodies this piece of advice (whether enabled or not)
+plus any other currently enabled advice for the same function, and the
+function's own definition.  If the `defadvice' is compiled, that
+compiles the combined definition also.
+
+   When the function's advice is subsequently activated, if the enabled
+advice for the function matches what was used to make this combined
+definition, then the existing combined definition is used, thus avoiding
+the need to construct one.  Thus, preactivation never causes wrong
+results--but it may fail to do any good, if the enabled advice at the
+time of activation doesn't match what was used for preactivation.
+
+   Here are some symptoms that can indicate that a preactivation did not
+work properly, because of a mismatch.
+
+   * Activation of the advised function takes longer than usual.
+
+   * The byte-compiler gets loaded while an advised function gets
+     activated.
+
+   * `byte-compile' is included in the value of `features' even though
+     you did not ever explicitly use the byte-compiler.
+
+   Compiled preactivated advice works properly even if the function
+itself is not defined until later; however, the function needs to be
+defined when you _compile_ the preactivated advice.
+
+   There is no elegant way to find out why preactivated advice is not
+being used.  What you can do is to trace the function
+`ad-cache-id-verification-code' (with the function
+`trace-function-background') before the advised function's advice is
+activated.  After activation, check the value returned by
+`ad-cache-id-verification-code' for that function: `verified' means
+that the preactivated advice was used, while other values give some
+information about why they were considered inappropriate.
+
+   *Warning:* There is one known case that can make preactivation fail,
+in that a preconstructed combined definition is used even though it
+fails to match the current state of advice.  This can happen when two
+packages define different pieces of advice with the same name, in the
+same class, for the same function.  But you should avoid that anyway.
+
+
+File: elisp,  Node: Argument Access in Advice,  Next: Subr Arguments,  Prev: Preactivation,  Up: Advising Functions
+
+Argument Access in Advice
+=========================
+
+   The simplest way to access the arguments of an advised function in
+the body of a piece of advice is to use the same names that the function
+definition uses.  To do this, you need to know the names of the argument
+variables of the original function.
+
+   While this simple method is sufficient in many cases, it has a
+disadvantage: it is not robust, because it hard-codes the argument names
+into the advice.  If the definition of the original function changes,
+the advice might break.
+
+   Another method is to specify an argument list in the advice itself.
+This avoids the need to know the original function definition's argument
+names, but it has a limitation: all the advice on any particular
+function must use the same argument list, because the argument list
+actually used for all the advice comes from the first piece of advice
+for that function.
+
+   A more robust method is to use macros that are translated into the
+proper access forms at activation time, i.e., when constructing the
+advised definition.  Access macros access actual arguments by position
+regardless of how these actual arguments get distributed onto the
+argument variables of a function.  This is robust because in Emacs Lisp
+the meaning of an argument is strictly determined by its position in the
+argument list.
+
+ - Macro: ad-get-arg position
+     This returns the actual argument that was supplied at POSITION.
+
+ - Macro: ad-get-args position
+     This returns the list of actual arguments supplied starting at
+     POSITION.
+
+ - Macro: ad-set-arg position value
+     This sets the value of the actual argument at POSITION to VALUE
+
+ - Macro: ad-set-args position value-list
+     This sets the list of actual arguments starting at POSITION to
+     VALUE-LIST.
+
+   Now an example.  Suppose the function `foo' is defined as
+
+     (defun foo (x y &optional z &rest r) ...)
+
+and is then called with
+
+     (foo 0 1 2 3 4 5 6)
+
+which means that X is 0, Y is 1, Z is 2 and R is `(3 4 5 6)' within the
+body of `foo'.  Here is what `ad-get-arg' and `ad-get-args' return in
+this case:
+
+     (ad-get-arg 0) => 0
+     (ad-get-arg 1) => 1
+     (ad-get-arg 2) => 2
+     (ad-get-arg 3) => 3
+     (ad-get-args 2) => (2 3 4 5 6)
+     (ad-get-args 4) => (4 5 6)
+
+   Setting arguments also makes sense in this example:
+
+     (ad-set-arg 5 "five")
+
+has the effect of changing the sixth argument to `"five"'.  If this
+happens in advice executed before the body of `foo' is run, then R will
+be `(3 4 "five" 6)' within that body.
+
+   Here is an example of setting a tail of the argument list:
+
+     (ad-set-args 0 '(5 4 3 2 1 0))
+
+If this happens in advice executed before the body of `foo' is run,
+then within that body, X will be 5, Y will be 4, Z will be 3, and R
+will be `(2 1 0)' inside the body of `foo'.
+
+   These argument constructs are not really implemented as Lisp macros.
+Instead they are implemented specially by the advice mechanism.
+
+
+File: elisp,  Node: Subr Arguments,  Next: Combined Definition,  Prev: Argument Access in Advice,  Up: Advising Functions
+
+Definition of Subr Argument Lists
+=================================
+
+   When the advice facility constructs the combined definition, it needs
+to know the argument list of the original function.  This is not always
+possible for primitive functions.  When advice cannot determine the
+argument list, it uses `(&rest ad-subr-args)', which always works but
+is inefficient because it constructs a list of the argument values.
+You can use `ad-define-subr-args' to declare the proper argument names
+for a primitive function:
+
+ - Function: ad-define-subr-args function arglist
+     This function specifies that ARGLIST should be used as the
+     argument list for function FUNCTION.
+
+   For example,
+
+     (ad-define-subr-args 'fset '(sym newdef))
+
+specifies the argument list for the function `fset'.
+
+
+File: elisp,  Node: Combined Definition,  Prev: Subr Arguments,  Up: Advising Functions
+
+The Combined Definition
+=======================
+
+   Suppose that a function has N pieces of before-advice (numbered from
+0 through N-1), M pieces of around-advice and K pieces of after-advice.
+Assuming no piece of advice is protected, the combined definition
+produced to implement the advice for a function looks like this:
+
+     (lambda ARGLIST
+       [ [ADVISED-DOCSTRING] [(interactive ...)] ]
+       (let (ad-return-value)
+         before-0-body-form...
+              ....
+         before-N-1-body-form...
+         around-0-body-form...
+            around-1-body-form...
+                  ....
+               around-M-1-body-form...
+                  (setq ad-return-value
+                        apply original definition to ARGLIST)
+               end-of-around-M-1-body-form...
+                  ....
+            end-of-around-1-body-form...
+         end-of-around-0-body-form...
+         after-0-body-form...
+               ....
+         after-K-1-body-form...
+         ad-return-value))
+
+   Macros are redefined as macros, which means adding `macro' to the
+beginning of the combined definition.
+
+   The interactive form is present if the original function or some
+piece of advice specifies one.  When an interactive primitive function
+is advised, advice uses a special method: it calls the primitive with
+`call-interactively' so that it will read its own arguments.  In this
+case, the advice cannot access the arguments.
+
+   The body forms of the various advice in each class are assembled
+according to their specified order.  The forms of around-advice L are
+included in one of the forms of around-advice L - 1.
+
+   The innermost part of the around advice onion is
+
+     apply original definition to ARGLIST
+
+whose form depends on the type of the original function.  The variable
+`ad-return-value' is set to whatever this returns.  The variable is
+visible to all pieces of advice, which can access and modify it before
+it is actually returned from the advised function.
+
+   The semantic structure of advised functions that contain protected
+pieces of advice is the same.  The only difference is that
+`unwind-protect' forms ensure that the protected advice gets executed
+even if some previous piece of advice had an error or a non-local exit.
+If any around-advice is protected, then the whole around-advice onion
+is protected as a result.
+
+
+File: elisp,  Node: Debugging,  Next: Read and Print,  Prev: Advising Functions,  Up: Top
+
+Debugging Lisp Programs
+***********************
+
+   There are three ways to investigate a problem in an Emacs Lisp
+program, depending on what you are doing with the program when the
+problem appears.
+
+   * If the problem occurs when you run the program, you can use a Lisp
+     debugger to investigate what is happening during execution.  In
+     addition to the ordinary debugger, Emacs comes with a source level
+     debugger, Edebug.  This chapter describes both of them.
+
+   * If the problem is syntactic, so that Lisp cannot even read the
+     program, you can use the Emacs facilities for editing Lisp to
+     localize it.
+
+   * If the problem occurs when trying to compile the program with the
+     byte compiler, you need to know how to examine the compiler's
+     input buffer.
+
+* Menu:
+
+* Debugger::            How the Emacs Lisp debugger is implemented.
+* Edebug::		A source-level Emacs Lisp debugger.
+* Syntax Errors::       How to find syntax errors.
+* Compilation Errors::  How to find errors that show up in byte compilation.
+
+   Another useful debugging tool is the dribble file.  When a dribble
+file is open, Emacs copies all keyboard input characters to that file.
+Afterward, you can examine the file to find out what input was used.
+*Note Terminal Input::.
+
+   For debugging problems in terminal descriptions, the
+`open-termscript' function can be useful.  *Note Terminal Output::.
+
+
+File: elisp,  Node: Debugger,  Next: Edebug,  Up: Debugging
+
+The Lisp Debugger
+=================
+
+   The ordinary "Lisp debugger" provides the ability to suspend
+evaluation of a form.  While evaluation is suspended (a state that is
+commonly known as a "break"), you may examine the run time stack,
+examine the values of local or global variables, or change those values.
+Since a break is a recursive edit, all the usual editing facilities of
+Emacs are available; you can even run programs that will enter the
+debugger recursively.  *Note Recursive Editing::.
+
+* Menu:
+
+* Error Debugging::       Entering the debugger when an error happens.
+* Infinite Loops::	  Stopping and debugging a program that doesn't exit.
+* Function Debugging::    Entering it when a certain function is called.
+* Explicit Debug::        Entering it at a certain point in the program.
+* Using Debugger::        What the debugger does; what you see while in it.
+* Debugger Commands::     Commands used while in the debugger.
+* Invoking the Debugger:: How to call the function `debug'.
+* Internals of Debugger:: Subroutines of the debugger, and global variables.
+
+
+File: elisp,  Node: Error Debugging,  Next: Infinite Loops,  Up: Debugger
+
+Entering the Debugger on an Error
+---------------------------------
+
+   The most important time to enter the debugger is when a Lisp error
+happens.  This allows you to investigate the immediate causes of the
+error.
+
+   However, entry to the debugger is not a normal consequence of an
+error.  Many commands frequently cause Lisp errors when invoked
+inappropriately (such as `C-f' at the end of the buffer), and during
+ordinary editing it would be very inconvenient to enter the debugger
+each time this happens.  So if you want errors to enter the debugger,
+set the variable `debug-on-error' to non-`nil'.  (The command
+`toggle-debug-on-error' provides an easy way to do this.)
+
+ - User Option: debug-on-error
+     This variable determines whether the debugger is called when an
+     error is signaled and not handled.  If `debug-on-error' is `t', all
+     kinds of errors call the debugger (except those listed in
+     `debug-ignored-errors').  If it is `nil', none call the debugger.
+
+     The value can also be a list of error conditions that should call
+     the debugger.  For example, if you set it to the list
+     `(void-variable)', then only errors about a variable that has no
+     value invoke the debugger.
+
+     When this variable is non-`nil', Emacs does not create an error
+     handler around process filter functions and sentinels.  Therefore,
+     errors in these functions also invoke the debugger.  *Note
+     Processes::.
+
+ - User Option: debug-ignored-errors
+     This variable specifies certain kinds of errors that should not
+     enter the debugger.  Its value is a list of error condition
+     symbols and/or regular expressions.  If the error has any of those
+     condition symbols, or if the error message matches any of the
+     regular expressions, then that error does not enter the debugger,
+     regardless of the value of `debug-on-error'.
+
+     The normal value of this variable lists several errors that happen
+     often during editing but rarely result from bugs in Lisp programs.
+     However, "rarely" is not "never"; if your program fails with an
+     error that matches this list, you will need to change this list in
+     order to debug the error.  The easiest way is usually to set
+     `debug-ignored-errors' to `nil'.
+
+ - User Option: debug-on-signal
+     Normally, errors that are caught by `condition-case' never run the
+     debugger, even if `debug-on-error' is non-`nil'.  In other words,
+     `condition-case' gets a chance to handle the error before the
+     debugger gets a chance.
+
+     If you set `debug-on-signal' to a non-`nil' value, then the
+     debugger gets the first chance at every error; an error will
+     invoke the debugger regardless of any `condition-case', if it fits
+     the criteria specified by the values of `debug-on-error' and
+     `debug-ignored-errors'.
+
+     *Warning:* This variable is strong medicine!  Various parts of
+     Emacs handle errors in the normal course of affairs, and you may
+     not even realize that errors happen there.  If you set
+     `debug-on-signal' to a non-`nil' value, those errors will enter
+     the debugger.
+
+     *Warning:* `debug-on-signal' has no effect when `debug-on-error'
+     is `nil'.
+
+   To debug an error that happens during loading of the init file, use
+the option `--debug-init'.  This binds `debug-on-error' to `t' while
+loading the init file, and bypasses the `condition-case' which normally
+catches errors in the init file.
+
+   If your init file sets `debug-on-error', the effect may not last
+past the end of loading the init file.  (This is an undesirable
+byproduct of the code that implements the `--debug-init' command line
+option.)  The best way to make the init file set `debug-on-error'
+permanently is with `after-init-hook', like this:
+
+     (add-hook 'after-init-hook
+               (lambda () (setq debug-on-error t)))
+
+
+File: elisp,  Node: Infinite Loops,  Next: Function Debugging,  Prev: Error Debugging,  Up: Debugger
+
+Debugging Infinite Loops
+------------------------
+
+   When a program loops infinitely and fails to return, your first
+problem is to stop the loop.  On most operating systems, you can do this
+with `C-g', which causes a "quit".
+
+   Ordinary quitting gives no information about why the program was
+looping.  To get more information, you can set the variable
+`debug-on-quit' to non-`nil'.  Quitting with `C-g' is not considered an
+error, and `debug-on-error' has no effect on the handling of `C-g'.
+Likewise, `debug-on-quit' has no effect on errors.
+
+   Once you have the debugger running in the middle of the infinite
+loop, you can proceed from the debugger using the stepping commands.
+If you step through the entire loop, you will probably get enough
+information to solve the problem.
+
+ - User Option: debug-on-quit
+     This variable determines whether the debugger is called when `quit'
+     is signaled and not handled.  If `debug-on-quit' is non-`nil',
+     then the debugger is called whenever you quit (that is, type
+     `C-g').  If `debug-on-quit' is `nil', then the debugger is not
+     called when you quit.  *Note Quitting::.
+
+
+File: elisp,  Node: Function Debugging,  Next: Explicit Debug,  Prev: Infinite Loops,  Up: Debugger
+
+Entering the Debugger on a Function Call
+----------------------------------------
+
+   To investigate a problem that happens in the middle of a program, one
+useful technique is to enter the debugger whenever a certain function is
+called.  You can do this to the function in which the problem occurs,
+and then step through the function, or you can do this to a function
+called shortly before the problem, step quickly over the call to that
+function, and then step through its caller.
+
+ - Command: debug-on-entry function-name
+     This function requests FUNCTION-NAME to invoke the debugger each
+     time it is called.  It works by inserting the form `(debug
+     'debug)' into the function definition as the first form.
+
+     Any function defined as Lisp code may be set to break on entry,
+     regardless of whether it is interpreted code or compiled code.  If
+     the function is a command, it will enter the debugger when called
+     from Lisp and when called interactively (after the reading of the
+     arguments).  You can't debug primitive functions (i.e., those
+     written in C) this way.
+
+     When `debug-on-entry' is called interactively, it prompts for
+     FUNCTION-NAME in the minibuffer.  If the function is already set
+     up to invoke the debugger on entry, `debug-on-entry' does nothing.
+     `debug-on-entry' always returns FUNCTION-NAME.
+
+     *Note:* if you redefine a function after using `debug-on-entry' on
+     it, the code to enter the debugger is discarded by the
+     redefinition.  In effect, redefining the function cancels the
+     break-on-entry feature for that function.
+
+          (defun fact (n)
+            (if (zerop n) 1
+                (* n (fact (1- n)))))
+               => fact
+          (debug-on-entry 'fact)
+               => fact
+          (fact 3)
+          
+          ------ Buffer: *Backtrace* ------
+          Entering:
+          * fact(3)
+            eval-region(4870 4878 t)
+            byte-code("...")
+            eval-last-sexp(nil)
+            (let ...)
+            eval-insert-last-sexp(nil)
+          * call-interactively(eval-insert-last-sexp)
+          ------ Buffer: *Backtrace* ------
+          
+          (symbol-function 'fact)
+               => (lambda (n)
+                    (debug (quote debug))
+                    (if (zerop n) 1 (* n (fact (1- n)))))
+
+ - Command: cancel-debug-on-entry function-name
+     This function undoes the effect of `debug-on-entry' on
+     FUNCTION-NAME.  When called interactively, it prompts for
+     FUNCTION-NAME in the minibuffer.  If FUNCTION-NAME is `nil' or the
+     empty string, it cancels break-on-entry for all functions.
+
+     Calling `cancel-debug-on-entry' does nothing to a function which is
+     not currently set up to break on entry.  It always returns
+     FUNCTION-NAME.
+
+
+File: elisp,  Node: Explicit Debug,  Next: Using Debugger,  Prev: Function Debugging,  Up: Debugger
+
+Explicit Entry to the Debugger
+------------------------------
+
+   You can cause the debugger to be called at a certain point in your
+program by writing the expression `(debug)' at that point.  To do this,
+visit the source file, insert the text `(debug)' at the proper place,
+and type `C-M-x'.  *Warning:* if you do this for temporary debugging
+purposes, be sure to undo this insertion before you save the file!
+
+   The place where you insert `(debug)' must be a place where an
+additional form can be evaluated and its value ignored.  (If the value
+of `(debug)' isn't ignored, it will alter the execution of the
+program!)  The most common suitable places are inside a `progn' or an
+implicit `progn' (*note Sequencing::).
+
+
+File: elisp,  Node: Using Debugger,  Next: Debugger Commands,  Prev: Explicit Debug,  Up: Debugger
+
+Using the Debugger
+------------------
+
+   When the debugger is entered, it displays the previously selected
+buffer in one window and a buffer named `*Backtrace*' in another
+window.  The backtrace buffer contains one line for each level of Lisp
+function execution currently going on.  At the beginning of this buffer
+is a message describing the reason that the debugger was invoked (such
+as the error message and associated data, if it was invoked due to an
+error).
+
+   The backtrace buffer is read-only and uses a special major mode,
+Debugger mode, in which letters are defined as debugger commands.  The
+usual Emacs editing commands are available; thus, you can switch windows
+to examine the buffer that was being edited at the time of the error,
+switch buffers, visit files, or do any other sort of editing.  However,
+the debugger is a recursive editing level (*note Recursive Editing::)
+and it is wise to go back to the backtrace buffer and exit the debugger
+(with the `q' command) when you are finished with it.  Exiting the
+debugger gets out of the recursive edit and kills the backtrace buffer.
+
+   The backtrace buffer shows you the functions that are executing and
+their argument values.  It also allows you to specify a stack frame by
+moving point to the line describing that frame.  (A stack frame is the
+place where the Lisp interpreter records information about a particular
+invocation of a function.)  The frame whose line point is on is
+considered the "current frame".  Some of the debugger commands operate
+on the current frame.
+
+   The debugger itself must be run byte-compiled, since it makes
+assumptions about how many stack frames are used for the debugger
+itself.  These assumptions are false if the debugger is running
+interpreted.
+
+
+File: elisp,  Node: Debugger Commands,  Next: Invoking the Debugger,  Prev: Using Debugger,  Up: Debugger
+
+Debugger Commands
+-----------------
+
+   Inside the debugger (in Debugger mode), these special commands are
+available in addition to the usual cursor motion commands.  (Keep in
+mind that all the usual facilities of Emacs, such as switching windows
+or buffers, are still available.)
+
+   The most important use of debugger commands is for stepping through
+code, so that you can see how control flows.  The debugger can step
+through the control structures of an interpreted function, but cannot do
+so in a byte-compiled function.  If you would like to step through a
+byte-compiled function, replace it with an interpreted definition of the
+same function.  (To do this, visit the source for the function and type
+`C-M-x' on its definition.)
+
+   Here is a list of Debugger mode commands:
+
+`c'
+     Exit the debugger and continue execution.  When continuing is
+     possible, it resumes execution of the program as if the debugger
+     had never been entered (aside from any side-effects that you
+     caused by changing variable values or data structures while inside
+     the debugger).
+
+     Continuing is possible after entry to the debugger due to function
+     entry or exit, explicit invocation, or quitting.  You cannot
+     continue if the debugger was entered because of an error.
+
+`d'
+     Continue execution, but enter the debugger the next time any Lisp
+     function is called.  This allows you to step through the
+     subexpressions of an expression, seeing what values the
+     subexpressions compute, and what else they do.
+
+     The stack frame made for the function call which enters the
+     debugger in this way will be flagged automatically so that the
+     debugger will be called again when the frame is exited.  You can
+     use the `u' command to cancel this flag.
+
+`b'
+     Flag the current frame so that the debugger will be entered when
+     the frame is exited.  Frames flagged in this way are marked with
+     stars in the backtrace buffer.
+
+`u'
+     Don't enter the debugger when the current frame is exited.  This
+     cancels a `b' command on that frame.  The visible effect is to
+     remove the star from the line in the backtrace buffer.
+
+`e'
+     Read a Lisp expression in the minibuffer, evaluate it, and print
+     the value in the echo area.  The debugger alters certain important
+     variables, and the current buffer, as part of its operation; `e'
+     temporarily restores their values from outside the debugger, so
+     you can examine and change them.  This makes the debugger more
+     transparent.  By contrast, `M-:' does nothing special in the
+     debugger; it shows you the variable values within the debugger.
+
+`R'
+     Like `e', but also save the result of evaluation in the buffer
+     `*Debugger-record*'.
+
+`q'
+     Terminate the program being debugged; return to top-level Emacs
+     command execution.
+
+     If the debugger was entered due to a `C-g' but you really want to
+     quit, and not debug, use the `q' command.
+
+`r'
+     Return a value from the debugger.  The value is computed by
+     reading an expression with the minibuffer and evaluating it.
+
+     The `r' command is useful when the debugger was invoked due to exit
+     from a Lisp call frame (as requested with `b' or by entering the
+     frame with `d'); then the value specified in the `r' command is
+     used as the value of that frame.  It is also useful if you call
+     `debug' and use its return value.  Otherwise, `r' has the same
+     effect as `c', and the specified return value does not matter.
+
+     You can't use `r' when the debugger was entered due to an error.
+
+
+File: elisp,  Node: Invoking the Debugger,  Next: Internals of Debugger,  Prev: Debugger Commands,  Up: Debugger
+
+Invoking the Debugger
+---------------------
+
+   Here we describe in full detail the function `debug' that is used to
+invoke the debugger.
+
+ - Function: debug &rest debugger-args
+     This function enters the debugger.  It switches buffers to a buffer
+     named `*Backtrace*' (or `*Backtrace*<2>' if it is the second
+     recursive entry to the debugger, etc.), and fills it with
+     information about the stack of Lisp function calls.  It then
+     enters a recursive edit, showing the backtrace buffer in Debugger
+     mode.
+
+     The Debugger mode `c' and `r' commands exit the recursive edit;
+     then `debug' switches back to the previous buffer and returns to
+     whatever called `debug'.  This is the only way the function
+     `debug' can return to its caller.
+
+     The use of the DEBUGGER-ARGS is that `debug' displays the rest of
+     its arguments at the top of the `*Backtrace*' buffer, so that the
+     user can see them.  Except as described below, this is the _only_
+     way these arguments are used.
+
+     However, certain values for first argument to `debug' have a
+     special significance.  (Normally, these values are used only by the
+     internals of Emacs, and not by programmers calling `debug'.)  Here
+     is a table of these special values:
+
+    `lambda'
+          A first argument of `lambda' means `debug' was called because
+          of entry to a function when `debug-on-next-call' was
+          non-`nil'.  The debugger displays `Entering:' as a line of
+          text at the top of the buffer.
+
+    `debug'
+          `debug' as first argument indicates a call to `debug' because
+          of entry to a function that was set to debug on entry.  The
+          debugger displays `Entering:', just as in the `lambda' case.
+          It also marks the stack frame for that function so that it
+          will invoke the debugger when exited.
+
+    `t'
+          When the first argument is `t', this indicates a call to
+          `debug' due to evaluation of a list form when
+          `debug-on-next-call' is non-`nil'.  The debugger displays the
+          following as the top line in the buffer:
+
+               Beginning evaluation of function call form:
+
+    `exit'
+          When the first argument is `exit', it indicates the exit of a
+          stack frame previously marked to invoke the debugger on exit.
+          The second argument given to `debug' in this case is the
+          value being returned from the frame.  The debugger displays
+          `Return value:' in the top line of the buffer, followed by
+          the value being returned.
+
+    `error'
+          When the first argument is `error', the debugger indicates
+          that it is being entered because an error or `quit' was
+          signaled and not handled, by displaying `Signaling:' followed
+          by the error signaled and any arguments to `signal'.  For
+          example,
+
+               (let ((debug-on-error t))
+                 (/ 1 0))
+               
+               ------ Buffer: *Backtrace* ------
+               Signaling: (arith-error)
+                 /(1 0)
+               ...
+               ------ Buffer: *Backtrace* ------
+
+          If an error was signaled, presumably the variable
+          `debug-on-error' is non-`nil'.  If `quit' was signaled, then
+          presumably the variable `debug-on-quit' is non-`nil'.
+
+    `nil'
+          Use `nil' as the first of the DEBUGGER-ARGS when you want to
+          enter the debugger explicitly.  The rest of the DEBUGGER-ARGS
+          are printed on the top line of the buffer.  You can use this
+          feature to display messages--for example, to remind yourself
+          of the conditions under which `debug' is called.
+

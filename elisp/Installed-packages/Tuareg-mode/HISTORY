@@ -1,0 +1,73 @@
+Caml Mode 0.9.x:
+----------------
+
+First version -
+        By Xavier Leroy <Xavier.Leroy@inria.fr>
+        and Jerome Vouillon <Jerome.Vouillon@ens.fr>, 1993.
+Compilation interface -
+        By Ian Zimmerman <itz@rahul.net>, 1996;
+        Copyright © 1996 Ian Zimmerman, all rights reserved.
+First Font-Lock and XEmacs support -
+        By Pierre Boulet <Pierre.Boulet@ens-lyon.fr>, 1996.
+First OCaml and OLabl version -
+        By Jacques Garrigue <Jacques.Garrigue@kurims.kyoto-u.ac.jp>, 1996.
+
+New version for Objective Caml
+        Extension to Objective Caml (and Labl) syntax (including literals
+        and preserving compatibility with Camllight syntax) complete
+        rewritting of Zimmerman's mode, especially comment detection
+        and indentation, along with major improvement of
+        indentation capabilities, new Font-Lock and
+        Hilit19, compatibility over Emacs and XEmacs;
+        By Albert Cohen <Albert.Cohen@prism.uvsq.fr>, 1997.
+
+Tuareg Mode history:
+---------------
+
+1.00  - January 8 1997 -
+        First verion of Tuareg
+        (previously known as Caml-Mode 0.9.2 -> 0.9.8).
+
+1.10  - From March 17 1997 to March 20 1997 -
+ to     First release of Tuareg
+1.12    Speed-up in faces initialization.
+        Fixed a bug in comment highlighting with Emacs Font-Lock
+
+1.20  - From March 23 1997 to July 28 1997 -
+ to     Support for symbol fontifying, adaptation of Font-Lock interface,
+1.27    Rewritting of a new Sym-Lock extension for Font-Lock (more powerful,
+        polyvalent, and fitting dynamic customization). Suggestion and first
+        adaptation by Chrstian Boos <boos@arthur.u-strasbg.fr>.
+	Improved phrase detection. `C-M-h' and `C-c C-e' now detect
+	both beginning and end of phrases ; `;;' is used, if present.
+	Improved `comint' (tuareg-interactive) mode. Now supports Font-Lock
+	on toplevel inputs. Patched many phrase detection bugs.
+	New option for `=' indentation, `match-string' optimized, and
+	indentation of `;' sequences accelerated.
+
+1.30  - April 14 1998 -
+	Major improvement of syntax parsing code (including proper handling
+	of multi-line strings and speed-up). Strong speed-up of parenthesis
+	parsing. A few indentation and phrase-related commands bugs corrected.
+1.31  - June 8 1998 -
+	Lot of bugs corrected, new customization (more flexible and usable,
+        with some examples). Minor Sym-Lock changes, indentation changes in
+        some cases, simplified installation guidelines.
+1.32  - June 26 1998 -
+        Only with XEmacs: Correct string/comment highlighting.
+        A few bugs removed, especially in literal/comment detection.
+        New customization features.
+1.33  - November 24 1998 -
+	New support for OCaml 2.00 syntax (let module X=..., and {r with ...}).
+	Indentation bug corrected for arrays, records and objects.
+1.34  - December 15 1998 -
+	Bugs corrected in OCaml 2.00 syntax, added new indentation options
+	for parentheses and = symbols.
+1.35  - January 13 1999 -
+	Major improvement of interactive mode, thanks to contribution
+	of Michel Quercia. Bug removal in phrase detection and comment
+	indentation (paragraph and lines).
+1.36  - Jabuary 22 1999 -
+	Navigation support for OCML manual, library, and buffer-dependent 
+	definitions (adapted from original code by Michel Quercia). New
+	commands, and next-error in toplevel by Claude Marché.

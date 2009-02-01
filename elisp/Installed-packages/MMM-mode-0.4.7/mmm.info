@@ -1,0 +1,90 @@
+This is mmm.info, produced by makeinfo version 4.0 from mmm.texinfo.
+
+INFO-DIR-SECTION GNU Emacs Lisp
+START-INFO-DIR-ENTRY
+* MMM-Mode: (mmm).                 Multiple Major Modes for Emacs
+END-INFO-DIR-ENTRY
+
+   This is edition 0.4.7 of the MMM Mode Manual, last updated 18
+February 2001. It documents version 0.4.7 of MMM Mode.
+
+   Copyright 2000 Michael Abraham Shulman.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "Copying" and "GNU General Public License"
+are included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be stated in a
+translation approved by the Free Software Foundation.
+
+
+Indirect:
+mmm.info-1: 1177
+mmm.info-2: 50986
+
+Tag Table:
+(Indirect)
+Node: Top1177
+Node: Overview5112
+Ref: Overview-Footnote-17001
+Node: Basic Concepts7121
+Node: Installation9477
+Node: Quick Start11471
+Node: Basics14092
+Node: MMM Minor Mode14777
+Node: Enabling MMM Mode15465
+Node: MMM Mode Keys16724
+Node: Submode Classes18986
+Node: Selecting Classes20332
+Node: File Classes21163
+Node: Mode-Ext Classes21931
+Node: Global Classes23666
+Node: Insertion25172
+Node: Re-parsing27349
+Node: Interactive27596
+Node: Global Mode30187
+Node: Major Mode Hook32147
+Node: Customizing33843
+Node: Region Coloring34582
+Node: Preferred Modes37150
+Node: Mode Line39132
+Node: Key Bindings40681
+Node: Local Variables42421
+Node: Changing Classes44221
+Node: Hooks45256
+Node: Supplied Classes46714
+Node: Mason47526
+Node: File Variables50986
+Node: Here-documents51724
+Node: Javascript53162
+Node: Embedded CSS53686
+Node: Embperl54111
+Node: ePerl54539
+Node: JSP54924
+Node: RPM55304
+Node: Writing Classes55967
+Node: Basic Classes57075
+Node: Paired Delimiters59630
+Node: Region Placement61330
+Node: Submode Groups64301
+Node: Calculated Submodes65507
+Node: Calculated Faces67736
+Node: Insertion Commands69270
+Node: Other Hooks72376
+Node: Delimiter Forms74429
+Node: Misc Keywords75781
+Node: Indices76181
+Node: Concept Index76469
+Node: Function Index79682
+Node: Keystroke Index81364
+
+End Tag Table

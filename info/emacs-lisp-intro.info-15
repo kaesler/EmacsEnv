@@ -1,0 +1,981 @@
+This is emacs-lisp-intro.info, produced by makeinfo version 4.0b from
+emacs-lisp-intro.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Emacs Lisp Intro: (eintr).
+  			A simple introduction to Emacs Lisp programming.
+END-INFO-DIR-ENTRY
+
+   This is an introduction to `Programming in Emacs Lisp', for people
+who are not programmers.
+
+   Edition 2.04, 2001 Dec 17
+
+   Copyright (C) 1990, '91, '92, '93, '94, '95, '97, 2001 Free Software
+Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Section being the Preface, with the Front-Cover Texts being
+no Front-Cover Texts, and with the Back-Cover Texts being no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: emacs-lisp-intro.info,  Node: Another Bug,  Next: Final printed graph,  Prev: mapcar,  Up: Print Whole Graph
+
+Another Bug ... Most Insidious
+------------------------------
+
+   I said `almost ready to print'!  Of course, there is a bug in the
+`print-graph' function ...  It has a `vertical-step' option, but not a
+`horizontal-step' option.  The `top-of-range' scale goes from 10 to 300
+by tens.  But the `print-graph' function will print only by ones.
+
+   This is a classic example of what some consider the most insidious
+type of bug, the bug of omission.  This is not the kind of bug you can
+find by studying the code, for it is not in the code; it is an omitted
+feature.  Your best actions are to try your program early and often;
+and try to arrange, as much as you can, to write code that is easy to
+understand and easy to change.  Try to be aware, whenever you can, that
+whatever you have written, _will_ be rewritten, if not soon,
+eventually.  A hard maxim to follow.
+
+   It is the `print-X-axis-numbered-line' function that needs the work;
+and then the `print-X-axis' and the `print-graph' functions need to be
+adapted.  Not much needs to be done; there is one nicety: the numbers
+ought to line up under the tic marks.  This takes a little thought.
+
+   Here is the corrected `print-X-axis-numbered-line':
+
+     (defun print-X-axis-numbered-line
+       (number-of-X-tics X-axis-leading-spaces
+        &optional horizontal-step)
+       "Print line of X-axis numbers"
+       (let ((number X-axis-label-spacing)
+             (horizontal-step (or horizontal-step 1)))
+         (insert X-axis-leading-spaces)
+         ;; Delete extra leading spaces.
+         (delete-char
+          (- (1-
+              (length (number-to-string horizontal-step)))))
+         (insert (concat
+                  (make-string
+                   ;; Insert white space.
+                   (-  (* symbol-width
+                          X-axis-label-spacing)
+                       (1-
+                        (length
+                         (number-to-string horizontal-step)))
+                       2)
+                   ? )
+                  (number-to-string
+                   (* number horizontal-step))))
+         ;; Insert remaining numbers.
+         (setq number (+ number X-axis-label-spacing))
+         (while (> number-of-X-tics 1)
+           (insert (X-axis-element
+                    (* number horizontal-step)))
+           (setq number (+ number X-axis-label-spacing))
+           (setq number-of-X-tics (1- number-of-X-tics)))))
+
+   If you are reading this in Info, you can see the new versions of
+`print-X-axis' `print-graph' and evaluate them.  If you are reading
+this in a printed book, you can see the changed lines here (the full
+text is too much to print).
+
+     (defun print-X-axis (numbers-list horizontal-step)
+       "Print X axis labels to length of NUMBERS-LIST.
+     Optionally, HORIZONTAL-STEP, a positive integer,
+     specifies how much an X  axis label increments for
+     each column."
+     ;; Value of symbol-width and full-Y-label-width
+     ;; are passed by `print-graph'.
+       (let* ((leading-spaces
+               (make-string full-Y-label-width ? ))
+            ;; symbol-width is provided by graph-body-print
+            (tic-width (* symbol-width X-axis-label-spacing))
+            (X-length (length numbers-list))
+            (X-tic
+             (concat
+              (make-string
+               ;; Make a string of blanks.
+               (-  (* symbol-width X-axis-label-spacing)
+                   (length X-axis-tic-symbol))
+               ? )
+              ;; Concatenate blanks with tic symbol.
+              X-axis-tic-symbol))
+            (tic-number
+             (if (zerop (% X-length tic-width))
+                 (/ X-length tic-width)
+               (1+ (/ X-length tic-width)))))
+     
+         (print-X-axis-tic-line
+          tic-number leading-spaces X-tic)
+         (insert "\n")
+         (print-X-axis-numbered-line
+          tic-number leading-spaces horizontal-step)))
+
+     (defun print-graph
+       (numbers-list &optional vertical-step horizontal-step)
+       "Print labelled bar graph of the NUMBERS-LIST.
+     The numbers-list consists of the Y-axis values.
+     
+     Optionally, VERTICAL-STEP, a positive integer,
+     specifies how much a Y axis label increments for
+     each line.  For example, a step of 5 means that
+     each row is five units.
+     
+     Optionally, HORIZONTAL-STEP, a positive integer,
+     specifies how much an X  axis label increments for
+     each column."
+       (let* ((symbol-width (length graph-blank))
+              ;; `height' is both the largest number
+              ;; and the number with the most digits.
+              (height (apply 'max numbers-list))
+              (height-of-top-line
+               (if (zerop (% height Y-axis-label-spacing))
+                   height
+                 ;; else
+                 (* (1+ (/ height Y-axis-label-spacing))
+                    Y-axis-label-spacing)))
+              (vertical-step (or vertical-step 1))
+              (full-Y-label-width
+               (length
+                (concat
+                 (number-to-string
+                  (* height-of-top-line vertical-step))
+                 Y-axis-tic))))
+         (print-Y-axis
+          height-of-top-line full-Y-label-width vertical-step)
+         (graph-body-print
+             numbers-list height-of-top-line symbol-width)
+         (print-X-axis numbers-list horizontal-step)))
+
+
+File: emacs-lisp-intro.info,  Node: Final printed graph,  Prev: Another Bug,  Up: Print Whole Graph
+
+The Printed Graph
+-----------------
+
+   When made and installed, you can call the `print-graph' command like
+this:
+
+     (print-graph fiftieth-list-for-graph 50 10)
+
+   Here is the graph:
+
+
+
+     1000 -  *
+             **
+             **
+             **
+             **
+      750 -  ***
+             ***
+             ***
+             ***
+             ****
+      500 - *****
+            ******
+            ******
+            ******
+            *******
+      250 - ********
+            *********                     *
+            ***********                   *
+            *************                 *
+       50 - ***************** *           *
+            |   |    |    |    |    |    |    |
+           10  50  100  150  200  250  300  350
+
+
+
+   The largest group of functions contain 10 - 19 words and symbols
+each.
+
+
+File: emacs-lisp-intro.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Full Graph,  Up: Top
+
+GNU Free Documentation License
+******************************
+
+                        Version 1.1, March 2000
+     Copyright (C) 2000 Free Software Foundation, Inc.
+     59 Temple Place, Suite 330, Boston, MA  02111-1307, USA
+     
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+
+  0. PREAMBLE
+
+     The purpose of this License is to make a manual, textbook, or other
+     written document "free" in the sense of freedom: to assure everyone
+     the effective freedom to copy and redistribute it, with or without
+     modifying it, either commercially or noncommercially.  Secondarily,
+     this License preserves for the author and publisher a way to get
+     credit for their work, while not being considered responsible for
+     modifications made by others.
+
+     This License is a kind of "copyleft", which means that derivative
+     works of the document must themselves be free in the same sense.
+     It complements the GNU General Public License, which is a copyleft
+     license designed for free software.
+
+     We have designed this License in order to use it for manuals for
+     free software, because free software needs free documentation: a
+     free program should come with manuals providing the same freedoms
+     that the software does.  But this License is not limited to
+     software manuals; it can be used for any textual work, regardless
+     of subject matter or whether it is published as a printed book.
+     We recommend this License principally for works whose purpose is
+     instruction or reference.
+
+  1. APPLICABILITY AND DEFINITIONS
+
+     This License applies to any manual or other work that contains a
+     notice placed by the copyright holder saying it can be distributed
+     under the terms of this License.  The "Document", below, refers to
+     any such manual or work.  Any member of the public is a licensee,
+     and is addressed as "you".
+
+     A "Modified Version" of the Document means any work containing the
+     Document or a portion of it, either copied verbatim, or with
+     modifications and/or translated into another language.
+
+     A "Secondary Section" is a named appendix or a front-matter
+     section of the Document that deals exclusively with the
+     relationship of the publishers or authors of the Document to the
+     Document's overall subject (or to related matters) and contains
+     nothing that could fall directly within that overall subject.
+     (For example, if the Document is in part a textbook of
+     mathematics, a Secondary Section may not explain any mathematics.)
+     The relationship could be a matter of historical connection with
+     the subject or with related matters, or of legal, commercial,
+     philosophical, ethical or political position regarding them.
+
+     The "Invariant Sections" are certain Secondary Sections whose
+     titles are designated, as being those of Invariant Sections, in
+     the notice that says that the Document is released under this
+     License.
+
+     The "Cover Texts" are certain short passages of text that are
+     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
+     that says that the Document is released under this License.
+
+     A "Transparent" copy of the Document means a machine-readable copy,
+     represented in a format whose specification is available to the
+     general public, whose contents can be viewed and edited directly
+     and straightforwardly with generic text editors or (for images
+     composed of pixels) generic paint programs or (for drawings) some
+     widely available drawing editor, and that is suitable for input to
+     text formatters or for automatic translation to a variety of
+     formats suitable for input to text formatters.  A copy made in an
+     otherwise Transparent file format whose markup has been designed
+     to thwart or discourage subsequent modification by readers is not
+     Transparent.  A copy that is not "Transparent" is called "Opaque".
+
+     Examples of suitable formats for Transparent copies include plain
+     ASCII without markup, Texinfo input format, LaTeX input format,
+     SGML or XML using a publicly available DTD, and
+     standard-conforming simple HTML designed for human modification.
+     Opaque formats include PostScript, PDF, proprietary formats that
+     can be read and edited only by proprietary word processors, SGML
+     or XML for which the DTD and/or processing tools are not generally
+     available, and the machine-generated HTML produced by some word
+     processors for output purposes only.
+
+     The "Title Page" means, for a printed book, the title page itself,
+     plus such following pages as are needed to hold, legibly, the
+     material this License requires to appear in the title page.  For
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
+
+  2. VERBATIM COPYING
+
+     You may copy and distribute the Document in any medium, either
+     commercially or noncommercially, provided that this License, the
+     copyright notices, and the license notice saying this License
+     applies to the Document are reproduced in all copies, and that you
+     add no other conditions whatsoever to those of this License.  You
+     may not use technical measures to obstruct or control the reading
+     or further copying of the copies you make or distribute.  However,
+     you may accept compensation in exchange for copies.  If you
+     distribute a large enough number of copies you must also follow
+     the conditions in section 3.
+
+     You may also lend copies, under the same conditions stated above,
+     and you may publicly display copies.
+
+  3. COPYING IN QUANTITY
+
+     If you publish printed copies of the Document numbering more than
+     100, and the Document's license notice requires Cover Texts, you
+     must enclose the copies in covers that carry, clearly and legibly,
+     all these Cover Texts: Front-Cover Texts on the front cover, and
+     Back-Cover Texts on the back cover.  Both covers must also clearly
+     and legibly identify you as the publisher of these copies.  The
+     front cover must present the full title with all words of the
+     title equally prominent and visible.  You may add other material
+     on the covers in addition.  Copying with changes limited to the
+     covers, as long as they preserve the title of the Document and
+     satisfy these conditions, can be treated as verbatim copying in
+     other respects.
+
+     If the required texts for either cover are too voluminous to fit
+     legibly, you should put the first ones listed (as many as fit
+     reasonably) on the actual cover, and continue the rest onto
+     adjacent pages.
+
+     If you publish or distribute Opaque copies of the Document
+     numbering more than 100, you must either include a
+     machine-readable Transparent copy along with each Opaque copy, or
+     state in or with each Opaque copy a publicly-accessible
+     computer-network location containing a complete Transparent copy
+     of the Document, free of added material, which the general
+     network-using public has access to download anonymously at no
+     charge using public-standard network protocols.  If you use the
+     latter option, you must take reasonably prudent steps, when you
+     begin distribution of Opaque copies in quantity, to ensure that
+     this Transparent copy will remain thus accessible at the stated
+     location until at least one year after the last time you
+     distribute an Opaque copy (directly or through your agents or
+     retailers) of that edition to the public.
+
+     It is requested, but not required, that you contact the authors of
+     the Document well before redistributing any large number of
+     copies, to give them a chance to provide you with an updated
+     version of the Document.
+
+  4. MODIFICATIONS
+
+     You may copy and distribute a Modified Version of the Document
+     under the conditions of sections 2 and 3 above, provided that you
+     release the Modified Version under precisely this License, with
+     the Modified Version filling the role of the Document, thus
+     licensing distribution and modification of the Modified Version to
+     whoever possesses a copy of it.  In addition, you must do these
+     things in the Modified Version:
+
+       A. Use in the Title Page (and on the covers, if any) a title
+          distinct from that of the Document, and from those of
+          previous versions (which should, if there were any, be listed
+          in the History section of the Document).  You may use the
+          same title as a previous version if the original publisher of
+          that version gives permission.
+
+       B. List on the Title Page, as authors, one or more persons or
+          entities responsible for authorship of the modifications in
+          the Modified Version, together with at least five of the
+          principal authors of the Document (all of its principal
+          authors, if it has less than five).
+
+       C. State on the Title page the name of the publisher of the
+          Modified Version, as the publisher.
+
+       D. Preserve all the copyright notices of the Document.
+
+       E. Add an appropriate copyright notice for your modifications
+          adjacent to the other copyright notices.
+
+       F. Include, immediately after the copyright notices, a license
+          notice giving the public permission to use the Modified
+          Version under the terms of this License, in the form shown in
+          the Addendum below.
+
+       G. Preserve in that license notice the full lists of Invariant
+          Sections and required Cover Texts given in the Document's
+          license notice.
+
+       H. Include an unaltered copy of this License.
+
+       I. Preserve the section entitled "History", and its title, and
+          add to it an item stating at least the title, year, new
+          authors, and publisher of the Modified Version as given on
+          the Title Page.  If there is no section entitled "History" in
+          the Document, create one stating the title, year, authors,
+          and publisher of the Document as given on its Title Page,
+          then add an item describing the Modified Version as stated in
+          the previous sentence.
+
+       J. Preserve the network location, if any, given in the Document
+          for public access to a Transparent copy of the Document, and
+          likewise the network locations given in the Document for
+          previous versions it was based on.  These may be placed in
+          the "History" section.  You may omit a network location for a
+          work that was published at least four years before the
+          Document itself, or if the original publisher of the version
+          it refers to gives permission.
+
+       K. In any section entitled "Acknowledgments" or "Dedications",
+          preserve the section's title, and preserve in the section all
+          the substance and tone of each of the contributor
+          acknowledgments and/or dedications given therein.
+
+       L. Preserve all the Invariant Sections of the Document,
+          unaltered in their text and in their titles.  Section numbers
+          or the equivalent are not considered part of the section
+          titles.
+
+       M. Delete any section entitled "Endorsements".  Such a section
+          may not be included in the Modified Version.
+
+       N. Do not retitle any existing section as "Endorsements" or to
+          conflict in title with any Invariant Section.
+
+     If the Modified Version includes new front-matter sections or
+     appendices that qualify as Secondary Sections and contain no
+     material copied from the Document, you may at your option
+     designate some or all of these sections as invariant.  To do this,
+     add their titles to the list of Invariant Sections in the Modified
+     Version's license notice.  These titles must be distinct from any
+     other section titles.
+
+     You may add a section entitled "Endorsements", provided it contains
+     nothing but endorsements of your Modified Version by various
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
+
+     You may add a passage of up to five words as a Front-Cover Text,
+     and a passage of up to 25 words as a Back-Cover Text, to the end
+     of the list of Cover Texts in the Modified Version.  Only one
+     passage of Front-Cover Text and one of Back-Cover Text may be
+     added by (or through arrangements made by) any one entity.  If the
+     Document already includes a cover text for the same cover,
+     previously added by you or by arrangement made by the same entity
+     you are acting on behalf of, you may not add another; but you may
+     replace the old one, on explicit permission from the previous
+     publisher that added the old one.
+
+     The author(s) and publisher(s) of the Document do not by this
+     License give permission to use their names for publicity for or to
+     assert or imply endorsement of any Modified Version.
+
+  5. COMBINING DOCUMENTS
+
+     You may combine the Document with other documents released under
+     this License, under the terms defined in section 4 above for
+     modified versions, provided that you include in the combination
+     all of the Invariant Sections of all of the original documents,
+     unmodified, and list them all as Invariant Sections of your
+     combined work in its license notice.
+
+     The combined work need only contain one copy of this License, and
+     multiple identical Invariant Sections may be replaced with a single
+     copy.  If there are multiple Invariant Sections with the same name
+     but different contents, make the title of each such section unique
+     by adding at the end of it, in parentheses, the name of the
+     original author or publisher of that section if known, or else a
+     unique number.  Make the same adjustment to the section titles in
+     the list of Invariant Sections in the license notice of the
+     combined work.
+
+     In the combination, you must combine any sections entitled
+     "History" in the various original documents, forming one section
+     entitled "History"; likewise combine any sections entitled
+     "Acknowledgments", and any sections entitled "Dedications".  You
+     must delete all sections entitled "Endorsements."
+
+  6. COLLECTIONS OF DOCUMENTS
+
+     You may make a collection consisting of the Document and other
+     documents released under this License, and replace the individual
+     copies of this License in the various documents with a single copy
+     that is included in the collection, provided that you follow the
+     rules of this License for verbatim copying of each of the
+     documents in all other respects.
+
+     You may extract a single document from such a collection, and
+     distribute it individually under this License, provided you insert
+     a copy of this License into the extracted document, and follow
+     this License in all other respects regarding verbatim copying of
+     that document.
+
+  7. AGGREGATION WITH INDEPENDENT WORKS
+
+     A compilation of the Document or its derivatives with other
+     separate and independent documents or works, in or on a volume of
+     a storage or distribution medium, does not as a whole count as a
+     Modified Version of the Document, provided no compilation
+     copyright is claimed for the compilation.  Such a compilation is
+     called an "aggregate", and this License does not apply to the
+     other self-contained works thus compiled with the Document, on
+     account of their being thus compiled, if they are not themselves
+     derivative works of the Document.
+
+     If the Cover Text requirement of section 3 is applicable to these
+     copies of the Document, then if the Document is less than one
+     quarter of the entire aggregate, the Document's Cover Texts may be
+     placed on covers that surround only the Document within the
+     aggregate.  Otherwise they must appear on covers around the whole
+     aggregate.
+
+  8. TRANSLATION
+
+     Translation is considered a kind of modification, so you may
+     distribute translations of the Document under the terms of section
+     4.  Replacing Invariant Sections with translations requires special
+     permission from their copyright holders, but you may include
+     translations of some or all Invariant Sections in addition to the
+     original versions of these Invariant Sections.  You may include a
+     translation of this License provided that you also include the
+     original English version of this License.  In case of a
+     disagreement between the translation and the original English
+     version of this License, the original English version will prevail.
+
+  9. TERMINATION
+
+     You may not copy, modify, sublicense, or distribute the Document
+     except as expressly provided for under this License.  Any other
+     attempt to copy, modify, sublicense or distribute the Document is
+     void, and will automatically terminate your rights under this
+     License.  However, parties who have received copies, or rights,
+     from you under this License will not have their licenses
+     terminated so long as such parties remain in full compliance.
+
+ 10. FUTURE REVISIONS OF THIS LICENSE
+
+     The Free Software Foundation may publish new, revised versions of
+     the GNU Free Documentation License from time to time.  Such new
+     versions will be similar in spirit to the present version, but may
+     differ in detail to address new problems or concerns.  See
+     `http://www.gnu.org/copyleft/'.
+
+     Each version of the License is given a distinguishing version
+     number.  If the Document specifies that a particular numbered
+     version of this License "or any later version" applies to it, you
+     have the option of following the terms and conditions either of
+     that specified version or of any later version that has been
+     published (not as a draft) by the Free Software Foundation.  If
+     the Document does not specify a version number of this License,
+     you may choose any version ever published (not as a draft) by the
+     Free Software Foundation.
+
+
+File: emacs-lisp-intro.info,  Node: Index,  Next: About the Author,  Prev: GNU Free Documentation License,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* % (remainder function):                Compute a Remainder.
+* (debug) in code:                       debug-on-quit.
+* * (multiplication):                    defun.
+* * for read-only buffer:                Read-only buffer.
+* *scratch* buffer:                      print-elements-of-list.
+* .emacs file:                           Emacs Initialization.
+* .emacs file, beginning of:             Beginning a .emacs File.
+* / (division):                          Large buffer case.
+* <= (less than or equal):               Inc Example parts.
+* > (greater than):                      if in more detail.
+* Accumulate, type of recursive pattern: Accumulate.
+* add-hook:                              Text and Auto-fill.
+* and <1>:                               fwd-para let.
+* and:                                   kill-new function.
+* and, introduced:                       kill-new function.
+* Anonymous function:                    lambda.
+* append-to-buffer:                      append-to-buffer.
+* apply:                                 Columns of a graph.
+* apropos:                               Columns of a graph.
+* Argument as local variable:            Dec Example altogether.
+* argument defined:                      Arguments.
+* argument list defined:                 defun.
+* Argument, wrong type of:               Wrong Type of Argument.
+* Arguments:                             Arguments.
+* Arguments' data types:                 Data types.
+* Arguments, variable number of:         Variable Number of Arguments.
+* Asterisk for read-only buffer:         Read-only buffer.
+* Auto Fill mode turned on:              Text and Auto-fill.
+* autoload:                              Autoload.
+* Automatic mode selection:              Text and Auto-fill.
+* Axis, print horizontal:                print-X-axis.
+* Axis, print vertical:                  print-Y-axis.
+* beginning-of-buffer:                   beginning-of-buffer.
+* bind defined:                          set & setq.
+* body defined:                          defun.
+* Body of graph:                         Readying a Graph.
+* Buffer size:                           Buffer Size & Locations.
+* Buffer, history of word:               Buffer Names.
+* buffer-file-name:                      Buffer Names.
+* buffer-menu, bound to key:             Keybindings.
+* buffer-name:                           Buffer Names.
+* Bug, most insidious type:              Another Bug.
+* Building robots:                       Building Robots.
+* Building Tags in the Emacs sources:    etags.
+* Byte compiling:                        Byte Compiling.
+* C language primitives:                 Primitive Functions.
+* C, a digression into:                  Digression into C.
+* call defined:                          Switching Buffers.
+* cancel-debug-on-entry:                 debug-on-entry.
+* car, introduced:                       car cdr & cons.
+* cdr, introduced:                       car cdr & cons.
+* Changing a function definition:        Change a defun.
+* Chest of Drawers, metaphor for a symbol: Symbols as Chest.
+* Clipping text:                         Cutting & Storing Text.
+* Code installation:                     Permanent Installation.
+* command defined:                       How to Evaluate.
+* Comments in Lisp code:                 Change a defun.
+* Common Lisp:                           Lisp History.
+* compare-windows:                       Keybindings.
+* concat:                                Data types.
+* cond:                                  Recursion with cond.
+* condition-case:                        condition-case.
+* Conditional 'twixt two versions of Emacs: Simple Extension.
+* Conditional with if:                   if.
+* cons, example:                         kill-new function.
+* cons, introduced:                      cons.
+* copy-region-as-kill:                   copy-region-as-kill.
+* copy-to-buffer:                        copy-to-buffer.
+* Count words recursively:               recursive-count-words.
+* count-words-in-defun:                  count-words-in-defun.
+* count-words-region:                    count-words-region.
+* Counting:                              Counting.
+* Counting words in a defun <1>:         count-words-in-defun.
+* Counting words in a defun:             Words in a defun.
+* current-buffer:                        Getting Buffers.
+* Customizing your .emacs file:          Emacs Initialization.
+* Cutting and storing text:              Cutting & Storing Text.
+* Data types:                            Data types.
+* debug:                                 debug.
+* debug-on-entry:                        debug-on-entry.
+* debug-on-quit:                         debug-on-quit.
+* debugging:                             Debugging.
+* default-mode-line-format:              Mode Line.
+* default.el init file:                  Site-wide Init.
+* defcustom:                             defcustom.
+* Deferment in recursion:                No Deferment.
+* Defermentless solution:                No deferment solution.
+* Definition installation:               Install.
+* Definition writing:                    Writing Defuns.
+* Definition, how to change:             Change a defun.
+* defun:                                 defun.
+* defvar:                                defvar.
+* defvar for a user customizable variable: defvar and asterisk.
+* defvar with an asterisk:               defvar and asterisk.
+* delete-and-extract-region <1>:         Digression into C.
+* delete-and-extract-region:             delete-and-extract-region.
+* Deleting text:                         Cutting & Storing Text.
+* describe-function:                     simplified-beginning-of-buffer.
+* describe-function, introduced:         Finding More.
+* Digression into C:                     Digression into C.
+* directory-files:                       Files List.
+* Division:                              Large buffer case.
+* dolist:                                dolist.
+* dotimes:                               dotimes.
+* Drawers, Chest of, metaphor for a symbol: Symbols as Chest.
+* Duplicated words function:             the-the.
+* edebug:                                edebug.
+* edit-options:                          defvar and asterisk.
+* Else:                                  else.
+* Emacs version, choosing:               Simple Extension.
+* empty list defined:                    Lisp Atoms.
+* empty string defined:                  Review.
+* eobp:                                  fwd-para between paragraphs.
+* eq:                                    Review.
+* eq (example of use):                   last-command & this-command.
+* equal:                                 Review.
+* Erasing text:                          Cutting & Storing Text.
+* error:                                 rotate-yk-ptr body.
+* Error for symbol without function:     Void Function.
+* Error for symbol without value:        Void Variable.
+* Error message generation:              Making Errors.
+* etags:                                 etags.
+* evaluate defined:                      Run a Program.
+* Evaluating inner lists:                Evaluating Inner Lists.
+* Evaluation:                            Evaluation.
+* Evaluation practice:                   Practicing Evaluation.
+* Every, type of recursive pattern:      Every.
+* Example variable, fill-column:         fill-column Example.
+* expression defined:                    Lisp Atoms.
+* Falsehood and truth in Emacs Lisp:     Truth & Falsehood.
+* FDL, GNU Free Documentation License:   GNU Free Documentation License.
+* files-in-below-directory:              Files List.
+* fill-column, an example variable:      fill-column Example.
+* Find a File:                           Find a File.
+* Find function documentation:           Finding More.
+* Find source of function:               Finding More.
+* find-tags:                             Finding More.
+* Flowers in a field:                    Lisp Lists.
+* Focusing attention (narrowing):        Narrowing & Widening.
+* form defined:                          Lisp Atoms.
+* Formatting convention:                 append save-excursion.
+* Formatting help:                       Typing Lists.
+* forward-paragraph:                     forward-paragraph.
+* forward-sentence:                      forward-sentence.
+* function defined:                      Making Errors.
+* function definition defined:           defun.
+* Function definition installation:      Install.
+* Function definition writing:           Writing Defuns.
+* Function definition, how to change:    Change a defun.
+* Functions, primitive:                  Primitive Functions.
+* Generate an error message:             Making Errors.
+* Getting a buffer:                      Getting Buffers.
+* Global set key:                        Keybindings.
+* global-set-key:                        Keybindings.
+* global-unset-key:                      Keybindings.
+* Graph prototype:                       Readying a Graph.
+* Graph, printing all:                   Print Whole Graph.
+* graph-body-print:                      graph-body-print.
+* graph-body-print Final version.:       The final version.
+* Handling the kill ring:                Kill Ring.
+* Help typing lists:                     Typing Lists.
+* Horizontal axis printing:              print-X-axis.
+* if:                                    if.
+* if-part defined:                       if in more detail.
+* indent-tabs-mode:                      Indent Tabs Mode.
+* Indentation for formatting:            append save-excursion.
+* Initialization file:                   Emacs Initialization.
+* Initializing a variable:               defvar.
+* Inner list evaluation:                 Evaluating Inner Lists.
+* insert-buffer:                         insert-buffer.
+* insert-buffer-substring:               append-to-buffer overview.
+* Insidious type of bug:                 Another Bug.
+* Install a Function Definition:         Install.
+* Install code permanently:              Permanent Installation.
+* interactive:                           Interactive.
+* interactive function defined:          How to Evaluate.
+* Interactive functions:                 Interactive.
+* Interactive options:                   Interactive Options.
+* interactive, example use of:           insert-buffer interactive.
+* Interpreter, Lisp, explained:          Run a Program.
+* Interpreter, what it does:             Lisp Interpreter.
+* Keep, type of recursive pattern:       Keep.
+* Key setting globally:                  Keybindings.
+* Key unbinding:                         Keybindings.
+* Keymaps:                               Keymaps.
+* Keyword:                               Optional Arguments.
+* Kill ring handling:                    Kill Ring.
+* Kill ring overview:                    Kill Ring Overview.
+* kill-append:                           kill-append function.
+* kill-new:                              kill-new function.
+* kill-region:                           kill-region.
+* Killing text:                          Cutting & Storing Text.
+* lambda:                                lambda.
+* length:                                length.
+* lengths-list-file:                     lengths-list-file.
+* lengths-list-many-files:               lengths-list-many-files.
+* let:                                   let.
+* let expression sample:                 Sample let Expression.
+* let expression, parts of:              Parts of let Expression.
+* let variables uninitialized:           Uninitialized let Variables.
+* Library, as term for `file':           Finding More.
+* line-to-top-of-window:                 Simple Extension.
+* Lisp Atoms:                            Lisp Atoms.
+* Lisp history:                          Lisp History.
+* Lisp interpreter, explained:           Run a Program.
+* Lisp interpreter, what it does:        Lisp Interpreter.
+* Lisp Lists:                            Lisp Lists.
+* Lisp macro:                            delete-and-extract-region.
+* list-buffers, rebound:                 Keybindings.
+* Lists in a computer:                   List Implementation.
+* load-library:                          Loading Files.
+* load-path:                             Loading Files.
+* Loading files:                         Loading Files.
+* local variable defined:                Prevent confusion.
+* Local variables list, per-buffer,:     Text and Auto-fill.
+* Location of point:                     Buffer Size & Locations.
+* looking-at:                            fwd-para between paragraphs.
+* Loops:                                 while.
+* Loops and recursion:                   Loops & Recursion.
+* Maclisp:                               Lisp History.
+* Macro, lisp:                           delete-and-extract-region.
+* Mail aliases:                          Mail Aliases.
+* make tags:                             etags.
+* make-string:                           Y Axis Element.
+* mapcar:                                mapcar.
+* mark:                                  save-excursion.
+* mark-whole-buffer:                     mark-whole-buffer.
+* match-beginning:                       fwd-para no fill prefix.
+* max:                                   Columns of a graph.
+* message:                               message.
+* min:                                   Columns of a graph.
+* Mode line format:                      Mode Line.
+* Mode selection, automatic:             Text and Auto-fill.
+* Motion by sentence and paragraph:      Regexp Search.
+* Narrowing:                             Narrowing & Widening.
+* narrowing defined:                     Buffer Size & Locations.
+* nil:                                   Truth & Falsehood.
+* nil, history of word:                  Buffer Names.
+* No deferment solution:                 No deferment solution.
+* nreverse:                              Counting function definitions.
+* nth:                                   nth.
+* nthcdr <1>:                            copy-region-as-kill.
+* nthcdr:                                nthcdr.
+* nthcdr, example:                       kill-new function.
+* number-to-string:                      Y Axis Element.
+* occur:                                 Keybindings.
+* optional:                              Optional Arguments.
+* Optional arguments:                    Optional Arguments.
+* Options for interactive:               Interactive Options.
+* or:                                    Insert or.
+* other-buffer:                          Getting Buffers.
+* Paragraphs, movement by:               Regexp Search.
+* Parts of a Recursive Definition:       Recursive Definition Parts.
+* Parts of let expression:               Parts of let Expression.
+* Passing information to functions:      Arguments.
+* Pasting text:                          Yanking.
+* Patterns, searching for:               Regexp Search.
+* Per-buffer, local variables list:      Text and Auto-fill.
+* Permanent code installation:           Permanent Installation.
+* point:                                 save-excursion.
+* point defined:                         Buffer Size & Locations.
+* Point location:                        Buffer Size & Locations.
+* Point, mark, buffer preservation:      save-excursion.
+* Practicing evaluation:                 Practicing Evaluation.
+* Preserving point, mark, and buffer:    save-excursion.
+* Primitive functions:                   Primitive Functions.
+* Primitives written in C:               Primitive Functions.
+* Print horizontal axis:                 print-X-axis.
+* Print vertical axis:                   print-Y-axis.
+* print-elements-of-list:                print-elements-of-list.
+* print-elements-recursively:            Recursion with list.
+* print-graph Final version.:            The final version.
+* print-graph varlist:                   print-graph Varlist.
+* print-X-axis:                          X Axis Tic Marks.
+* print-X-axis-numbered-line:            X Axis Tic Marks.
+* print-X-axis-tic-line:                 X Axis Tic Marks.
+* print-Y-axis:                          print-Y-axis Penultimate.
+* Printing the whole graph:              Print Whole Graph.
+* prog1:                                 fwd-para between paragraphs.
+* progn:                                 progn.
+* Program, running one:                  Run a Program.
+* Prototype graph:                       Readying a Graph.
+* re-search-forward:                     re-search-forward.
+* Read-only buffer:                      Read-only buffer.
+* Readying a graph:                      Readying a Graph.
+* Rebinding keys:                        Keymaps.
+* Recursion:                             Recursion.
+* Recursion and loops:                   Loops & Recursion.
+* Recursion without Deferments:          No Deferment.
+* Recursive Definition Parts:            Recursive Definition Parts.
+* Recursive pattern: accumulate:         Accumulate.
+* Recursive pattern: every:              Every.
+* Recursive pattern: keep:               Keep.
+* Recursive Patterns:                    Recursive Patterns.
+* recursive-count-words:                 recursive-count-words.
+* recursive-graph-body-print:            recursive-graph-body-print.
+* recursive-lengths-list-many-files:     Several files recursively.
+* Recursively counting words:            recursive-count-words.
+* regexp-quote:                          fwd-para let.
+* Region, what it is:                    save-excursion.
+* Regular expression searches:           Regexp Search.
+* Regular expressions for word counting: Counting Words.
+* Remainder function, %:                 Compute a Remainder.
+* Repetition (loops):                    Loops & Recursion.
+* Repetition for word counting:          Counting Words.
+* Retrieving text:                       Yanking.
+* reverse:                               Counting function definitions.
+* Ring, making a list like a:            Kill Ring.
+* Robots, building:                      Building Robots.
+* rotate-yank-pointer <1>:               rotate-yank-pointer.
+* rotate-yank-pointer:                   Yanking.
+* Run a program:                         Run a Program.
+* Sample let expression:                 Sample let Expression.
+* save-excursion:                        save-excursion.
+* save-restriction:                      save-restriction.
+* search-forward:                        search-forward.
+* Searches, illustrating:                Regexp Search.
+* sentence-end:                          sentence-end.
+* Sentences, movement by:                Regexp Search.
+* set:                                   Using set.
+* set-buffer:                            Switching Buffers.
+* setcar:                                setcar.
+* setcdr:                                setcdr.
+* setcdr, example:                       kill-new function.
+* setq:                                  Using setq.
+* Setting a key globally:                Keybindings.
+* Setting value of variable:             set & setq.
+* side effect defined:                   Evaluation.
+* Simple extension in .emacs file:       Simple Extension.
+* simplified-beginning-of-buffer:        simplified-beginning-of-buffer.
+* site-init.el init file:                Site-wide Init.
+* site-load.el init file:                Site-wide Init.
+* Size of buffer:                        Buffer Size & Locations.
+* Solution without deferment:            No deferment solution.
+* sort:                                  Sorting.
+* Source level debugger:                 edebug.
+* Special form:                          Complications.
+* Special form of defun:                 defun.
+* Storing and cutting text:              Cutting & Storing Text.
+* string defined:                        Lisp Atoms.
+* switch-to-buffer:                      Switching Buffers.
+* Switching to a buffer:                 Switching Buffers.
+* Symbol names:                          Names & Definitions.
+* Symbol without function error:         Void Function.
+* Symbol without value error:            Void Variable.
+* Symbolic expressions, introduced:      Lisp Atoms.
+* Symbols as a Chest of Drawers:         Symbols as Chest.
+* Syntax categories and tables:          Syntax.
+* Tabs, preventing:                      Indent Tabs Mode.
+* TAGS file, create own:                 etags.
+* Tags in the Emacs sources:             etags.
+* TAGS table, specifying:                Finding More.
+* Text between double quotation marks:   Lisp Atoms.
+* Text Mode turned on:                   Text and Auto-fill.
+* Text retrieval:                        Yanking.
+* the-the:                               the-the.
+* then-part defined:                     if in more detail.
+* top-of-ranges:                         Counting function definitions.
+* triangle-bugged:                       debug.
+* triangle-recursively:                  Recursive triangle function.
+* Truth and falsehood in Emacs Lisp:     Truth & Falsehood.
+* Types of data:                         Data types.
+* Unbinding key:                         Keybindings.
+* Uninitialized let variables:           Uninitialized let Variables.
+* Variable initialization:               defvar.
+* Variable number of arguments:          Variable Number of Arguments.
+* Variable, example of, fill-column:     fill-column Example.
+* Variable, setting value:               set & setq.
+* Variables:                             Variables.
+* varlist defined:                       Parts of let Expression.
+* Version of Emacs, choosing:            Simple Extension.
+* Vertical axis printing:                print-Y-axis.
+* what-line:                             what-line.
+* while:                                 while.
+* Whitespace in lists:                   Whitespace in Lists.
+* Whole graph printing:                  Print Whole Graph.
+* Widening:                              Narrowing & Widening.
+* Widening, example of:                  what-line.
+* Word counting in a defun:              Words in a defun.
+* Words and symbols in defun:            Words and Symbols.
+* Words, counted recursively:            recursive-count-words.
+* Words, duplicated:                     the-the.
+* Writing a function definition:         Writing Defuns.
+* Wrong type of argument:                Wrong Type of Argument.
+* X axis printing:                       print-X-axis.
+* X-axis-element:                        X Axis Tic Marks.
+* Y axis printing:                       print-Y-axis.
+* Y-axis-column:                         Y-axis-column.
+* Y-axis-column Final version.:          The final version.
+* Y-axis-label-spacing:                  Compute a Remainder.
+* Y-axis-tic:                            Y Axis Element.
+* yank <1>:                              yank.
+* yank:                                  Yanking.
+* yank-pop:                              yank-pop.
+* zap-to-char:                           zap-to-char.
+* zerop:                                 rotate-yk-ptr body.
+
+
+File: emacs-lisp-intro.info,  Node: About the Author,  Prev: Index,  Up: Top
+
+About the Author
+****************
+
+     Robert J. Chassell has worked with GNU Emacs since 1985.  He writes
+     and edits, teaches Emacs and Emacs Lisp, and speaks throughout the
+     world on software freedom.  Chassell was a founding Director and
+     Treasurer of the Free Software Foundation, Inc.  He is co-author of
+     the `Texinfo' manual, and has edited more than a dozen other
+     books.  He graduated from Cambridge University, in England.  He
+     has an abiding interest in social and economic history and flies
+     his own airplane.
+
+    
+
+

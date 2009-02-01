@@ -1,0 +1,1059 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Chars and Bytes,  Next: Splitting Characters,  Prev: Character Sets,  Up: Non-ASCII Characters
+
+Characters and Bytes
+====================
+
+   In multibyte representation, each character occupies one or more
+bytes.  Each character set has an "introduction sequence", which is
+normally one or two bytes long.  (Exception: the ASCII character set
+and the EIGHT-BIT-GRAPHIC character set have a zero-length introduction
+sequence.)  The introduction sequence is the beginning of the byte
+sequence for any character in the character set.  The rest of the
+character's bytes distinguish it from the other characters in the same
+character set.  Depending on the character set, there are either one or
+two distinguishing bytes; the number of such bytes is called the
+"dimension" of the character set.
+
+ - Function: charset-dimension charset
+     This function returns the dimension of CHARSET; at present, the
+     dimension is always 1 or 2.
+
+ - Function: charset-bytes charset
+     This function returns the number of bytes used to represent a
+     character in character set CHARSET.
+
+   This is the simplest way to determine the byte length of a character
+set's introduction sequence:
+
+     (- (charset-bytes CHARSET)
+        (charset-dimension CHARSET))
+
+
+File: elisp,  Node: Splitting Characters,  Next: Scanning Charsets,  Prev: Chars and Bytes,  Up: Non-ASCII Characters
+
+Splitting Characters
+====================
+
+   The functions in this section convert between characters and the byte
+values used to represent them.  For most purposes, there is no need to
+be concerned with the sequence of bytes used to represent a character,
+because Emacs translates automatically when necessary.
+
+ - Function: split-char character
+     Return a list containing the name of the character set of
+     CHARACTER, followed by one or two byte values (integers) which
+     identify CHARACTER within that character set.  The number of byte
+     values is the character set's dimension.
+
+          (split-char 2248)
+               => (latin-iso8859-1 72)
+          (split-char 65)
+               => (ascii 65)
+          (split-char 128)
+               => (eight-bit-control 128)
+
+ - Function: make-char charset &optional code1 code2
+     This function returns the character in character set CHARSET whose
+     position codes are CODE1 and CODE2.  This is roughly the inverse
+     of `split-char'.  Normally, you should specify either one or both
+     of CODE1 and CODE2 according to the dimension of CHARSET.  For
+     example,
+
+          (make-char 'latin-iso8859-1 72)
+               => 2248
+
+   If you call `make-char' with no BYTE-VALUES, the result is a
+"generic character" which stands for CHARSET.  A generic character is
+an integer, but it is _not_ valid for insertion in the buffer as a
+character.  It can be used in `char-table-range' to refer to the whole
+character set (*note Char-Tables::).  `char-valid-p' returns `nil' for
+generic characters.  For example:
+
+     (make-char 'latin-iso8859-1)
+          => 2176
+     (char-valid-p 2176)
+          => nil
+     (char-valid-p 2176 t)
+          => t
+     (split-char 2176)
+          => (latin-iso8859-1 0)
+
+   The character sets ASCII, EIGHT-BIT-CONTROL, and EIGHT-BIT-GRAPHIC
+don't have corresponding generic characters.  If CHARSET is one of them
+and you don't supply CODE1, `make-char' returns the character code
+corresponding to the smallest code in CHARSET.
+
+
+File: elisp,  Node: Scanning Charsets,  Next: Translation of Characters,  Prev: Splitting Characters,  Up: Non-ASCII Characters
+
+Scanning for Character Sets
+===========================
+
+   Sometimes it is useful to find out which character sets appear in a
+part of a buffer or a string.  One use for this is in determining which
+coding systems (*note Coding Systems::) are capable of representing all
+of the text in question.
+
+ - Function: find-charset-region beg end &optional translation
+     This function returns a list of the character sets that appear in
+     the current buffer between positions BEG and END.
+
+     The optional argument TRANSLATION specifies a translation table to
+     be used in scanning the text (*note Translation of Characters::).
+     If it is non-`nil', then each character in the region is translated
+     through this table, and the value returned describes the translated
+     characters instead of the characters actually in the buffer.
+
+ - Function: find-charset-string string &optional translation
+     This function returns a list of the character sets that appear in
+     the string STRING.  It is just like `find-charset-region', except
+     that it applies to the contents of STRING instead of part of the
+     current buffer.
+
+
+File: elisp,  Node: Translation of Characters,  Next: Coding Systems,  Prev: Scanning Charsets,  Up: Non-ASCII Characters
+
+Translation of Characters
+=========================
+
+   A "translation table" specifies a mapping of characters into
+characters.  These tables are used in encoding and decoding, and for
+other purposes.  Some coding systems specify their own particular
+translation tables; there are also default translation tables which
+apply to all other coding systems.
+
+ - Function: make-translation-table &rest translations
+     This function returns a translation table based on the argument
+     TRANSLATIONS.  Each element of TRANSLATIONS should be a list of
+     elements of the form `(FROM . TO)'; this says to translate the
+     character FROM into TO.
+
+     The arguments and the forms in each argument are processed in
+     order, and if a previous form already translates TO to some other
+     character, say TO-ALT, FROM is also translated to TO-ALT.
+
+     You can also map one whole character set into another character
+     set with the same dimension.  To do this, you specify a generic
+     character (which designates a character set) for FROM (*note
+     Splitting Characters::).  In this case, TO should also be a
+     generic character, for another character set of the same
+     dimension.  Then the translation table translates each character
+     of FROM's character set into the corresponding character of TO's
+     character set.
+
+   In decoding, the translation table's translations are applied to the
+characters that result from ordinary decoding.  If a coding system has
+property `character-translation-table-for-decode', that specifies the
+translation table to use.  Otherwise, if
+`standard-translation-table-for-decode' is non-`nil', decoding uses
+that table.
+
+   In encoding, the translation table's translations are applied to the
+characters in the buffer, and the result of translation is actually
+encoded.  If a coding system has property
+`character-translation-table-for-encode', that specifies the
+translation table to use.  Otherwise the variable
+`standard-translation-table-for-encode' specifies the translation table.
+
+ - Variable: standard-translation-table-for-decode
+     This is the default translation table for decoding, for coding
+     systems that don't specify any other translation table.
+
+ - Variable: standard-translation-table-for-encode
+     This is the default translation table for encoding, for coding
+     systems that don't specify any other translation table.
+
+
+File: elisp,  Node: Coding Systems,  Next: Input Methods,  Prev: Translation of Characters,  Up: Non-ASCII Characters
+
+Coding Systems
+==============
+
+   When Emacs reads or writes a file, and when Emacs sends text to a
+subprocess or receives text from a subprocess, it normally performs
+character code conversion and end-of-line conversion as specified by a
+particular "coding system".
+
+   How to define a coding system is an arcane matter, and is not
+documented here.
+
+* Menu:
+
+* Coding System Basics::        Basic concepts.
+* Encoding and I/O::            How file I/O functions handle coding systems.
+* Lisp and Coding Systems::     Functions to operate on coding system names.
+* User-Chosen Coding Systems::  Asking the user to choose a coding system.
+* Default Coding Systems::      Controlling the default choices.
+* Specifying Coding Systems::   Requesting a particular coding system
+                                    for a single file operation.
+* Explicit Encoding::           Encoding or decoding text without doing I/O.
+* Terminal I/O Encoding::       Use of encoding for terminal I/O.
+* MS-DOS File Types::           How DOS "text" and "binary" files
+                                    relate to coding systems.
+
+
+File: elisp,  Node: Coding System Basics,  Next: Encoding and I/O,  Up: Coding Systems
+
+Basic Concepts of Coding Systems
+--------------------------------
+
+   "Character code conversion" involves conversion between the encoding
+used inside Emacs and some other encoding.  Emacs supports many
+different encodings, in that it can convert to and from them.  For
+example, it can convert text to or from encodings such as Latin 1, Latin
+2, Latin 3, Latin 4, Latin 5, and several variants of ISO 2022.  In some
+cases, Emacs supports several alternative encodings for the same
+characters; for example, there are three coding systems for the Cyrillic
+(Russian) alphabet: ISO, Alternativnyj, and KOI8.
+
+   Most coding systems specify a particular character code for
+conversion, but some of them leave the choice unspecified--to be chosen
+heuristically for each file, based on the data.
+
+   "End of line conversion" handles three different conventions used on
+various systems for representing end of line in files.  The Unix
+convention is to use the linefeed character (also called newline).  The
+DOS convention is to use a carriage-return and a linefeed at the end of
+a line.  The Mac convention is to use just carriage-return.
+
+   "Base coding systems" such as `latin-1' leave the end-of-line
+conversion unspecified, to be chosen based on the data.  "Variant
+coding systems" such as `latin-1-unix', `latin-1-dos' and `latin-1-mac'
+specify the end-of-line conversion explicitly as well.  Most base
+coding systems have three corresponding variants whose names are formed
+by adding `-unix', `-dos' and `-mac'.
+
+   The coding system `raw-text' is special in that it prevents
+character code conversion, and causes the buffer visited with that
+coding system to be a unibyte buffer.  It does not specify the
+end-of-line conversion, allowing that to be determined as usual by the
+data, and has the usual three variants which specify the end-of-line
+conversion.  `no-conversion' is equivalent to `raw-text-unix': it
+specifies no conversion of either character codes or end-of-line.
+
+   The coding system `emacs-mule' specifies that the data is
+represented in the internal Emacs encoding.  This is like `raw-text' in
+that no code conversion happens, but different in that the result is
+multibyte data.
+
+ - Function: coding-system-get coding-system property
+     This function returns the specified property of the coding system
+     CODING-SYSTEM.  Most coding system properties exist for internal
+     purposes, but one that you might find useful is `mime-charset'.
+     That property's value is the name used in MIME for the character
+     coding which this coding system can read and write.  Examples:
+
+          (coding-system-get 'iso-latin-1 'mime-charset)
+               => iso-8859-1
+          (coding-system-get 'iso-2022-cn 'mime-charset)
+               => iso-2022-cn
+          (coding-system-get 'cyrillic-koi8 'mime-charset)
+               => koi8-r
+
+     The value of the `mime-charset' property is also defined as an
+     alias for the coding system.
+
+
+File: elisp,  Node: Encoding and I/O,  Next: Lisp and Coding Systems,  Prev: Coding System Basics,  Up: Coding Systems
+
+Encoding and I/O
+----------------
+
+   The principal purpose of coding systems is for use in reading and
+writing files.  The function `insert-file-contents' uses a coding
+system for decoding the file data, and `write-region' uses one to
+encode the buffer contents.
+
+   You can specify the coding system to use either explicitly (*note
+Specifying Coding Systems::), or implicitly using the defaulting
+mechanism (*note Default Coding Systems::).  But these methods may not
+completely specify what to do.  For example, they may choose a coding
+system such as `undefined' which leaves the character code conversion
+to be determined from the data.  In these cases, the I/O operation
+finishes the job of choosing a coding system.  Very often you will want
+to find out afterwards which coding system was chosen.
+
+ - Variable: buffer-file-coding-system
+     This variable records the coding system that was used for visiting
+     the current buffer.  It is used for saving the buffer, and for
+     writing part of the buffer with `write-region'.  When those
+     operations ask the user to specify a different coding system,
+     `buffer-file-coding-system' is updated to the coding system
+     specified.
+
+     However, `buffer-file-coding-system' does not affect sending text
+     to a subprocess.
+
+ - Variable: save-buffer-coding-system
+     This variable specifies the coding system for saving the buffer (by
+     overriding `buffer-file-coding-system').  Note that it is not used
+     for `write-region'.
+
+     When a command to save the buffer starts out to use
+     `buffer-file-coding-system' (or `save-buffer-coding-system'), and
+     that coding system cannot handle the actual text in the buffer,
+     the command asks the user to choose another coding system.  After
+     that happens, the command also updates `buffer-file-coding-system'
+     to represent the coding system that the user specified.
+
+ - Variable: last-coding-system-used
+     I/O operations for files and subprocesses set this variable to the
+     coding system name that was used.  The explicit encoding and
+     decoding functions (*note Explicit Encoding::) set it too.
+
+     *Warning:* Since receiving subprocess output sets this variable,
+     it can change whenever Emacs waits; therefore, you should copy the
+     value shortly after the function call that stores the value you are
+     interested in.
+
+   The variable `selection-coding-system' specifies how to encode
+selections for the window system.  *Note Window System Selections::.
+
+
+File: elisp,  Node: Lisp and Coding Systems,  Next: User-Chosen Coding Systems,  Prev: Encoding and I/O,  Up: Coding Systems
+
+Coding Systems in Lisp
+----------------------
+
+   Here are the Lisp facilities for working with coding systems:
+
+ - Function: coding-system-list &optional base-only
+     This function returns a list of all coding system names (symbols).
+     If BASE-ONLY is non-`nil', the value includes only the base
+     coding systems.  Otherwise, it includes alias and variant coding
+     systems as well.
+
+ - Function: coding-system-p object
+     This function returns `t' if OBJECT is a coding system name.
+
+ - Function: check-coding-system coding-system
+     This function checks the validity of CODING-SYSTEM.  If that is
+     valid, it returns CODING-SYSTEM.  Otherwise it signals an error
+     with condition `coding-system-error'.
+
+ - Function: coding-system-change-eol-conversion coding-system eol-type
+     This function returns a coding system which is like CODING-SYSTEM
+     except for its eol conversion, which is specified by `eol-type'.
+     EOL-TYPE should be `unix', `dos', `mac', or `nil'.  If it is
+     `nil', the returned coding system determines the end-of-line
+     conversion from the data.
+
+ - Function: coding-system-change-text-conversion eol-coding text-coding
+     This function returns a coding system which uses the end-of-line
+     conversion of EOL-CODING, and the text conversion of TEXT-CODING.
+     If TEXT-CODING is `nil', it returns `undecided', or one of its
+     variants according to EOL-CODING.
+
+ - Function: find-coding-systems-region from to
+     This function returns a list of coding systems that could be used
+     to encode a text between FROM and TO.  All coding systems in the
+     list can safely encode any multibyte characters in that portion of
+     the text.
+
+     If the text contains no multibyte characters, the function returns
+     the list `(undecided)'.
+
+ - Function: find-coding-systems-string string
+     This function returns a list of coding systems that could be used
+     to encode the text of STRING.  All coding systems in the list can
+     safely encode any multibyte characters in STRING.  If the text
+     contains no multibyte characters, this returns the list
+     `(undecided)'.
+
+ - Function: find-coding-systems-for-charsets charsets
+     This function returns a list of coding systems that could be used
+     to encode all the character sets in the list CHARSETS.
+
+ - Function: detect-coding-region start end &optional highest
+     This function chooses a plausible coding system for decoding the
+     text from START to END.  This text should be a byte sequence
+     (*note Explicit Encoding::).
+
+     Normally this function returns a list of coding systems that could
+     handle decoding the text that was scanned.  They are listed in
+     order of decreasing priority.  But if HIGHEST is non-`nil', then
+     the return value is just one coding system, the one that is
+     highest in priority.
+
+     If the region contains only ASCII characters, the value is
+     `undecided' or `(undecided)'.
+
+ - Function: detect-coding-string string highest
+     This function is like `detect-coding-region' except that it
+     operates on the contents of STRING instead of bytes in the buffer.
+
+   *Note Process Information::, for how to examine or set the coding
+systems used for I/O to a subprocess.
+
+
+File: elisp,  Node: User-Chosen Coding Systems,  Next: Default Coding Systems,  Prev: Lisp and Coding Systems,  Up: Coding Systems
+
+User-Chosen Coding Systems
+--------------------------
+
+ - Function: select-safe-coding-system from to &optional
+          default-coding-system accept-default-p
+     This function selects a coding system for encoding specified text,
+     asking the user to choose if necessary.  Normally the specified
+     text is the text in the current buffer between FROM and TO,
+     defaulting to the whole buffer if they are `nil'.  If FROM is a
+     string, the string is the specified text, and TO is ignored.
+
+     If DEFAULT-CODING-SYSTEM is non-`nil', that is the first coding
+     system to try; if that can handle the text,
+     `select-safe-coding-system' returns that coding system.  It can
+     also be a list of coding systems; then the function tries each of
+     them one by one.  After trying all of them, it next tries the
+     user's most preferred coding system (*note prefer-coding-system:
+     (emacs)Recognize Coding.), and after that the current buffer's
+     value of `buffer-file-coding-system' (if it is not `undecided').
+
+     If one of those coding systems can safely encode all the specified
+     text, `select-safe-coding-system' chooses it and returns it.
+     Otherwise, it asks the user to choose from a list of coding systems
+     which can encode all the text, and returns the user's choice.
+
+     The optional argument ACCEPT-DEFAULT-P, if non-`nil', should be a
+     function to determine whether the coding system selected without
+     user interaction is acceptable.  If this function returns `nil',
+     the silently selected coding system is rejected, and the user is
+     asked to select a coding system from a list of possible candidates.
+
+     If the variable `select-safe-coding-system-accept-default-p' is
+     non-`nil', its value overrides the value of ACCEPT-DEFAULT-P.
+
+   Here are two functions you can use to let the user specify a coding
+system, with completion.  *Note Completion::.
+
+ - Function: read-coding-system prompt &optional default
+     This function reads a coding system using the minibuffer,
+     prompting with string PROMPT, and returns the coding system name
+     as a symbol.  If the user enters null input, DEFAULT specifies
+     which coding system to return.  It should be a symbol or a string.
+
+ - Function: read-non-nil-coding-system prompt
+     This function reads a coding system using the minibuffer,
+     prompting with string PROMPT, and returns the coding system name
+     as a symbol.  If the user tries to enter null input, it asks the
+     user to try again.  *Note Coding Systems::.
+
+
+File: elisp,  Node: Default Coding Systems,  Next: Specifying Coding Systems,  Prev: User-Chosen Coding Systems,  Up: Coding Systems
+
+Default Coding Systems
+----------------------
+
+   This section describes variables that specify the default coding
+system for certain files or when running certain subprograms, and the
+function that I/O operations use to access them.
+
+   The idea of these variables is that you set them once and for all to
+the defaults you want, and then do not change them again.  To specify a
+particular coding system for a particular operation in a Lisp program,
+don't change these variables; instead, override them using
+`coding-system-for-read' and `coding-system-for-write' (*note
+Specifying Coding Systems::).
+
+ - Variable: auto-coding-regexp-alist
+     This variable is an alist of text patterns and corresponding coding
+     systems. Each element has the form `(REGEXP . CODING-SYSTEM)'; a
+     file whose first few kilobytes match REGEXP is decoded with
+     CODING-SYSTEM when its contents are read into a buffer.  The
+     settings in this alist take priority over `coding:' tags in the
+     files and the contents of `file-coding-system-alist' (see below).
+     The default value is set so that Emacs automatically recognizes
+     mail files in Babyl format and reads them with no code conversions.
+
+ - Variable: file-coding-system-alist
+     This variable is an alist that specifies the coding systems to use
+     for reading and writing particular files.  Each element has the
+     form `(PATTERN . CODING)', where PATTERN is a regular expression
+     that matches certain file names.  The element applies to file
+     names that match PATTERN.
+
+     The CDR of the element, CODING, should be either a coding system,
+     a cons cell containing two coding systems, or a function name (a
+     symbol with a function definition).  If CODING is a coding system,
+     that coding system is used for both reading the file and writing
+     it.  If CODING is a cons cell containing two coding systems, its
+     CAR specifies the coding system for decoding, and its CDR
+     specifies the coding system for encoding.
+
+     If CODING is a function name, the function must return a coding
+     system or a cons cell containing two coding systems.  This value
+     is used as described above.
+
+ - Variable: process-coding-system-alist
+     This variable is an alist specifying which coding systems to use
+     for a subprocess, depending on which program is running in the
+     subprocess.  It works like `file-coding-system-alist', except that
+     PATTERN is matched against the program name used to start the
+     subprocess.  The coding system or systems specified in this alist
+     are used to initialize the coding systems used for I/O to the
+     subprocess, but you can specify other coding systems later using
+     `set-process-coding-system'.
+
+   *Warning:* Coding systems such as `undecided', which determine the
+coding system from the data, do not work entirely reliably with
+asynchronous subprocess output.  This is because Emacs handles
+asynchronous subprocess output in batches, as it arrives.  If the coding
+system leaves the character code conversion unspecified, or leaves the
+end-of-line conversion unspecified, Emacs must try to detect the proper
+conversion from one batch at a time, and this does not always work.
+
+   Therefore, with an asynchronous subprocess, if at all possible, use a
+coding system which determines both the character code conversion and
+the end of line conversion--that is, one like `latin-1-unix', rather
+than `undecided' or `latin-1'.
+
+ - Variable: network-coding-system-alist
+     This variable is an alist that specifies the coding system to use
+     for network streams.  It works much like
+     `file-coding-system-alist', with the difference that the PATTERN
+     in an element may be either a port number or a regular expression.
+     If it is a regular expression, it is matched against the network
+     service name used to open the network stream.
+
+ - Variable: default-process-coding-system
+     This variable specifies the coding systems to use for subprocess
+     (and network stream) input and output, when nothing else specifies
+     what to do.
+
+     The value should be a cons cell of the form `(INPUT-CODING .
+     OUTPUT-CODING)'.  Here INPUT-CODING applies to input from the
+     subprocess, and OUTPUT-CODING applies to output to it.
+
+ - Function: find-operation-coding-system operation &rest arguments
+     This function returns the coding system to use (by default) for
+     performing OPERATION with ARGUMENTS.  The value has this form:
+
+          (DECODING-SYSTEM ENCODING-SYSTEM)
+
+     The first element, DECODING-SYSTEM, is the coding system to use
+     for decoding (in case OPERATION does decoding), and
+     ENCODING-SYSTEM is the coding system for encoding (in case
+     OPERATION does encoding).
+
+     The argument OPERATION should be a symbol, one of
+     `insert-file-contents', `write-region', `call-process',
+     `call-process-region', `start-process', or `open-network-stream'.
+     These are the names of the Emacs I/O primitives that can do coding
+     system conversion.
+
+     The remaining arguments should be the same arguments that might be
+     given to that I/O primitive.  Depending on the primitive, one of
+     those arguments is selected as the "target".  For example, if
+     OPERATION does file I/O, whichever argument specifies the file
+     name is the target.  For subprocess primitives, the process name
+     is the target.  For `open-network-stream', the target is the
+     service name or port number.
+
+     This function looks up the target in `file-coding-system-alist',
+     `process-coding-system-alist', or `network-coding-system-alist',
+     depending on OPERATION.  *Note Default Coding Systems::.
+
+
+File: elisp,  Node: Specifying Coding Systems,  Next: Explicit Encoding,  Prev: Default Coding Systems,  Up: Coding Systems
+
+Specifying a Coding System for One Operation
+--------------------------------------------
+
+   You can specify the coding system for a specific operation by binding
+the variables `coding-system-for-read' and/or `coding-system-for-write'.
+
+ - Variable: coding-system-for-read
+     If this variable is non-`nil', it specifies the coding system to
+     use for reading a file, or for input from a synchronous subprocess.
+
+     It also applies to any asynchronous subprocess or network stream,
+     but in a different way: the value of `coding-system-for-read' when
+     you start the subprocess or open the network stream specifies the
+     input decoding method for that subprocess or network stream.  It
+     remains in use for that subprocess or network stream unless and
+     until overridden.
+
+     The right way to use this variable is to bind it with `let' for a
+     specific I/O operation.  Its global value is normally `nil', and
+     you should not globally set it to any other value.  Here is an
+     example of the right way to use the variable:
+
+          ;; Read the file with no character code conversion.
+          ;; Assume CRLF represents end-of-line.
+          (let ((coding-system-for-write 'emacs-mule-dos))
+            (insert-file-contents filename))
+
+     When its value is non-`nil', `coding-system-for-read' takes
+     precedence over all other methods of specifying a coding system to
+     use for input, including `file-coding-system-alist',
+     `process-coding-system-alist' and `network-coding-system-alist'.
+
+ - Variable: coding-system-for-write
+     This works much like `coding-system-for-read', except that it
+     applies to output rather than input.  It affects writing to files,
+     as well as sending output to subprocesses and net connections.
+
+     When a single operation does both input and output, as do
+     `call-process-region' and `start-process', both
+     `coding-system-for-read' and `coding-system-for-write' affect it.
+
+ - Variable: inhibit-eol-conversion
+     When this variable is non-`nil', no end-of-line conversion is done,
+     no matter which coding system is specified.  This applies to all
+     the Emacs I/O and subprocess primitives, and to the explicit
+     encoding and decoding functions (*note Explicit Encoding::).
+
+
+File: elisp,  Node: Explicit Encoding,  Next: Terminal I/O Encoding,  Prev: Specifying Coding Systems,  Up: Coding Systems
+
+Explicit Encoding and Decoding
+------------------------------
+
+   All the operations that transfer text in and out of Emacs have the
+ability to use a coding system to encode or decode the text.  You can
+also explicitly encode and decode text using the functions in this
+section.
+
+   The result of encoding, and the input to decoding, are not ordinary
+text.  They logically consist of a series of byte values; that is, a
+series of characters whose codes are in the range 0 through 255.  In a
+multibyte buffer or string, character codes 128 through 159 are
+represented by multibyte sequences, but this is invisible to Lisp
+programs.
+
+   The usual way to read a file into a buffer as a sequence of bytes, so
+you can decode the contents explicitly, is with
+`insert-file-contents-literally' (*note Reading from Files::);
+alternatively, specify a non-`nil' RAWFILE argument when visiting a
+file with `find-file-noselect'.  These methods result in a unibyte
+buffer.
+
+   The usual way to use the byte sequence that results from explicitly
+encoding text is to copy it to a file or process--for example, to write
+it with `write-region' (*note Writing to Files::), and suppress
+encoding by binding `coding-system-for-write' to `no-conversion'.
+
+   Here are the functions to perform explicit encoding or decoding.  The
+decoding functions produce sequences of bytes; the encoding functions
+are meant to operate on sequences of bytes.  All of these functions
+discard text properties.
+
+ - Function: encode-coding-region start end coding-system
+     This function encodes the text from START to END according to
+     coding system CODING-SYSTEM.  The encoded text replaces the
+     original text in the buffer.  The result of encoding is logically a
+     sequence of bytes, but the buffer remains multibyte if it was
+     multibyte before.
+
+ - Function: encode-coding-string string coding-system
+     This function encodes the text in STRING according to coding
+     system CODING-SYSTEM.  It returns a new string containing the
+     encoded text.  The result of encoding is a unibyte string.
+
+ - Function: decode-coding-region start end coding-system
+     This function decodes the text from START to END according to
+     coding system CODING-SYSTEM.  The decoded text replaces the
+     original text in the buffer.  To make explicit decoding useful,
+     the text before decoding ought to be a sequence of byte values,
+     but both multibyte and unibyte buffers are acceptable.
+
+ - Function: decode-coding-string string coding-system
+     This function decodes the text in STRING according to coding
+     system CODING-SYSTEM.  It returns a new string containing the
+     decoded text.  To make explicit decoding useful, the contents of
+     STRING ought to be a sequence of byte values, but a multibyte
+     string is acceptable.
+
+
+File: elisp,  Node: Terminal I/O Encoding,  Next: MS-DOS File Types,  Prev: Explicit Encoding,  Up: Coding Systems
+
+Terminal I/O Encoding
+---------------------
+
+   Emacs can decode keyboard input using a coding system, and encode
+terminal output.  This is useful for terminals that transmit or display
+text using a particular encoding such as Latin-1.  Emacs does not set
+`last-coding-system-used' for encoding or decoding for the terminal.
+
+ - Function: keyboard-coding-system
+     This function returns the coding system that is in use for decoding
+     keyboard input--or `nil' if no coding system is to be used.
+
+ - Function: set-keyboard-coding-system coding-system
+     This function specifies CODING-SYSTEM as the coding system to use
+     for decoding keyboard input.  If CODING-SYSTEM is `nil', that
+     means do not decode keyboard input.
+
+ - Function: terminal-coding-system
+     This function returns the coding system that is in use for encoding
+     terminal output--or `nil' for no encoding.
+
+ - Function: set-terminal-coding-system coding-system
+     This function specifies CODING-SYSTEM as the coding system to use
+     for encoding terminal output.  If CODING-SYSTEM is `nil', that
+     means do not encode terminal output.
+
+
+File: elisp,  Node: MS-DOS File Types,  Prev: Terminal I/O Encoding,  Up: Coding Systems
+
+MS-DOS File Types
+-----------------
+
+   On MS-DOS and Microsoft Windows, Emacs guesses the appropriate
+end-of-line conversion for a file by looking at the file's name.  This
+feature classifies files as "text files" and "binary files".  By
+"binary file" we mean a file of literal byte values that are not
+necessarily meant to be characters; Emacs does no end-of-line conversion
+and no character code conversion for them.  On the other hand, the bytes
+in a text file are intended to represent characters; when you create a
+new file whose name implies that it is a text file, Emacs uses DOS
+end-of-line conversion.
+
+ - Variable: buffer-file-type
+     This variable, automatically buffer-local in each buffer, records
+     the file type of the buffer's visited file.  When a buffer does
+     not specify a coding system with `buffer-file-coding-system', this
+     variable is used to determine which coding system to use when
+     writing the contents of the buffer.  It should be `nil' for text,
+     `t' for binary.  If it is `t', the coding system is
+     `no-conversion'.  Otherwise, `undecided-dos' is used.
+
+     Normally this variable is set by visiting a file; it is set to
+     `nil' if the file was visited without any actual conversion.
+
+ - User Option: file-name-buffer-file-type-alist
+     This variable holds an alist for recognizing text and binary files.
+     Each element has the form (REGEXP . TYPE), where REGEXP is matched
+     against the file name, and TYPE may be `nil' for text, `t' for
+     binary, or a function to call to compute which.  If it is a
+     function, then it is called with a single argument (the file name)
+     and should return `t' or `nil'.
+
+     When running on MS-DOS or MS-Windows, Emacs checks this alist to
+     decide which coding system to use when reading a file.  For a text
+     file, `undecided-dos' is used.  For a binary file, `no-conversion'
+     is used.
+
+     If no element in this alist matches a given file name, then
+     `default-buffer-file-type' says how to treat the file.
+
+ - User Option: default-buffer-file-type
+     This variable says how to handle files for which
+     `file-name-buffer-file-type-alist' says nothing about the type.
+
+     If this variable is non-`nil', then these files are treated as
+     binary: the coding system `no-conversion' is used.  Otherwise,
+     nothing special is done for them--the coding system is deduced
+     solely from the file contents, in the usual Emacs fashion.
+
+
+File: elisp,  Node: Input Methods,  Next: Locales,  Prev: Coding Systems,  Up: Non-ASCII Characters
+
+Input Methods
+=============
+
+   "Input methods" provide convenient ways of entering non-ASCII
+characters from the keyboard.  Unlike coding systems, which translate
+non-ASCII characters to and from encodings meant to be read by
+programs, input methods provide human-friendly commands.  (*Note Input
+Methods: (emacs)Input Methods, for information on how users use input
+methods to enter text.)  How to define input methods is not yet
+documented in this manual, but here we describe how to use them.
+
+   Each input method has a name, which is currently a string; in the
+future, symbols may also be usable as input method names.
+
+ - Variable: current-input-method
+     This variable holds the name of the input method now active in the
+     current buffer.  (It automatically becomes local in each buffer
+     when set in any fashion.)  It is `nil' if no input method is
+     active in the buffer now.
+
+ - Variable: default-input-method
+     This variable holds the default input method for commands that
+     choose an input method.  Unlike `current-input-method', this
+     variable is normally global.
+
+ - Function: set-input-method input-method
+     This function activates input method INPUT-METHOD for the current
+     buffer.  It also sets `default-input-method' to INPUT-METHOD.  If
+     INPUT-METHOD is `nil', this function deactivates any input method
+     for the current buffer.
+
+ - Function: read-input-method-name prompt &optional default
+          inhibit-null
+     This function reads an input method name with the minibuffer,
+     prompting with PROMPT.  If DEFAULT is non-`nil', that is returned
+     by default, if the user enters empty input.  However, if
+     INHIBIT-NULL is non-`nil', empty input signals an error.
+
+     The returned value is a string.
+
+ - Variable: input-method-alist
+     This variable defines all the supported input methods.  Each
+     element defines one input method, and should have the form:
+
+          (INPUT-METHOD LANGUAGE-ENV ACTIVATE-FUNC
+           TITLE DESCRIPTION ARGS...)
+
+     Here INPUT-METHOD is the input method name, a string; LANGUAGE-ENV
+     is another string, the name of the language environment this input
+     method is recommended for.  (That serves only for documentation
+     purposes.)
+
+     ACTIVATE-FUNC is a function to call to activate this method.  The
+     ARGS, if any, are passed as arguments to ACTIVATE-FUNC.  All told,
+     the arguments to ACTIVATE-FUNC are INPUT-METHOD and the ARGS.
+
+     TITLE is a string to display in the mode line while this method is
+     active.  DESCRIPTION is a string describing this method and what
+     it is good for.
+
+   The fundamental interface to input methods is through the variable
+`input-method-function'.  *Note Reading One Event::.
+
+
+File: elisp,  Node: Locales,  Prev: Input Methods,  Up: Non-ASCII Characters
+
+Locales
+=======
+
+   POSIX defines a concept of "locales" which control which language to
+use in language-related features.  These Emacs variables control how
+Emacs interacts with these features.
+
+ - Variable: locale-coding-system
+     This variable specifies the coding system to use for decoding
+     system error messages, for encoding the format argument to
+     `format-time-string', and for decoding the return value of
+     `format-time-string'.
+
+ - Variable: system-messages-locale
+     This variable specifies the locale to use for generating system
+     error messages.  Changing the locale can cause messages to come
+     out in a different language or in a different orthography.  If the
+     variable is `nil', the locale is specified by environment
+     variables in the usual POSIX fashion.
+
+ - Variable: system-time-locale
+     This variable specifies the locale to use for formatting time
+     values.  Changing the locale can cause messages to appear
+     according to the conventions of a different language.  If the
+     variable is `nil', the locale is specified by environment
+     variables in the usual POSIX fashion.
+
+
+File: elisp,  Node: Searching and Matching,  Next: Syntax Tables,  Prev: Non-ASCII Characters,  Up: Top
+
+Searching and Matching
+**********************
+
+   GNU Emacs provides two ways to search through a buffer for specified
+text: exact string searches and regular expression searches.  After a
+regular expression search, you can examine the "match data" to
+determine which text matched the whole regular expression or various
+portions of it.
+
+* Menu:
+
+* String Search::         Search for an exact match.
+* Regular Expressions::   Describing classes of strings.
+* Regexp Search::         Searching for a match for a regexp.
+* POSIX Regexps::         Searching POSIX-style for the longest match.
+* Search and Replace::	  Internals of `query-replace'.
+* Match Data::            Finding out which part of the text matched
+                            various parts of a regexp, after regexp search.
+* Searching and Case::    Case-independent or case-significant searching.
+* Standard Regexps::      Useful regexps for finding sentences, pages,...
+
+   The `skip-chars...' functions also perform a kind of searching.
+*Note Skipping Characters::.
+
+
+File: elisp,  Node: String Search,  Next: Regular Expressions,  Up: Searching and Matching
+
+Searching for Strings
+=====================
+
+   These are the primitive functions for searching through the text in a
+buffer.  They are meant for use in programs, but you may call them
+interactively.  If you do so, they prompt for the search string; the
+arguments LIMIT and NOERROR are `nil', and REPEAT is 1.
+
+   These search functions convert the search string to multibyte if the
+buffer is multibyte; they convert the search string to unibyte if the
+buffer is unibyte.  *Note Text Representations::.
+
+ - Command: search-forward string &optional limit noerror repeat
+     This function searches forward from point for an exact match for
+     STRING.  If successful, it sets point to the end of the occurrence
+     found, and returns the new value of point.  If no match is found,
+     the value and side effects depend on NOERROR (see below).
+
+     In the following example, point is initially at the beginning of
+     the line.  Then `(search-forward "fox")' moves point after the last
+     letter of `fox':
+
+          ---------- Buffer: foo ----------
+          -!-The quick brown fox jumped over the lazy dog.
+          ---------- Buffer: foo ----------
+          
+          (search-forward "fox")
+               => 20
+          
+          ---------- Buffer: foo ----------
+          The quick brown fox-!- jumped over the lazy dog.
+          ---------- Buffer: foo ----------
+
+     The argument LIMIT specifies the upper bound to the search.  (It
+     must be a position in the current buffer.)  No match extending
+     after that position is accepted.  If LIMIT is omitted or `nil', it
+     defaults to the end of the accessible portion of the buffer.
+
+     What happens when the search fails depends on the value of
+     NOERROR.  If NOERROR is `nil', a `search-failed' error is
+     signaled.  If NOERROR is `t', `search-forward' returns `nil' and
+     does nothing.  If NOERROR is neither `nil' nor `t', then
+     `search-forward' moves point to the upper bound and returns `nil'.
+     (It would be more consistent now to return the new position of
+     point in that case, but some existing programs may depend on a
+     value of `nil'.)
+
+     If REPEAT is supplied (it must be a positive number), then the
+     search is repeated that many times (each time starting at the end
+     of the previous time's match).  If these successive searches
+     succeed, the function succeeds, moving point and returning its new
+     value.  Otherwise the search fails.
+
+ - Command: search-backward string &optional limit noerror repeat
+     This function searches backward from point for STRING.  It is just
+     like `search-forward' except that it searches backwards and leaves
+     point at the beginning of the match.
+
+ - Command: word-search-forward string &optional limit noerror repeat
+     This function searches forward from point for a "word" match for
+     STRING.  If it finds a match, it sets point to the end of the
+     match found, and returns the new value of point.
+
+     Word matching regards STRING as a sequence of words, disregarding
+     punctuation that separates them.  It searches the buffer for the
+     same sequence of words.  Each word must be distinct in the buffer
+     (searching for the word `ball' does not match the word `balls'),
+     but the details of punctuation and spacing are ignored (searching
+     for `ball boy' does match `ball.  Boy!').
+
+     In this example, point is initially at the beginning of the
+     buffer; the search leaves it between the `y' and the `!'.
+
+          ---------- Buffer: foo ----------
+          -!-He said "Please!  Find
+          the ball boy!"
+          ---------- Buffer: foo ----------
+          
+          (word-search-forward "Please find the ball, boy.")
+               => 35
+          
+          ---------- Buffer: foo ----------
+          He said "Please!  Find
+          the ball boy-!-!"
+          ---------- Buffer: foo ----------
+
+     If LIMIT is non-`nil' (it must be a position in the current
+     buffer), then it is the upper bound to the search.  The match
+     found must not extend after that position.
+
+     If NOERROR is `nil', then `word-search-forward' signals an error
+     if the search fails.  If NOERROR is `t', then it returns `nil'
+     instead of signaling an error.  If NOERROR is neither `nil' nor
+     `t', it moves point to LIMIT (or the end of the buffer) and
+     returns `nil'.
+
+     If REPEAT is non-`nil', then the search is repeated that many
+     times.  Point is positioned at the end of the last match.
+
+ - Command: word-search-backward string &optional limit noerror repeat
+     This function searches backward from point for a word match to
+     STRING.  This function is just like `word-search-forward' except
+     that it searches backward and normally leaves point at the
+     beginning of the match.
+
+
+File: elisp,  Node: Regular Expressions,  Next: Regexp Search,  Prev: String Search,  Up: Searching and Matching
+
+Regular Expressions
+===================
+
+   A "regular expression" ("regexp", for short) is a pattern that
+denotes a (possibly infinite) set of strings.  Searching for matches for
+a regexp is a very powerful operation.  This section explains how to
+write regexps; the following section says how to search for them.
+
+* Menu:
+
+* Syntax of Regexps::       Rules for writing regular expressions.
+* Regexp Functions::        Functions for operating on regular expressions.
+* Regexp Example::          Illustrates regular expression syntax.
+
+
+File: elisp,  Node: Syntax of Regexps,  Next: Regexp Functions,  Up: Regular Expressions
+
+Syntax of Regular Expressions
+-----------------------------
+
+   Regular expressions have a syntax in which a few characters are
+special constructs and the rest are "ordinary".  An ordinary character
+is a simple regular expression that matches that character and nothing
+else.  The special characters are `.', `*', `+', `?', `[', `]', `^',
+`$', and `\'; no new special characters will be defined in the future.
+Any other character appearing in a regular expression is ordinary,
+unless a `\' precedes it.
+
+   For example, `f' is not a special character, so it is ordinary, and
+therefore `f' is a regular expression that matches the string `f' and
+no other string.  (It does _not_ match the string `fg', but it does
+match a _part_ of that string.)  Likewise, `o' is a regular expression
+that matches only `o'.
+
+   Any two regular expressions A and B can be concatenated.  The result
+is a regular expression that matches a string if A matches some amount
+of the beginning of that string and B matches the rest of the string.
+
+   As a simple example, we can concatenate the regular expressions `f'
+and `o' to get the regular expression `fo', which matches only the
+string `fo'.  Still trivial.  To do something more powerful, you need
+to use one of the special regular expression constructs.
+
+* Menu:
+
+* Regexp Special::      Special characters in regular expressions.
+* Char Classes::        Character classes used in regular expressions.
+* Regexp Backslash::    Backslash-sequences in regular expressions.
+

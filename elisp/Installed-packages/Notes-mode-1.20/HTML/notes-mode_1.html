@@ -1,0 +1,402 @@
+<HTML>
+<HEAD>
+<!-- Created by texi2html 1.56k from ../notes-mode.texi on 1 February 2001 -->
+
+<TITLE>Notes-mode - Introduction</TITLE>
+</HEAD>
+<BODY>
+Go to the first, previous, <A HREF="notes-mode_2.html">next</A>, <A HREF="notes-mode_7.html">last</A> section, <A HREF="notes-mode_toc.html">table of contents</A>.
+<P><HR><P>
+
+
+<H1><A NAME="SEC1" HREF="notes-mode_toc.html#TOC1">Introduction</A></H1>
+
+<P>
+What is notes-mode and why should you (perhaps) use it?
+
+
+
+
+<H2><A NAME="SEC2" HREF="notes-mode_toc.html#TOC2">What is it?</A></H2>
+
+<P>
+Notes-mode is an indexing system for on-line note-taking.
+Notes-mode is composed of two parts, the visible part,
+a major-mode for emacs to aid note-taking;
+and the invisible part,
+scripts which periodically index your notes for you.
+
+
+<P>
+Note that notes-mode provides tools to <EM>index</EM> your notes,
+not to <EM>search</EM> them.
+(Other existing tools such as <TT>`grep'</TT>, <TT>`agrep'</TT>, and <TT>`glimpse'</TT>
+already allow file search.)
+
+
+<P>
+A digression about indexing vs. searching:
+Indexing in this sense means
+organize them according to categories you give,
+while searching looks through all text for arbitrary strings.
+Drawing on the World Wide Web for examples,
+Yahoo (<TT>`http://www.yahoo.com/'</TT>) is an index,
+while Alta Vista (<TT>`http://www.altavista.digital.com/'</TT>)
+is a search-engine.
+In (potentially) more familiar terms,
+the yellow pages
+<A NAME="DOCF1" HREF="notes-mode_foot.html#FOOT1">(1)</A>
+are an index,
+while directory information (411 in the USA)
+is sort of a search-engine.
+
+
+
+
+<H2><A NAME="SEC3" HREF="notes-mode_toc.html#TOC3">Why keep notes at all?</A></H2>
+
+<P>
+So why should you use notes-mode?
+Well, first, consider why you should (perhaps)
+keep your notes on line.
+First,
+I assume that you take notes as part of your work or school.
+If you don't,
+you can stop reading now and go back to watching TV.
+
+
+<P>
+If you keep notes, ask yourself why you keep them.
+Reasons vary for different people, but some include:
+
+
+
+<UL>
+
+<LI>
+
+To remember what is said or done.
+
+<LI>
+
+To focus on what is important about what is said.
+
+<LI>
+
+To provide proof of having done something
+at a particular time or date.
+
+<LI>
+
+I know there were other reasons here,
+but they slipped my mind.
+</UL>
+
+
+
+<H2><A NAME="SEC4" HREF="notes-mode_toc.html#TOC4">Why keep notes on-line?</A></H2>
+
+<P>
+OK, I've talked you into keeping notes.
+Why do it on-line?
+Again, there are different reasons for different people.
+If you don't want to consider keeping your notes on-line,
+you're welcome to go back to your (clay tablets)
+paper notes.
+
+
+<P>
+However, if you do much of your work on-line,
+or if you have portable computer,
+then you might want to consider keeping your notes on-line.
+
+
+
+<UL>
+
+<LI>
+
+It's faster to type than write,
+and possibly more legible at high speed.
+
+<LI>
+
+Often information is already on-line.
+For example, in software development, bug reports,
+measurement results, and everything else that's useful
+is on-line.
+
+<LI>
+
+You can take down more detail than you otherwise would
+(especially if the data is already on-line).
+Taking more copious notes can be helpful when you go back
+to figure out why that strange thing was happening.
+
+<LI>
+
+On-line notes are easy to search.
+Grep, agrep, and glimpse are all much faster
+and are often more accurate than paging through paper notes
+looking for a particular key-word.
+
+<LI>
+
+On-line notes are easy to index.
+(At least with notes-mode!)
+In addition to raw-text search,
+it's helpful to organize notes by category.
+If you keep a table-of-contents of your paper notes,
+you are either extremely fastidious
+or a librarian (Nadia?).
+
+<LI>
+
+You can keep all of your notes with you at all times
+(if you have a portable computer).
+Even at a page a day,
+paper notes quickly become bulky and awkward to carry around.
+On-line notes fit on your computer's hard disk,
+an extraordinarily compact medium
+by comparison.
+
+<LI>
+
+Your notes can be automatically backed up.
+Paper notes can become damaged with time,
+and as a graduate student
+one of my fears was fire in Boelter Hall
+consuming all my research experiments
+and and therefore hopes of a degree.
+Electronic notes are extremely easy to duplicate
+and can be automatically backed up with the rest of your computer.
+(You <EM>do</EM> back up your computer, don't you?)
+
+</UL>
+
+<P>
+While these advantages are undoubtedly clear to any
+right-thinking computer user,
+it should be said that there are a few disadvantages 
+for on-line note-taking.
+
+
+
+<UL>
+
+<LI>
+
+If you don't have a computer with you most of the time,
+it's difficult take notes on-line (because you're off-line, of course).
+<A NAME="DOCF2" HREF="notes-mode_foot.html#FOOT2">(2)</A>
+
+<LI>
+
+Computers require power.
+If your portable computer runs out of juice,
+you're on your own.
+Corollary:  watch your power, or bring paper.
+Better corollary:  watch your power, <EM>and</EM> bring paper.
+
+<LI>
+
+Social limitations.
+It's not always socially acceptable to take notes-on-line.
+For example,
+at a party,
+few people would use a computer
+to take down the phone number of a person
+to whom they're attracted
+(at least, if they wanted the attraction to be mutual).
+<A NAME="DOCF3" HREF="notes-mode_foot.html#FOOT3">(3)</A>
+Sometimes other people find the sound of typing distracting.
+
+<LI>
+
+Health issues.
+Repetitive stress injuries do occur
+writing (slower) by hand is at least 
+an alternate motion than typing.
+
+<LI>
+
+Legal limitations.
+If you want to use your electronic notes
+to justify a patent or invention,
+you may be breaking legal ground.
+Being on the legal cutting-edge is rarely an easy thing
+for the person involved.<A NAME="DOCF4" HREF="notes-mode_foot.html#FOOT4">(4)</A>
+
+</UL>
+
+
+
+<H2><A NAME="SEC5" HREF="notes-mode_toc.html#TOC5">Why use notes-mode?</A></H2>
+
+<P>
+OK, I've sold you on note-taking and even on on-line note-taking.
+What about notes-mode?
+Naturally,
+it slices, dices, and makes julienne fries.
+But wait, there's more:
+
+
+
+<UL>
+
+<LI>
+
+It automates indexing your notes,
+linking notes with the same subject together.
+
+<LI>
+
+It supports embedded links,
+allowing you to manually link together different topics 
+and external files.
+
+<LI>
+
+It includes a number of convenience-features in emacs.
+Subjects can be completed based on existing subjects.
+The usual emacs customization mechanisms are available.
+
+<LI>
+
+Notes containing sensitive information can be encrypted.
+
+<LI>
+
+Notes-mode seems better than the other, currently available alternatives.
+</UL>
+
+<P>
+What are the alternatives?  I'm glad you asked.
+<A NAME="DOCF5" HREF="notes-mode_foot.html#FOOT5">(5)</A>
+
+
+
+<UL>
+
+<LI>
+
+<STRONG>HTML</STRONG>.
+HTML has better formatting capabilities than notes-mode,
+and it has excellent linking capabilities.
+Unfortunately,
+HTML's tags are fairly intrusive
+ (each is at least four characters long and most come with a pair),
+ tags can get confused with normal text,
+ errors in HTML can be bad (obscuring data),
+ and there's no automatic indexing feature
+ (at least with plain HTML).
+Besides,
+ all data should be kept as close to the ASCII from whence it came,
+ as God Intended (hi, Steve).
+
+<LI>
+
+<STRONG>Word Processors</STRONG>.
+Word processors are strong in the formatting department,
+ but most don't really have linking capabilities,
+ and have poor or restricted indexing.
+
+</UL>
+
+
+
+<H2><A NAME="SEC6" HREF="notes-mode_toc.html#TOC6">Y2K Statement</A></H2>
+
+<P>
+Notes mode uses dates extensively,
+ both two-digit years and seconds-since-1970.
+However, notes-mode has been coded to function correctly through
+ the year 2038.
+
+
+<P>
+To avoid problems with the year 2000, notes-mode assumes
+ that any two-digit years before "70" are 20xx, not 19xx.
+Notes-mode should therefore work correctly in both the year 1999 and 2000.
+
+
+<P>
+(Notes-mode 1.17 released February 1999 fixes a lingering Y2K problem.)
+
+
+<P>
+Because notes-mode uses seconds-since-1970 for some date calculations
+ it will fail beyond the year 2038 on computers with 32-bit integers.
+
+
+<P>
+If I'm still using notes-mode then on a 32-bit machine I'll see what I can do.
+
+
+
+
+<H2><A NAME="SEC7" HREF="notes-mode_toc.html#TOC7">Related work</A></H2>
+
+<P>
+What would a document be without related work?
+
+
+<P>
+Notes-mode is not related in any way to Lotus Notes.
+
+
+<P>
+I am told (by David Weisman)
+ that it's something like the now defunct Lotus Agenda.
+
+
+<P>
+Ashvin Goel, one of the contributors to notes-mode,
+ has gone off and done a from-scratch reimplementation
+ called records-mode.
+It's very similar to notes mode,
+ and emphasizes on-the-fly updates to entry links
+ but lacks a manual.
+You may want to check it out at
+ <TT>`http://www.cse.ogi.edu/~ashvin/software.html'</TT>.
+
+
+<P>
+Hyperbole (by Bob Weiner) offers better linking facilities
+than notes-mode, but it has a bunch of stuff notes-mode doesn't need
+and it's missing notes-specific indexing provided by notes-mode.
+For people already using Hyperbole
+ it would be interesting to replace notes-mode's linking
+ with Hyperbole's.
+Contributions in this area are welcome, provided they make Hyperbole
+ optional.
+
+
+
+
+<H2><A NAME="SEC8" HREF="notes-mode_toc.html#TOC8">Staying on top</A></H2>
+
+<P>
+The most recent distribution of notes-mode 
+ is always available via
+ <TT>`http://www.isi.edu/~johnh/SOFTWARE/NOTES_MODE/'</TT>.
+
+
+<P>
+After you've installed notes mode you're encouraged to subscribe
+to the mailing lists:
+Send the message "subscribe" to
+<TT>`notes-mode-announce-request@heidemann.la.ca.us'</TT> and 
+<TT>`notes-mode-talk-request@heidemann.la.ca.us'</TT>.
+(Or use <TT>`majordomo@heidemann.la.ca.us'</TT>.)
+
+
+<P>
+The announce list will contain only release announcements
+and so is guaranteed to be very low bandwidth.
+
+
+<P><HR><P>
+Go to the first, previous, <A HREF="notes-mode_2.html">next</A>, <A HREF="notes-mode_7.html">last</A> section, <A HREF="notes-mode_toc.html">table of contents</A>.
+</BODY>
+</HTML>

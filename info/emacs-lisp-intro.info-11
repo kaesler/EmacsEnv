@@ -1,0 +1,1141 @@
+This is emacs-lisp-intro.info, produced by makeinfo version 4.0b from
+emacs-lisp-intro.texi.
+
+INFO-DIR-SECTION Emacs
+START-INFO-DIR-ENTRY
+* Emacs Lisp Intro: (eintr).
+  			A simple introduction to Emacs Lisp programming.
+END-INFO-DIR-ENTRY
+
+   This is an introduction to `Programming in Emacs Lisp', for people
+who are not programmers.
+
+   Edition 2.04, 2001 Dec 17
+
+   Copyright (C) 1990, '91, '92, '93, '94, '95, '97, 2001 Free Software
+Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Section being the Preface, with the Front-Cover Texts being
+no Front-Cover Texts, and with the Back-Cover Texts being no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
+
+
+File: emacs-lisp-intro.info,  Node: lengths-list-file,  Next: Several files,  Prev: Find a File,  Up: Words in a defun
+
+`lengths-list-file' in Detail
+=============================
+
+   The core of the `lengths-list-file' function is a `while' loop
+containing a function to move point forward `defun by defun' and a
+function to count the number of words and symbols in each defun.  This
+core must be surrounded by functions that do various other tasks,
+including finding the file, and ensuring that point starts out at the
+beginning of the file.  The function definition looks like this:
+
+     (defun lengths-list-file (filename)
+       "Return list of definitions' lengths within FILE.
+     The returned list is a list of numbers.
+     Each number is the number of words or
+     symbols in one function definition."
+       (message "Working on `%s' ... " filename)
+       (save-excursion
+         (let ((buffer (find-file-noselect filename))
+               (lengths-list))
+           (set-buffer buffer)
+           (setq buffer-read-only t)
+           (widen)
+           (goto-char (point-min))
+           (while (re-search-forward "^(defun" nil t)
+             (setq lengths-list
+                   (cons (count-words-in-defun) lengths-list)))
+           (kill-buffer buffer)
+           lengths-list)))
+
+The function is passed one argument, the name of the file on which it
+will work.  It has four lines of documentation, but no interactive
+specification.  Since people worry that a computer is broken if they
+don't see anything going on, the first line of the body is a message.
+
+   The next line contains a `save-excursion' that returns Emacs'
+attention to the current buffer when the function completes.  This is
+useful in case you embed this function in another function that
+presumes point is restored to the original buffer.
+
+   In the varlist of the `let' expression, Emacs finds the file and
+binds the local variable `buffer' to the buffer containing the file.
+At the same time, Emacs creates `lengths-list' as a local variable.
+
+   Next, Emacs switches its attention to the buffer.
+
+   In the following line, Emacs makes the buffer read-only.  Ideally,
+this line is not necessary.  None of the functions for counting words
+and symbols in a function definition should change the buffer.
+Besides, the buffer is not going to be saved, even if it were changed.
+This line is entirely the consequence of great, perhaps excessive,
+caution.  The reason for the caution is that this function and those it
+calls work on the sources for Emacs and it is very inconvenient if they
+are inadvertently modified.  It goes without saying that I did not
+realize a need for this line until an experiment went awry and started
+to modify my Emacs source files ...
+
+   Next comes a call to widen the buffer if it is narrowed.  This
+function is usually not needed--Emacs creates a fresh buffer if none
+already exists; but if a buffer visiting the file already exists Emacs
+returns that one.  In this case, the buffer may be narrowed and must be
+widened.  If we wanted to be fully `user-friendly', we would arrange to
+save the restriction and the location of point, but we won't.
+
+   The `(goto-char (point-min))' expression moves point to the
+beginning of the buffer.
+
+   Then comes a `while' loop in which the `work' of the function is
+carried out.  In the loop, Emacs determines the length of each
+definition and constructs a lengths' list containing the information.
+
+   Emacs kills the buffer after working through it.  This is to save
+space inside of Emacs.  My version of Emacs 19 contained over 300
+source files of interest; Emacs 21 contains over 800 source files.
+Another function will apply `lengths-list-file' to each of the files.
+
+   Finally, the last expression within the `let' expression is the
+`lengths-list' variable; its value is returned as the value of the
+whole function.
+
+   You can try this function by installing it in the usual fashion.
+Then place your cursor after the following expression and type `C-x
+C-e' (`eval-last-sexp').
+
+     (lengths-list-file
+      "/usr/local/share/emacs/21.0.100/lisp/emacs-lisp/debug.el")
+
+(You may need to change the pathname of the file; the one here worked
+with GNU Emacs version 21.0.100.  To change the expression, copy it to
+the `*scratch*' buffer and edit it.
+
+(Also, to see the full length of the list, rather than a truncated
+version, you may have to evaluate the following:
+
+     (custom-set-variables '(eval-expression-print-length nil))
+
+(*Note Setting Variables with `defcustom': defcustom.  Then evaluate
+the `lengths-list-file' expression.)
+
+   The lengths' list for `debug.el' takes less than a second to produce
+and looks like this:
+
+     (77 95 85 87 131 89 50 25 44 44 68 35 64 45 17 34 167 457)
+
+   (Using my old machine, the version 19 lengths' list for `debug.el'
+took seven seconds to produce and looked like this:
+
+     (75 41 80 62 20 45 44 68 45 12 34 235)
+
+   (The newer version of  `debug.el' contains more defuns than the
+earlier one; and my new machine is much faster than the old one.)
+
+   Note that the length of the last definition in the file is first in
+the list.
+
+
+File: emacs-lisp-intro.info,  Node: Several files,  Next: Several files recursively,  Prev: lengths-list-file,  Up: Words in a defun
+
+Count Words in `defuns' in Different Files
+==========================================
+
+   In the previous section, we created a function that returns a list of
+the lengths of each definition in a file.  Now, we want to define a
+function to return a master list of the lengths of the definitions in a
+list of files.
+
+   Working on each of a list of files is a repetitious act, so we can
+use either a `while' loop or recursion.
+
+* Menu:
+
+* lengths-list-many-files::     Return a list of the lengths of defuns.
+* append::                      Attach one list to another.
+
+
+File: emacs-lisp-intro.info,  Node: lengths-list-many-files,  Next: append,  Prev: Several files,  Up: Several files
+
+Determine the lengths of `defuns'
+---------------------------------
+
+   The design using a `while' loop is routine.  The argument passed the
+function is a list of files.  As we saw earlier (*note Loop Example::),
+you can write a `while' loop so that the body of the loop is evaluated
+if such a list contains elements, but to exit the loop if the list is
+empty.  For this design to work, the body of the loop must contain an
+expression that shortens the list each time the body is evaluated, so
+that eventually the list is empty.  The usual technique is to set the
+value of the list to the value of the CDR of the list each time the
+body is evaluated.
+
+   The template looks like this:
+
+     (while TEST-WHETHER-LIST-IS-EMPTY
+       BODY...
+       SET-LIST-TO-CDR-OF-LIST)
+
+   Also, we remember that a `while' loop returns `nil' (the result of
+evaluating the true-or-false-test), not the result of any evaluation
+within its body.  (The evaluations within the body of the loop are done
+for their side effects.)  However, the expression that sets the
+lengths' list is part of the body--and that is the value that we want
+returned by the function as a whole.  To do this, we enclose the
+`while' loop within a `let' expression, and arrange that the last
+element of the `let' expression contains the value of the lengths'
+list.  (*Note Loop Example with an Incrementing Counter: Incrementing
+Example.)
+
+   These considerations lead us directly to the function itself:
+
+     ;;; Use `while' loop.
+     (defun lengths-list-many-files (list-of-files)
+       "Return list of lengths of defuns in LIST-OF-FILES."
+       (let (lengths-list)
+     
+     ;;; true-or-false-test
+         (while list-of-files
+           (setq lengths-list
+                 (append
+                  lengths-list
+     
+     ;;; Generate a lengths' list.
+                  (lengths-list-file
+                   (expand-file-name (car list-of-files)))))
+     
+     ;;; Make files' list shorter.
+           (setq list-of-files (cdr list-of-files)))
+     
+     ;;; Return final value of lengths' list.
+         lengths-list))
+
+   `expand-file-name' is a built-in function that converts a file name
+to the absolute, long, path name form of the directory in which the
+function is called.
+
+   Thus, if `expand-file-name' is called on `debug.el' when Emacs is
+visiting the `/usr/local/share/emacs/21.0.100/lisp/emacs-lisp/'
+directory,
+
+     debug.el
+
+becomes
+
+     /usr/local/share/emacs/21.0.100/lisp/emacs-lisp/debug.el
+
+   The only other new element of this function definition is the as yet
+unstudied function `append', which merits a short section for itself.
+
+
+File: emacs-lisp-intro.info,  Node: append,  Prev: lengths-list-many-files,  Up: Several files
+
+The `append' Function
+---------------------
+
+   The `append' function attaches one list to another.  Thus,
+
+     (append '(1 2 3 4) '(5 6 7 8))
+
+produces the list
+
+     (1 2 3 4 5 6 7 8)
+
+   This is exactly how we want to attach two lengths' lists produced by
+`lengths-list-file' to each other.  The results contrast with `cons',
+
+     (cons '(1 2 3 4) '(5 6 7 8))
+
+which constructs a new list in which the first argument to `cons'
+becomes the first element of the new list:
+
+     ((1 2 3 4) 5 6 7 8)
+
+
+File: emacs-lisp-intro.info,  Node: Several files recursively,  Next: Prepare the data,  Prev: Several files,  Up: Words in a defun
+
+Recursively Count Words in Different Files
+==========================================
+
+   Besides a `while' loop, you can work on each of a list of files with
+recursion.  A recursive version of `lengths-list-many-files' is short
+and simple.
+
+   The recursive function has the usual parts: the `do-again-test', the
+`next-step-expression', and the recursive call.  The `do-again-test'
+determines whether the function should call itself again, which it will
+do if the `list-of-files' contains any remaining elements; the
+`next-step-expression' resets the `list-of-files' to the CDR of itself,
+so eventually the list will be empty; and the recursive call calls
+itself on the shorter list.  The complete function is shorter than this
+description!
+
+     (defun recursive-lengths-list-many-files (list-of-files)
+       "Return list of lengths of each defun in LIST-OF-FILES."
+       (if list-of-files                     ; do-again-test
+           (append
+            (lengths-list-file
+             (expand-file-name (car list-of-files)))
+            (recursive-lengths-list-many-files
+             (cdr list-of-files)))))
+
+In a sentence, the function returns the lengths' list for the first of
+the `list-of-files' appended to the result of calling itself on the
+rest of the `list-of-files'.
+
+   Here is a test of `recursive-lengths-list-many-files', along with
+the results of running `lengths-list-file' on each of the files
+individually.
+
+   Install `recursive-lengths-list-many-files' and `lengths-list-file',
+if necessary, and then evaluate the following expressions.  You may
+need to change the files' pathnames; those here work when this Info
+file and the Emacs sources are located in their customary places.  To
+change the expressions, copy them to the `*scratch*' buffer, edit them,
+and then evaluate them.
+
+   The results are shown after the `=>'.  (These results are for files
+from Emacs Version 21.0.100; files from other versions of Emacs may
+produce different results.)
+
+     (cd "/usr/local/share/emacs/21.0.100/")
+     
+     (lengths-list-file "./lisp/macros.el")
+          => (273 263 456 90)
+     
+     (lengths-list-file "./lisp/mail/mailalias.el")
+          => (38 32 26 77 174 180 321 198 324)
+     
+     (lengths-list-file "./lisp/makesum.el")
+          => (85 181)
+     
+     (recursive-lengths-list-many-files
+      '("./lisp/macros.el"
+        "./lisp/mail/mailalias.el"
+        "./lisp/makesum.el"))
+            => (273 263 456 90 38 32 26 77 174 180 321 198 324 85 181)
+
+   The `recursive-lengths-list-many-files' function produces the output
+we want.
+
+   The next step is to prepare the data in the list for display in a
+graph.
+
+
+File: emacs-lisp-intro.info,  Node: Prepare the data,  Prev: Several files recursively,  Up: Words in a defun
+
+Prepare the Data for Display in a Graph
+=======================================
+
+   The `recursive-lengths-list-many-files' function returns a list of
+numbers.  Each number records the length of a function definition.
+What we need to do now is transform this data into a list of numbers
+suitable for generating a graph.  The new list will tell how many
+functions definitions contain less than 10 words and symbols, how many
+contain between 10 and 19 words and symbols, how many contain between
+20 and 29 words and symbols, and so on.
+
+   In brief, we need to go through the lengths' list produced by the
+`recursive-lengths-list-many-files' function and count the number of
+defuns within each range of lengths, and produce a list of those
+numbers.
+
+   Based on what we have done before, we can readily foresee that it
+should not be too hard to write a function that `CDRs' down the
+lengths' list, looks at each element, determines which length range it
+is in, and increments a counter for that range.
+
+   However, before beginning to write such a function, we should
+consider the advantages of sorting the lengths' list first, so the
+numbers are ordered from smallest to largest.  First, sorting will make
+it easier to count the numbers in each range, since two adjacent
+numbers will either be in the same length range or in adjacent ranges.
+Second, by inspecting a sorted list, we can discover the highest and
+lowest number, and thereby determine the largest and smallest length
+range that we will need.
+
+* Menu:
+
+* Sorting::                     Sorting lists.
+* Files List::                  Making a list of files.
+* Counting function definitions::
+
+
+File: emacs-lisp-intro.info,  Node: Sorting,  Next: Files List,  Prev: Prepare the data,  Up: Prepare the data
+
+Sorting Lists
+-------------
+
+   Emacs contains a function to sort lists, called (as you might guess)
+`sort'.  The `sort' function takes two arguments, the list to be
+sorted, and a predicate that determines whether the first of two list
+elements is "less" than the second.
+
+   As we saw earlier (*note Using the Wrong Type Object as an Argument:
+Wrong Type of Argument.), a predicate is a function that determines
+whether some property is true or false.  The `sort' function will
+reorder a list according to whatever property the predicate uses; this
+means that `sort' can be used to sort non-numeric lists by non-numeric
+criteria--it can, for example, alphabetize a list.
+
+   The `<' function is used when sorting a numeric list.  For example,
+
+     (sort '(4 8 21 17 33 7 21 7) '<)
+
+produces this:
+
+     (4 7 7 8 17 21 21 33)
+
+(Note that in this example, both the arguments are quoted so that the
+symbols are not evaluated before being passed to `sort' as arguments.)
+
+   Sorting the list returned by the `recursive-lengths-list-many-files'
+function is straightforward; it uses the `<' function:
+
+     (sort
+      (recursive-lengths-list-many-files
+       '("../lisp/macros.el"
+         "../lisp/mailalias.el"
+         "../lisp/makesum.el"))
+      '<
+
+which produces:
+
+     (85 86 116 122 154 176 179 265)
+
+(Note that in this example, the first argument to `sort' is not quoted,
+since the expression must be evaluated so as to produce the list that
+is passed to `sort'.)
+
+
+File: emacs-lisp-intro.info,  Node: Files List,  Next: Counting function definitions,  Prev: Sorting,  Up: Prepare the data
+
+Making a List of Files
+----------------------
+
+   The `recursive-lengths-list-many-files' function requires a list of
+files as its argument.  For our test examples, we constructed such a
+list by hand; but the Emacs Lisp source directory is too large for us
+to do for that.  Instead, we will write a function to do the job for
+us.  In this function, we will use both a `while' loop and a recursive
+call.
+
+   We did not have to write a function like this for older versions of
+GNU Emacs, since they placed all the `.el' files in one directory.
+Instead, we were able to use the `directory-files' function, which
+lists the names of files that match a specified pattern within a single
+directory.
+
+   However, recent versions of Emacs place Emacs Lisp files in
+sub-directories of the top level `lisp' directory.  This re-arrangement
+eases navigation.  For example, all the mail related files are in a
+`lisp' sub-directory called `mail'.  But at the same time, this
+arrangement forces us to create a file listing function that descends
+into the sub-directories.
+
+   We can create this function, called `files-in-below-directory',
+using familiar functions such as `car', `nthcdr', and `substring' in
+conjunction with an existing function called
+`directory-files-and-attributes'.  This latter function not only lists
+all the filenames in a directory, including the names of
+sub-directories, but also their attributes.
+
+   To restate our goal: to create a function that will enable us to
+feed filenames to `recursive-lengths-list-many-files' as a list that
+looks like this (but with more elements):
+
+     ("../lisp/macros.el"
+      "../lisp/mail/rmail.el"
+      "../lisp/makesum.el")
+
+   The `directory-files-and-attributes' function returns a list of
+lists.  Each of the lists within the main list consists of 13 elements.
+The first element is a string that contains the name of the file -
+which, in GNU/Linux, may be a `directory file', that is to say, a file
+with the special attributes of a directory.  The second element of the
+list is `t' for a directory, a string for symbolic link (the string is
+the name linked to), or `nil'.
+
+   For example, the first `.el' file in the `lisp/' directory is
+`abbrev.el'.  Its name is
+`/usr/local/share/emacs/21.0.100/lisp/abbrev.el' and it is not a
+directory or a symbolic link.
+
+   This is how `directory-files-and-attributes' lists that file and its
+attributes:
+
+     ("/usr/local/share/emacs/21.0.100/lisp/abbrev.el"
+     nil
+     1
+     1000
+     100
+     (15019 32380)
+     (14883 48041)
+     (15214 49336)
+     11583
+     "-rw-rw-r--"
+     t
+     341385
+     776)
+
+   On the other hand, `mail/' is a directory within the `lisp/'
+directory.  The beginning of its listing looks like this:
+
+     ("/usr/local/share/emacs/21.0.100/lisp/mail"
+     t
+     ...
+     )
+
+   (Look at the documentation of `file-attributes' to learn about the
+different attributes.  Bear in mind that the `file-attributes' function
+does not list the filename, so its first element is
+`directory-files-and-attributes''s second element.)
+
+   We will want our new function, `files-in-below-directory', to list
+the `.el' files in the directory it is told to check, and in any
+directories below that directory.
+
+   This gives us a hint on how to construct `files-in-below-directory':
+within a directory, the function should add `.el' filenames to a list;
+and if, within a directory, the function comes upon a sub-directory, it
+should go into that sub-directory and repeat its actions.
+
+   However, we should note that every directory contains a name that
+refers to itself, called `.', ("dot") and a name that refers to its
+parent directory, called `..' ("double dot").  (In `/', the root
+directory, `..' refers to itself, since `/' has no parent.)  Clearly,
+we do not want our `files-in-below-directory' function to enter those
+directories, since they always lead us, directly or indirectly, to the
+current directory.
+
+   Consequently, our `files-in-below-directory' function must do
+several tasks:
+
+   * Check to see whether it is looking at a filename that ends in
+     `.el'; and if so, add its name to a list.
+
+   * Check to see whether it is looking at a filename that is the name
+     of a directory; and if so,
+
+        - Check to see whether it is looking at `.'  or `..'; and if so
+          skip it.
+
+        - Or else, go into that directory and repeat the process.
+
+   Let's write a function definition to do these tasks.  We will use a
+`while' loop to move from one filename to another within a directory,
+checking what needs to be done; and we will use a recursive call to
+repeat the actions on each sub-directory.  The recursive pattern is
+`accumulate' (*note Recursive Pattern: _accumulate_: Accumulate.),
+using `append' as the combiner.
+
+   Here is the function:
+
+     (defun files-in-below-directory (directory)
+       "List the .el files in DIRECTORY and in its sub-directories."
+       ;; Although the function will be used non-interactively,
+       ;; it will be easier to test if we make it interactive.
+       ;; The directory will have a name such as
+       ;;  "/usr/local/share/emacs/21.0.100/lisp/"
+       (interactive "DDirectory name: ")
+       (let (el-files-list
+             (current-directory-list
+              (directory-files-and-attributes directory t)))
+         ;; while we are in the current directory
+         (while current-directory-list
+           (cond
+            ;; check to see whether filename ends in `.el'
+            ;; and if so, append its name to a list.
+            ((equal ".el" (substring (car (car current-directory-list)) -3))
+             (setq el-files-list
+                   (cons (car (car current-directory-list)) el-files-list)))
+            ;; check whether filename is that of a directory
+            ((eq t (car (cdr (car current-directory-list))))
+             ;; decide whether to skip or recurse
+             (if
+                 (equal (or "." "..")
+                        (substring (car (car current-directory-list)) -1))
+                 ;; then do nothing if filename is that of
+                 ;;   current directory or parent
+                 ()
+               ;; else descend into the directory and repeat the process
+               (setq el-files-list
+                     (append
+                      (files-in-below-directory
+                       (car (car current-directory-list)))
+                      el-files-list)))))
+           ;; move to the next filename in the list; this also
+           ;; shortens the list so the while loop eventually comes to an end
+           (setq current-directory-list (cdr current-directory-list)))
+         ;; return the filenames
+         el-files-list))
+
+   The `files-in-below-directory' `directory-files' function takes one
+argument, the name of a directory.
+
+   Thus, on my system,
+
+     (length
+      (files-in-below-directory "/usr/local/share/emacs/21.0.100/lisp/"))
+
+tells me that my version 21.0.100 Lisp sources directory contains 754
+`.el' files.
+
+   `files-in-below-directory' returns a list in reverse alphabetical
+order.  An expression to sort the list in alphabetical order looks like
+this:
+
+     (sort
+      (files-in-below-directory "/usr/local/share/emacs/21.0.100/lisp/")
+      'string-lessp)
+
+
+File: emacs-lisp-intro.info,  Node: Counting function definitions,  Prev: Files List,  Up: Prepare the data
+
+Counting function definitions
+-----------------------------
+
+   Our immediate goal is to generate a list that tells us how many
+function definitions contain fewer than 10 words and symbols, how many
+contain between 10 and 19 words and symbols, how many contain between
+20 and 29 words and symbols, and so on.
+
+   With a sorted list of numbers, this is easy: count how many elements
+of the list are smaller than 10, then, after moving past the numbers
+just counted, count how many are smaller than 20, then, after moving
+past the numbers just counted, count how many are smaller than 30, and
+so on.  Each of the numbers, 10, 20, 30, 40, and the like, is one
+larger than the top of that range.  We can call the list of such
+numbers the `top-of-ranges' list.
+
+   If we wished, we could generate this list automatically, but it is
+simpler to write a list manually.  Here it is:
+
+     (defvar top-of-ranges
+      '(10  20  30  40  50
+        60  70  80  90 100
+       110 120 130 140 150
+       160 170 180 190 200
+       210 220 230 240 250
+       260 270 280 290 300)
+      "List specifying ranges for `defuns-per-range'.")
+
+   To change the ranges, we edit this list.
+
+   Next, we need to write the function that creates the list of the
+number of definitions within each range.  Clearly, this function must
+take the `sorted-lengths' and the `top-of-ranges' lists as arguments.
+
+   The `defuns-per-range' function must do two things again and again:
+it must count the number of definitions within a range specified by the
+current top-of-range value; and it must shift to the next higher value
+in the `top-of-ranges' list after counting the number of definitions in
+the current range.  Since each of these actions is repetitive, we can
+use `while' loops for the job.  One loop counts the number of
+definitions in the range defined by the current top-of-range value, and
+the other loop selects each of the top-of-range values in turn.
+
+   Several entries of the `sorted-lengths' list are counted for each
+range; this means that the loop for the `sorted-lengths' list will be
+inside the loop for the `top-of-ranges' list, like a small gear inside
+a big gear.
+
+   The inner loop counts the number of definitions within the range.  It
+is a simple counting loop of the type we have seen before.  (*Note A
+loop with an incrementing counter: Incrementing Loop.)  The
+true-or-false test of the loop tests whether the value from the
+`sorted-lengths' list is smaller than the current value of the top of
+the range.  If it is, the function increments the counter and tests the
+next value from the `sorted-lengths' list.
+
+   The inner loop looks like this:
+
+     (while LENGTH-ELEMENT-SMALLER-THAN-TOP-OF-RANGE
+       (setq number-within-range (1+ number-within-range))
+       (setq sorted-lengths (cdr sorted-lengths)))
+
+   The outer loop must start with the lowest value of the
+`top-of-ranges' list, and then be set to each of the succeeding higher
+values in turn.  This can be done with a loop like this:
+
+     (while top-of-ranges
+       BODY-OF-LOOP...
+       (setq top-of-ranges (cdr top-of-ranges)))
+
+   Put together, the two loops look like this:
+
+     (while top-of-ranges
+     
+       ;; Count the number of elements within the current range.
+       (while LENGTH-ELEMENT-SMALLER-THAN-TOP-OF-RANGE
+         (setq number-within-range (1+ number-within-range))
+         (setq sorted-lengths (cdr sorted-lengths)))
+     
+       ;; Move to next range.
+       (setq top-of-ranges (cdr top-of-ranges)))
+
+   In addition, in each circuit of the outer loop, Emacs should record
+the number of definitions within that range (the value of
+`number-within-range') in a list.  We can use `cons' for this purpose.
+(*Note `cons': cons.)
+
+   The `cons' function works fine, except that the list it constructs
+will contain the number of definitions for the highest range at its
+beginning and the number of definitions for the lowest range at its
+end.  This is because `cons' attaches new elements of the list to the
+beginning of the list, and since the two loops are working their way
+through the lengths' list from the lower end first, the
+`defuns-per-range-list' will end up largest number first.  But we will
+want to print our graph with smallest values first and the larger
+later.  The solution is to reverse the order of the
+`defuns-per-range-list'.  We can do this using the `nreverse' function,
+which reverses the order of a list.
+
+   For example,
+
+     (nreverse '(1 2 3 4))
+
+produces:
+
+     (4 3 2 1)
+
+   Note that the `nreverse' function is "destructive"--that is, it
+changes the list to which it is applied; this contrasts with the `car'
+and `cdr' functions, which are non-destructive.  In this case, we do
+not want the original `defuns-per-range-list', so it does not matter
+that it is destroyed.  (The `reverse' function provides a reversed copy
+of a list, leaving the original list as is.)
+
+   Put all together, the `defuns-per-range' looks like this:
+
+     (defun defuns-per-range (sorted-lengths top-of-ranges)
+       "SORTED-LENGTHS defuns in each TOP-OF-RANGES range."
+       (let ((top-of-range (car top-of-ranges))
+             (number-within-range 0)
+             defuns-per-range-list)
+     
+         ;; Outer loop.
+         (while top-of-ranges
+     
+           ;; Inner loop.
+           (while (and
+                   ;; Need number for numeric test.
+                   (car sorted-lengths)
+                   (< (car sorted-lengths) top-of-range))
+     
+             ;; Count number of definitions within current range.
+             (setq number-within-range (1+ number-within-range))
+             (setq sorted-lengths (cdr sorted-lengths)))
+     
+           ;; Exit inner loop but remain within outer loop.
+     
+           (setq defuns-per-range-list
+                 (cons number-within-range defuns-per-range-list))
+           (setq number-within-range 0)      ; Reset count to zero.
+     
+           ;; Move to next range.
+           (setq top-of-ranges (cdr top-of-ranges))
+           ;; Specify next top of range value.
+           (setq top-of-range (car top-of-ranges)))
+     
+         ;; Exit outer loop and count the number of defuns larger than
+         ;;   the largest top-of-range value.
+         (setq defuns-per-range-list
+               (cons
+                (length sorted-lengths)
+                defuns-per-range-list))
+     
+         ;; Return a list of the number of definitions within each range,
+         ;;   smallest to largest.
+         (nreverse defuns-per-range-list)))
+
+The function is straightforward except for one subtle feature.  The
+true-or-false test of the inner loop looks like this:
+
+     (and (car sorted-lengths)
+          (< (car sorted-lengths) top-of-range))
+
+instead of like this:
+
+     (< (car sorted-lengths) top-of-range)
+
+   The purpose of the test is to determine whether the first item in the
+`sorted-lengths' list is less than the value of the top of the range.
+
+   The simple version of the test works fine unless the
+`sorted-lengths' list has a `nil' value.  In that case, the `(car
+sorted-lengths)' expression function returns `nil'.  The `<' function
+cannot compare a number to `nil', which is an empty list, so Emacs
+signals an error and stops the function from attempting to continue to
+execute.
+
+   The `sorted-lengths' list always becomes `nil' when the counter
+reaches the end of the list.  This means that any attempt to use the
+`defuns-per-range' function with the simple version of the test will
+fail.
+
+   We solve the problem by using the `(car sorted-lengths)' expression
+in conjunction with the `and' expression.  The `(car sorted-lengths)'
+expression returns a non-`nil' value so long as the list has at least
+one number within it, but returns `nil' if the list is empty.  The
+`and' expression first evaluates the `(car sorted-lengths)' expression,
+and if it is `nil', returns false _without_ evaluating the `<'
+expression.  But if the `(car sorted-lengths)' expression returns a
+non-`nil' value, the `and' expression evaluates the `<' expression, and
+returns that value as the value of the `and' expression.
+
+   This way, we avoid an error.  *Note forward-paragraph::, for more
+information about `and'.
+
+   Here is a short test of the `defuns-per-range' function.  First,
+evaluate the expression that binds (a shortened) `top-of-ranges' list
+to the list of values, then evaluate the expression for binding the
+`sorted-lengths' list, and then evaluate the `defuns-per-range'
+function.
+
+     ;; (Shorter list than we will use later.)
+     (setq top-of-ranges
+      '(110 120 130 140 150
+        160 170 180 190 200))
+     
+     (setq sorted-lengths
+           '(85 86 110 116 122 129 154 176 179 200 265 300 300))
+     
+     (defuns-per-range sorted-lengths top-of-ranges)
+
+The list returned looks like this:
+
+     (2 2 2 0 0 1 0 2 0 0 4)
+
+Indeed, there are two elements of the `sorted-lengths' list smaller
+than 110, two elements between 110 and 119, two elements between 120
+and 129, and so on.  There are four elements with a value of 200 or
+larger.
+
+
+File: emacs-lisp-intro.info,  Node: Readying a Graph,  Next: Emacs Initialization,  Prev: Words in a defun,  Up: Top
+
+Readying a Graph
+****************
+
+   Our goal is to construct a graph showing the numbers of function
+definitions of various lengths in the Emacs lisp sources.
+
+   As a practical matter, if you were creating a graph, you would
+probably use a program such as `gnuplot' to do the job.  (`gnuplot' is
+nicely integrated into GNU Emacs.)  In this case, however, we create
+one from scratch, and in the process we will re-acquaint ourselves with
+some of what we learned before and learn more.
+
+   In this chapter, we will first write a simple graph printing
+function.  This first definition will be a "prototype", a rapidly
+written function that enables us to reconnoiter this unknown
+graph-making territory.  We will discover dragons, or find that they
+are myth.  After scouting the terrain, we will feel more confident and
+enhance the function to label the axes automatically.
+
+* Menu:
+
+* Columns of a graph::
+* graph-body-print::            How to print the body of a graph.
+* recursive-graph-body-print::
+* Printed Axes::
+* Line Graph Exercise::
+
+
+File: emacs-lisp-intro.info,  Node: Columns of a graph,  Next: graph-body-print,  Prev: Readying a Graph,  Up: Readying a Graph
+
+Printing the Columns of a Graph
+===============================
+
+   Since Emacs is designed to be flexible and work with all kinds of
+terminals, including character-only terminals, the graph will need to
+be made from one of the `typewriter' symbols.  An asterisk will do; as
+we enhance the graph-printing function, we can make the choice of
+symbol a user option.
+
+   We can call this function `graph-body-print'; it will take a
+`numbers-list' as its only argument.  At this stage, we will not label
+the graph, but only print its body.
+
+   The `graph-body-print' function inserts a vertical column of
+asterisks for each element in the `numbers-list'.  The height of each
+line is determined by the value of that element of the `numbers-list'.
+
+   Inserting columns is a repetitive act; that means that this function
+can be written either with a `while' loop or recursively.
+
+   Our first challenge is to discover how to print a column of
+asterisks.  Usually, in Emacs, we print characters onto a screen
+horizontally, line by line, by typing.  We have two routes we can
+follow: write our own column-insertion function or discover whether one
+exists in Emacs.
+
+   To see whether there is one in Emacs, we can use the `M-x apropos'
+command.  This command is like the `C-h a' (command-apropos) command,
+except that the latter finds only those functions that are commands.
+The `M-x apropos' command lists all symbols that match a regular
+expression, including functions that are not interactive.
+
+   What we want to look for is some command that prints or inserts
+columns.  Very likely, the name of the function will contain either the
+word `print' or the word `insert' or the word `column'.  Therefore, we
+can simply type `M-x apropos RET print\|insert\|column RET' and look at
+the result.  On my system, this command takes quite some time, and then
+produces a list of 79 functions and variables.  Scanning down the list,
+the only function that looks as if it might do the job is
+`insert-rectangle'.
+
+   Indeed, this is the function we want; its documentation says:
+
+     insert-rectangle:
+     Insert text of RECTANGLE with upper left corner at point.
+     RECTANGLE's first line is inserted at point,
+     its second line is inserted at a point vertically under point, etc.
+     RECTANGLE should be a list of strings.
+
+   We can run a quick test, to make sure it does what we expect of it.
+
+   Here is the result of placing the cursor after the
+`insert-rectangle' expression and typing `C-u C-x C-e'
+(`eval-last-sexp').  The function inserts the strings `"first"',
+`"second"', and `"third"' at and below point.  Also the function
+returns `nil'.
+
+     (insert-rectangle '("first" "second" "third"))first
+                                                   second
+                                                   third
+     nil
+
+Of course, we won't be inserting the text of the `insert-rectangle'
+expression itself into the buffer in which we are making the graph, but
+will call the function from our program.  We shall, however, have to
+make sure that point is in the buffer at the place where the
+`insert-rectangle' function will insert its column of strings.
+
+   If you are reading this in Info, you can see how this works by
+switching to another buffer, such as the `*scratch*' buffer, placing
+point somewhere in the buffer, typing `M-:', typing the
+`insert-rectangle' expression into the minibuffer at the prompt, and
+then typing <RET>.  This causes Emacs to evaluate the expression in the
+minibuffer, but to use as the value of point the position of point in
+the `*scratch*' buffer.  (`M-:' is the keybinding for
+`eval-expression'.)
+
+   We find when we do this that point ends up at the end of the last
+inserted line--that is to say, this function moves point as a
+side-effect.  If we were to repeat the command, with point at this
+position, the next insertion would be below and to the right of the
+previous insertion.  We don't want this!  If we are going to make a bar
+graph, the columns need to be beside each other.
+
+   So we discover that each cycle of the column-inserting `while' loop
+must reposition point to the place we want it, and that place will be
+at the top, not the bottom, of the column.  Moreover, we remember that
+when we print a graph, we do not expect all the columns to be the same
+height.  This means that the top of each column may be at a different
+height from the previous one.  We cannot simply reposition point to the
+same line each time, but moved over to the right--or perhaps we can...
+
+   We are planning to make the columns of the bar graph out of
+asterisks.  The number of asterisks in the column is the number
+specified by the current element of the `numbers-list'.  We need to
+construct a list of asterisks of the right length for each call to
+`insert-rectangle'.  If this list consists solely of the requisite
+number of asterisks, then we will have position point the right number
+of lines above the base for the graph to print correctly.  This could
+be difficult.
+
+   Alternatively, if we can figure out some way to pass
+`insert-rectangle' a list of the same length each time, then we can
+place point on the same line each time, but move it over one column to
+the right for each new column.  If we do this, however, some of the
+entries in the list passed to `insert-rectangle' must be blanks rather
+than asterisks.  For example, if the maximum height of the graph is 5,
+but the height of the column is 3, then `insert-rectangle' requires an
+argument that looks like this:
+
+     (" " " " "*" "*" "*")
+
+   This last proposal is not so difficult, so long as we can determine
+the column height.  There are two ways for us to specify the column
+height: we can arbitrarily state what it will be, which would work fine
+for graphs of that height; or we can search through the list of numbers
+and use the maximum height of the list as the maximum height of the
+graph.  If the latter operation were difficult, then the former
+procedure would be easiest, but there is a function built into Emacs
+that determines the maximum of its arguments.  We can use that
+function.  The function is called `max' and it returns the largest of
+all its arguments, which must be numbers.  Thus, for example,
+
+     (max  3 4 6 5 7 3)
+
+returns 7.  (A corresponding function called `min' returns the smallest
+of all its arguments.)
+
+   However, we cannot simply call `max' on the `numbers-list'; the
+`max' function expects numbers as its argument, not a list of numbers.
+Thus, the following expression,
+
+     (max  '(3 4 6 5 7 3))
+
+produces the following error message;
+
+     Wrong type of argument:  number-or-marker-p, (3 4 6 5 7 3)
+
+   We need a function that passes a list of arguments to a function.
+This function is `apply'.  This function `applies' its first argument
+(a function) to its remaining arguments, the last of which may be a
+list.
+
+   For example,
+
+     (apply 'max 3 4 7 3 '(4 8 5))
+
+returns 8.
+
+   (Incidentally, I don't know how you would learn of this function
+without a book such as this.  It is possible to discover other
+functions, like `search-forward' or `insert-rectangle', by guessing at
+a part of their names and then using `apropos'.  Even though its base
+in metaphor is clear--`apply' its first argument to the rest--I doubt a
+novice would come up with that particular word when using `apropos' or
+other aid.  Of course, I could be wrong; after all, the function was
+first named by someone who had to invent it.)
+
+   The second and subsequent arguments to `apply' are optional, so we
+can use `apply' to call a function and pass the elements of a list to
+it, like this, which also returns 8:
+
+     (apply 'max '(4 8 5))
+
+   This latter way is how we will use `apply'.  The
+`recursive-lengths-list-many-files' function returns a numbers' list to
+which we can apply `max' (we could also apply `max' to the sorted
+numbers' list; it does not matter whether the list is sorted or not.)
+
+   Hence, the operation for finding the maximum height of the graph is
+this:
+
+     (setq max-graph-height (apply 'max numbers-list))
+
+   Now we can return to the question of how to create a list of strings
+for a column of the graph.  Told the maximum height of the graph and
+the number of asterisks that should appear in the column, the function
+should return a list of strings for the `insert-rectangle' command to
+insert.
+
+   Each column is made up of asterisks or blanks.  Since the function is
+passed the value of the height of the column and the number of
+asterisks in the column, the number of blanks can be found by
+subtracting the number of asterisks from the height of the column.
+Given the number of blanks and the number of asterisks, two `while'
+loops can be used to construct the list:
+
+     ;;; First version.
+     (defun column-of-graph (max-graph-height actual-height)
+       "Return list of strings that is one column of a graph."
+       (let ((insert-list nil)
+             (number-of-top-blanks
+              (- max-graph-height actual-height)))
+     
+         ;; Fill in asterisks.
+         (while (> actual-height 0)
+           (setq insert-list (cons "*" insert-list))
+           (setq actual-height (1- actual-height)))
+     
+         ;; Fill in blanks.
+         (while (> number-of-top-blanks 0)
+           (setq insert-list (cons " " insert-list))
+           (setq number-of-top-blanks
+                 (1- number-of-top-blanks)))
+     
+         ;; Return whole list.
+         insert-list))
+
+   If you install this function and then evaluate the following
+expression you will see that it returns the list as desired:
+
+     (column-of-graph 5 3)
+
+returns
+
+     (" " " " "*" "*" "*")
+
+   As written, `column-of-graph' contains a major flaw: the symbols
+used for the blank and for the marked entries in the column are
+`hard-coded' as a space and asterisk.  This is fine for a prototype,
+but you, or another user, may wish to use other symbols.  For example,
+in testing the graph function, you many want to use a period in place
+of the space, to make sure the point is being repositioned properly
+each time the `insert-rectangle' function is called; or you might want
+to substitute a `+' sign or other symbol for the asterisk.  You might
+even want to make a graph-column that is more than one display column
+wide.  The program should be more flexible.  The way to do that is to
+replace the blank and the asterisk with two variables that we can call
+`graph-blank' and `graph-symbol' and define those variables separately.
+
+   Also, the documentation is not well written.  These considerations
+lead us to the second version of the function:
+
+     (defvar graph-symbol "*"
+       "String used as symbol in graph, usually an asterisk.")
+     
+     (defvar graph-blank " "
+       "String used as blank in graph, usually a blank space.
+     graph-blank must be the same number of columns wide
+     as graph-symbol.")
+
+(For an explanation of `defvar', see *Note Initializing a Variable with
+`defvar': defvar.)
+
+     ;;; Second version.
+     (defun column-of-graph (max-graph-height actual-height)
+       "Return MAX-GRAPH-HEIGHT strings; ACTUAL-HEIGHT are graph-symbols.
+     The graph-symbols are contiguous entries at the end
+     of the list.
+     The list will be inserted as one column of a graph.
+     The strings are either graph-blank or graph-symbol."
+     
+       (let ((insert-list nil)
+             (number-of-top-blanks
+              (- max-graph-height actual-height)))
+     
+         ;; Fill in `graph-symbols'.
+         (while (> actual-height 0)
+           (setq insert-list (cons graph-symbol insert-list))
+           (setq actual-height (1- actual-height)))
+     
+         ;; Fill in `graph-blanks'.
+         (while (> number-of-top-blanks 0)
+           (setq insert-list (cons graph-blank insert-list))
+           (setq number-of-top-blanks
+                 (1- number-of-top-blanks)))
+     
+         ;; Return whole list.
+         insert-list))
+
+   If we wished, we could rewrite `column-of-graph' a third time to
+provide optionally for a line graph as well as for a bar graph.  This
+would not be hard to do.  One way to think of a line graph is that it
+is no more than a bar graph in which the part of each bar that is below
+the top is blank.  To construct a column for a line graph, the function
+first constructs a list of blanks that is one shorter than the value,
+then it uses `cons' to attach a graph symbol to the list; then it uses
+`cons' again to attach the `top blanks' to the list.
+
+   It is easy to see how to write such a function, but since we don't
+need it, we will not do it.  But the job could be done, and if it were
+done, it would be done with `column-of-graph'.  Even more important, it
+is worth noting that few changes would have to be made anywhere else.
+The enhancement, if we ever wish to make it, is simple.
+
+   Now, finally, we come to our first actual graph printing function.
+This prints the body of a graph, not the labels for the vertical and
+horizontal axes, so we can call this `graph-body-print'.
+

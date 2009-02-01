@@ -1,0 +1,1339 @@
+This is elisp, produced by makeinfo version 4.0f from ./elisp.texi.
+
+INFO-DIR-SECTION Editors
+START-INFO-DIR-ENTRY
+* Elisp: (elisp).	The Emacs Lisp Reference Manual.
+END-INFO-DIR-ENTRY
+
+   This Info file contains edition 2.8 of the GNU Emacs Lisp Reference
+Manual, corresponding to Emacs version 21.2.
+
+   Published by the Free Software Foundation 59 Temple Place, Suite 330
+Boston, MA  02111-1307  USA
+
+   Copyright (C) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+2000, 2001, 2002 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Copying", with the Front-Cover texts being "A
+GNU Manual", and with the Back-Cover Texts as in (a) below.  A copy of
+the license is included in the section entitled "GNU Free Documentation
+License".
+
+   (a) The FSF's Back-Cover Text is: "You have freedom to copy and
+modify this GNU Manual, like GNU software.  Copies published by the Free
+Software Foundation raise funds for GNU development."
+
+
+File: elisp,  Node: Hash Table Type,  Next: Function Type,  Prev: Bool-Vector Type,  Up: Programming Types
+
+Hash Table Type
+---------------
+
+   A hash table is a very fast kind of lookup table, somewhat like an
+alist in that it maps keys to corresponding values, but much faster.
+Hash tables are a new feature in Emacs 21; they have no read syntax, and
+print using hash notation.  *Note Hash Tables::.
+
+     (make-hash-table)
+          => #<hash-table 'eql nil 0/65 0x83af980>
+
+
+File: elisp,  Node: Function Type,  Next: Macro Type,  Prev: Hash Table Type,  Up: Programming Types
+
+Function Type
+-------------
+
+   Just as functions in other programming languages are executable,
+"Lisp function" objects are pieces of executable code.  However,
+functions in Lisp are primarily Lisp objects, and only secondarily the
+text which represents them.  These Lisp objects are lambda expressions:
+lists whose first element is the symbol `lambda' (*note Lambda
+Expressions::).
+
+   In most programming languages, it is impossible to have a function
+without a name.  In Lisp, a function has no intrinsic name.  A lambda
+expression is also called an "anonymous function" (*note Anonymous
+Functions::).  A named function in Lisp is actually a symbol with a
+valid function in its function cell (*note Defining Functions::).
+
+   Most of the time, functions are called when their names are written
+in Lisp expressions in Lisp programs.  However, you can construct or
+obtain a function object at run time and then call it with the primitive
+functions `funcall' and `apply'.  *Note Calling Functions::.
+
+
+File: elisp,  Node: Macro Type,  Next: Primitive Function Type,  Prev: Function Type,  Up: Programming Types
+
+Macro Type
+----------
+
+   A "Lisp macro" is a user-defined construct that extends the Lisp
+language.  It is represented as an object much like a function, but with
+different argument-passing semantics.  A Lisp macro has the form of a
+list whose first element is the symbol `macro' and whose CDR is a Lisp
+function object, including the `lambda' symbol.
+
+   Lisp macro objects are usually defined with the built-in `defmacro'
+function, but any list that begins with `macro' is a macro as far as
+Emacs is concerned.  *Note Macros::, for an explanation of how to write
+a macro.
+
+   *Warning*: Lisp macros and keyboard macros (*note Keyboard Macros::)
+are entirely different things.  When we use the word "macro" without
+qualification, we mean a Lisp macro, not a keyboard macro.
+
+
+File: elisp,  Node: Primitive Function Type,  Next: Byte-Code Type,  Prev: Macro Type,  Up: Programming Types
+
+Primitive Function Type
+-----------------------
+
+   A "primitive function" is a function callable from Lisp but written
+in the C programming language.  Primitive functions are also called
+"subrs" or "built-in functions".  (The word "subr" is derived from
+"subroutine".)  Most primitive functions evaluate all their arguments
+when they are called.  A primitive function that does not evaluate all
+its arguments is called a "special form" (*note Special Forms::).
+
+   It does not matter to the caller of a function whether the function
+is primitive.  However, this does matter if you try to redefine a
+primitive with a function written in Lisp.  The reason is that the
+primitive function may be called directly from C code.  Calls to the
+redefined function from Lisp will use the new definition, but calls
+from C code may still use the built-in definition.  Therefore, *we
+discourage redefinition of primitive functions*.
+
+   The term "function" refers to all Emacs functions, whether written
+in Lisp or C.  *Note Function Type::, for information about the
+functions written in Lisp.
+
+   Primitive functions have no read syntax and print in hash notation
+with the name of the subroutine.
+
+     (symbol-function 'car)          ; Access the function cell
+                                     ;   of the symbol.
+          => #<subr car>
+     (subrp (symbol-function 'car))  ; Is this a primitive function?
+          => t                       ; Yes.
+
+
+File: elisp,  Node: Byte-Code Type,  Next: Autoload Type,  Prev: Primitive Function Type,  Up: Programming Types
+
+Byte-Code Function Type
+-----------------------
+
+   The byte compiler produces "byte-code function objects".
+Internally, a byte-code function object is much like a vector; however,
+the evaluator handles this data type specially when it appears as a
+function to be called.  *Note Byte Compilation::, for information about
+the byte compiler.
+
+   The printed representation and read syntax for a byte-code function
+object is like that for a vector, with an additional `#' before the
+opening `['.
+
+
+File: elisp,  Node: Autoload Type,  Prev: Byte-Code Type,  Up: Programming Types
+
+Autoload Type
+-------------
+
+   An "autoload object" is a list whose first element is the symbol
+`autoload'.  It is stored as the function definition of a symbol, where
+it serves as a placeholder for the real definition.  The autoload
+object says that the real definition is found in a file of Lisp code
+that should be loaded when necessary.  It contains the name of the file,
+plus some other information about the real definition.
+
+   After the file has been loaded, the symbol should have a new function
+definition that is not an autoload object.  The new definition is then
+called as if it had been there to begin with.  From the user's point of
+view, the function call works as expected, using the function definition
+in the loaded file.
+
+   An autoload object is usually created with the function `autoload',
+which stores the object in the function cell of a symbol.  *Note
+Autoload::, for more details.
+
+
+File: elisp,  Node: Editing Types,  Next: Circular Objects,  Prev: Programming Types,  Up: Lisp Data Types
+
+Editing Types
+=============
+
+   The types in the previous section are used for general programming
+purposes, and most of them are common to most Lisp dialects.  Emacs Lisp
+provides several additional data types for purposes connected with
+editing.
+
+* Menu:
+
+* Buffer Type::         The basic object of editing.
+* Marker Type::         A position in a buffer.
+* Window Type::         Buffers are displayed in windows.
+* Frame Type::		Windows subdivide frames.
+* Window Configuration Type::   Recording the way a frame is subdivided.
+* Frame Configuration Type::    Recording the status of all frames.
+* Process Type::        A process running on the underlying OS.
+* Stream Type::         Receive or send characters.
+* Keymap Type::         What function a keystroke invokes.
+* Overlay Type::        How an overlay is represented.
+
+
+File: elisp,  Node: Buffer Type,  Next: Marker Type,  Up: Editing Types
+
+Buffer Type
+-----------
+
+   A "buffer" is an object that holds text that can be edited (*note
+Buffers::).  Most buffers hold the contents of a disk file (*note
+Files::) so they can be edited, but some are used for other purposes.
+Most buffers are also meant to be seen by the user, and therefore
+displayed, at some time, in a window (*note Windows::).  But a buffer
+need not be displayed in any window.
+
+   The contents of a buffer are much like a string, but buffers are not
+used like strings in Emacs Lisp, and the available operations are
+different.  For example, you can insert text efficiently into an
+existing buffer, altering the buffer's contents, whereas "inserting"
+text into a string requires concatenating substrings, and the result is
+an entirely new string object.
+
+   Each buffer has a designated position called "point" (*note
+Positions::).  At any time, one buffer is the "current buffer".  Most
+editing commands act on the contents of the current buffer in the
+neighborhood of point.  Many of the standard Emacs functions manipulate
+or test the characters in the current buffer; a whole chapter in this
+manual is devoted to describing these functions (*note Text::).
+
+   Several other data structures are associated with each buffer:
+
+   * a local syntax table (*note Syntax Tables::);
+
+   * a local keymap (*note Keymaps::); and,
+
+   * a list of buffer-local variable bindings (*note Buffer-Local
+     Variables::).
+
+   * overlays (*note Overlays::).
+
+   * text properties for the text in the buffer (*note Text
+     Properties::).
+
+The local keymap and variable list contain entries that individually
+override global bindings or values.  These are used to customize the
+behavior of programs in different buffers, without actually changing the
+programs.
+
+   A buffer may be "indirect", which means it shares the text of
+another buffer, but presents it differently.  *Note Indirect Buffers::.
+
+   Buffers have no read syntax.  They print in hash notation, showing
+the buffer name.
+
+     (current-buffer)
+          => #<buffer objects.texi>
+
+
+File: elisp,  Node: Marker Type,  Next: Window Type,  Prev: Buffer Type,  Up: Editing Types
+
+Marker Type
+-----------
+
+   A "marker" denotes a position in a specific buffer.  Markers
+therefore have two components: one for the buffer, and one for the
+position.  Changes in the buffer's text automatically relocate the
+position value as necessary to ensure that the marker always points
+between the same two characters in the buffer.
+
+   Markers have no read syntax.  They print in hash notation, giving the
+current character position and the name of the buffer.
+
+     (point-marker)
+          => #<marker at 10779 in objects.texi>
+
+   *Note Markers::, for information on how to test, create, copy, and
+move markers.
+
+
+File: elisp,  Node: Window Type,  Next: Frame Type,  Prev: Marker Type,  Up: Editing Types
+
+Window Type
+-----------
+
+   A "window" describes the portion of the terminal screen that Emacs
+uses to display a buffer.  Every window has one associated buffer, whose
+contents appear in the window.  By contrast, a given buffer may appear
+in one window, no window, or several windows.
+
+   Though many windows may exist simultaneously, at any time one window
+is designated the "selected window".  This is the window where the
+cursor is (usually) displayed when Emacs is ready for a command.  The
+selected window usually displays the current buffer, but this is not
+necessarily the case.
+
+   Windows are grouped on the screen into frames; each window belongs to
+one and only one frame.  *Note Frame Type::.
+
+   Windows have no read syntax.  They print in hash notation, giving the
+window number and the name of the buffer being displayed.  The window
+numbers exist to identify windows uniquely, since the buffer displayed
+in any given window can change frequently.
+
+     (selected-window)
+          => #<window 1 on objects.texi>
+
+   *Note Windows::, for a description of the functions that work on
+windows.
+
+
+File: elisp,  Node: Frame Type,  Next: Window Configuration Type,  Prev: Window Type,  Up: Editing Types
+
+Frame Type
+----------
+
+   A "frame" is a rectangle on the screen that contains one or more
+Emacs windows.  A frame initially contains a single main window (plus
+perhaps a minibuffer window) which you can subdivide vertically or
+horizontally into smaller windows.
+
+   Frames have no read syntax.  They print in hash notation, giving the
+frame's title, plus its address in core (useful to identify the frame
+uniquely).
+
+     (selected-frame)
+          => #<frame emacs@psilocin.gnu.org 0xdac80>
+
+   *Note Frames::, for a description of the functions that work on
+frames.
+
+
+File: elisp,  Node: Window Configuration Type,  Next: Frame Configuration Type,  Prev: Frame Type,  Up: Editing Types
+
+Window Configuration Type
+-------------------------
+
+   A "window configuration" stores information about the positions,
+sizes, and contents of the windows in a frame, so you can recreate the
+same arrangement of windows later.
+
+   Window configurations do not have a read syntax; their print syntax
+looks like `#<window-configuration>'.  *Note Window Configurations::,
+for a description of several functions related to window configurations.
+
+
+File: elisp,  Node: Frame Configuration Type,  Next: Process Type,  Prev: Window Configuration Type,  Up: Editing Types
+
+Frame Configuration Type
+------------------------
+
+   A "frame configuration" stores information about the positions,
+sizes, and contents of the windows in all frames.  It is actually a
+list whose CAR is `frame-configuration' and whose CDR is an alist.
+Each alist element describes one frame, which appears as the CAR of
+that element.
+
+   *Note Frame Configurations::, for a description of several functions
+related to frame configurations.
+
+
+File: elisp,  Node: Process Type,  Next: Stream Type,  Prev: Frame Configuration Type,  Up: Editing Types
+
+Process Type
+------------
+
+   The word "process" usually means a running program.  Emacs itself
+runs in a process of this sort.  However, in Emacs Lisp, a process is a
+Lisp object that designates a subprocess created by the Emacs process.
+Programs such as shells, GDB, ftp, and compilers, running in
+subprocesses of Emacs, extend the capabilities of Emacs.
+
+   An Emacs subprocess takes textual input from Emacs and returns
+textual output to Emacs for further manipulation.  Emacs can also send
+signals to the subprocess.
+
+   Process objects have no read syntax.  They print in hash notation,
+giving the name of the process:
+
+     (process-list)
+          => (#<process shell>)
+
+   *Note Processes::, for information about functions that create,
+delete, return information about, send input or signals to, and receive
+output from processes.
+
+
+File: elisp,  Node: Stream Type,  Next: Keymap Type,  Prev: Process Type,  Up: Editing Types
+
+Stream Type
+-----------
+
+   A "stream" is an object that can be used as a source or sink for
+characters--either to supply characters for input or to accept them as
+output.  Many different types can be used this way: markers, buffers,
+strings, and functions.  Most often, input streams (character sources)
+obtain characters from the keyboard, a buffer, or a file, and output
+streams (character sinks) send characters to a buffer, such as a
+`*Help*' buffer, or to the echo area.
+
+   The object `nil', in addition to its other meanings, may be used as
+a stream.  It stands for the value of the variable `standard-input' or
+`standard-output'.  Also, the object `t' as a stream specifies input
+using the minibuffer (*note Minibuffers::) or output in the echo area
+(*note The Echo Area::).
+
+   Streams have no special printed representation or read syntax, and
+print as whatever primitive type they are.
+
+   *Note Read and Print::, for a description of functions related to
+streams, including parsing and printing functions.
+
+
+File: elisp,  Node: Keymap Type,  Next: Overlay Type,  Prev: Stream Type,  Up: Editing Types
+
+Keymap Type
+-----------
+
+   A "keymap" maps keys typed by the user to commands.  This mapping
+controls how the user's command input is executed.  A keymap is actually
+a list whose CAR is the symbol `keymap'.
+
+   *Note Keymaps::, for information about creating keymaps, handling
+prefix keys, local as well as global keymaps, and changing key bindings.
+
+
+File: elisp,  Node: Overlay Type,  Prev: Keymap Type,  Up: Editing Types
+
+Overlay Type
+------------
+
+   An "overlay" specifies properties that apply to a part of a buffer.
+Each overlay applies to a specified range of the buffer, and contains a
+property list (a list whose elements are alternating property names and
+values).  Overlay properties are used to present parts of the buffer
+temporarily in a different display style.  Overlays have no read
+syntax, and print in hash notation, giving the buffer name and range of
+positions.
+
+   *Note Overlays::, for how to create and use overlays.
+
+
+File: elisp,  Node: Circular Objects,  Next: Type Predicates,  Prev: Editing Types,  Up: Lisp Data Types
+
+Read Syntax for Circular Objects
+================================
+
+   In Emacs 21, to represent shared or circular structure within a
+complex of Lisp objects, you can use the reader constructs `#N=' and
+`#N#'.
+
+   Use `#N=' before an object to label it for later reference;
+subsequently, you can use `#N#' to refer the same object in another
+place.  Here, N is some integer.  For example, here is how to make a
+list in which the first element recurs as the third element:
+
+     (#1=(a) b #1#)
+
+This differs from ordinary syntax such as this
+
+     ((a) b (a))
+
+which would result in a list whose first and third elements look alike
+but are not the same Lisp object.  This shows the difference:
+
+     (prog1 nil
+       (setq x '(#1=(a) b #1#)))
+     (eq (nth 0 x) (nth 2 x))
+          => t
+     (setq x '((a) b (a)))
+     (eq (nth 0 x) (nth 2 x))
+          => nil
+
+   You can also use the same syntax to make a circular structure, which
+appears as an "element" within itself.  Here is an example:
+
+     #1=(a #1#)
+
+This makes a list whose second element is the list itself.  Here's how
+you can see that it really works:
+
+     (prog1 nil
+       (setq x '#1=(a #1#)))
+     (eq x (cadr x))
+          => t
+
+   The Lisp printer can produce this syntax to record circular and
+shared structure in a Lisp object, if you bind the variable
+`print-circle' to a non-`nil' value.  *Note Output Variables::.
+
+
+File: elisp,  Node: Type Predicates,  Next: Equality Predicates,  Prev: Circular Objects,  Up: Lisp Data Types
+
+Type Predicates
+===============
+
+   The Emacs Lisp interpreter itself does not perform type checking on
+the actual arguments passed to functions when they are called.  It could
+not do so, since function arguments in Lisp do not have declared data
+types, as they do in other programming languages.  It is therefore up to
+the individual function to test whether each actual argument belongs to
+a type that the function can use.
+
+   All built-in functions do check the types of their actual arguments
+when appropriate, and signal a `wrong-type-argument' error if an
+argument is of the wrong type.  For example, here is what happens if you
+pass an argument to `+' that it cannot handle:
+
+     (+ 2 'a)
+          error--> Wrong type argument: number-or-marker-p, a
+
+   If you want your program to handle different types differently, you
+must do explicit type checking.  The most common way to check the type
+of an object is to call a "type predicate" function.  Emacs has a type
+predicate for each type, as well as some predicates for combinations of
+types.
+
+   A type predicate function takes one argument; it returns `t' if the
+argument belongs to the appropriate type, and `nil' otherwise.
+Following a general Lisp convention for predicate functions, most type
+predicates' names end with `p'.
+
+   Here is an example which uses the predicates `listp' to check for a
+list and `symbolp' to check for a symbol.
+
+     (defun add-on (x)
+       (cond ((symbolp x)
+              ;; If X is a symbol, put it on LIST.
+              (setq list (cons x list)))
+             ((listp x)
+              ;; If X is a list, add its elements to LIST.
+              (setq list (append x list)))
+             (t
+              ;; We handle only symbols and lists.
+              (error "Invalid argument %s in add-on" x))))
+
+   Here is a table of predefined type predicates, in alphabetical order,
+with references to further information.
+
+`atom'
+     *Note atom: List-related Predicates.
+
+`arrayp'
+     *Note arrayp: Array Functions.
+
+`bool-vector-p'
+     *Note bool-vector-p: Bool-Vectors.
+
+`bufferp'
+     *Note bufferp: Buffer Basics.
+
+`byte-code-function-p'
+     *Note byte-code-function-p: Byte-Code Type.
+
+`case-table-p'
+     *Note case-table-p: Case Tables.
+
+`char-or-string-p'
+     *Note char-or-string-p: Predicates for Strings.
+
+`char-table-p'
+     *Note char-table-p: Char-Tables.
+
+`commandp'
+     *Note commandp: Interactive Call.
+
+`consp'
+     *Note consp: List-related Predicates.
+
+`display-table-p'
+     *Note display-table-p: Display Tables.
+
+`floatp'
+     *Note floatp: Predicates on Numbers.
+
+`frame-configuration-p'
+     *Note frame-configuration-p: Frame Configurations.
+
+`frame-live-p'
+     *Note frame-live-p: Deleting Frames.
+
+`framep'
+     *Note framep: Frames.
+
+`functionp'
+     *Note functionp: Functions.
+
+`integer-or-marker-p'
+     *Note integer-or-marker-p: Predicates on Markers.
+
+`integerp'
+     *Note integerp: Predicates on Numbers.
+
+`keymapp'
+     *Note keymapp: Creating Keymaps.
+
+`keywordp'
+     *Note Constant Variables::.
+
+`listp'
+     *Note listp: List-related Predicates.
+
+`markerp'
+     *Note markerp: Predicates on Markers.
+
+`wholenump'
+     *Note wholenump: Predicates on Numbers.
+
+`nlistp'
+     *Note nlistp: List-related Predicates.
+
+`numberp'
+     *Note numberp: Predicates on Numbers.
+
+`number-or-marker-p'
+     *Note number-or-marker-p: Predicates on Markers.
+
+`overlayp'
+     *Note overlayp: Overlays.
+
+`processp'
+     *Note processp: Processes.
+
+`sequencep'
+     *Note sequencep: Sequence Functions.
+
+`stringp'
+     *Note stringp: Predicates for Strings.
+
+`subrp'
+     *Note subrp: Function Cells.
+
+`symbolp'
+     *Note symbolp: Symbols.
+
+`syntax-table-p'
+     *Note syntax-table-p: Syntax Tables.
+
+`user-variable-p'
+     *Note user-variable-p: Defining Variables.
+
+`vectorp'
+     *Note vectorp: Vectors.
+
+`window-configuration-p'
+     *Note window-configuration-p: Window Configurations.
+
+`window-live-p'
+     *Note window-live-p: Deleting Windows.
+
+`windowp'
+     *Note windowp: Basic Windows.
+
+   The most general way to check the type of an object is to call the
+function `type-of'.  Recall that each object belongs to one and only
+one primitive type; `type-of' tells you which one (*note Lisp Data
+Types::).  But `type-of' knows nothing about non-primitive types.  In
+most cases, it is more convenient to use type predicates than `type-of'.
+
+ - Function: type-of object
+     This function returns a symbol naming the primitive type of
+     OBJECT.  The value is one of the symbols `symbol', `integer',
+     `float', `string', `cons', `vector', `char-table', `bool-vector',
+     `hash-table', `subr', `compiled-function', `marker', `overlay',
+     `window', `buffer', `frame', `process', or `window-configuration'.
+
+          (type-of 1)
+               => integer
+          (type-of 'nil)
+               => symbol
+          (type-of '())    ; `()' is `nil'.
+               => symbol
+          (type-of '(x))
+               => cons
+
+
+File: elisp,  Node: Equality Predicates,  Prev: Type Predicates,  Up: Lisp Data Types
+
+Equality Predicates
+===================
+
+   Here we describe two functions that test for equality between any two
+objects.  Other functions test equality between objects of specific
+types, e.g., strings.  For these predicates, see the appropriate chapter
+describing the data type.
+
+ - Function: eq object1 object2
+     This function returns `t' if OBJECT1 and OBJECT2 are the same
+     object, `nil' otherwise.  The "same object" means that a change in
+     one will be reflected by the same change in the other.
+
+     `eq' returns `t' if OBJECT1 and OBJECT2 are integers with the same
+     value.  Also, since symbol names are normally unique, if the
+     arguments are symbols with the same name, they are `eq'.  For
+     other types (e.g., lists, vectors, strings), two arguments with
+     the same contents or elements are not necessarily `eq' to each
+     other: they are `eq' only if they are the same object.
+
+          (eq 'foo 'foo)
+               => t
+          
+          (eq 456 456)
+               => t
+          
+          (eq "asdf" "asdf")
+               => nil
+          
+          (eq '(1 (2 (3))) '(1 (2 (3))))
+               => nil
+          
+          (setq foo '(1 (2 (3))))
+               => (1 (2 (3)))
+          (eq foo foo)
+               => t
+          (eq foo '(1 (2 (3))))
+               => nil
+          
+          (eq [(1 2) 3] [(1 2) 3])
+               => nil
+          
+          (eq (point-marker) (point-marker))
+               => nil
+
+     The `make-symbol' function returns an uninterned symbol, distinct
+     from the symbol that is used if you write the name in a Lisp
+     expression.  Distinct symbols with the same name are not `eq'.
+     *Note Creating Symbols::.
+
+          (eq (make-symbol "foo") 'foo)
+               => nil
+
+ - Function: equal object1 object2
+     This function returns `t' if OBJECT1 and OBJECT2 have equal
+     components, `nil' otherwise.  Whereas `eq' tests if its arguments
+     are the same object, `equal' looks inside nonidentical arguments
+     to see if their elements or contents are the same.  So, if two
+     objects are `eq', they are `equal', but the converse is not always
+     true.
+
+          (equal 'foo 'foo)
+               => t
+          
+          (equal 456 456)
+               => t
+          
+          (equal "asdf" "asdf")
+               => t
+          (eq "asdf" "asdf")
+               => nil
+          
+          (equal '(1 (2 (3))) '(1 (2 (3))))
+               => t
+          (eq '(1 (2 (3))) '(1 (2 (3))))
+               => nil
+          
+          (equal [(1 2) 3] [(1 2) 3])
+               => t
+          (eq [(1 2) 3] [(1 2) 3])
+               => nil
+          
+          (equal (point-marker) (point-marker))
+               => t
+          
+          (eq (point-marker) (point-marker))
+               => nil
+
+     Comparison of strings is case-sensitive, but does not take account
+     of text properties--it compares only the characters in the strings.
+     A unibyte string never equals a multibyte string unless the
+     contents are entirely ASCII (*note Text Representations::).
+
+          (equal "asdf" "ASDF")
+               => nil
+
+     However, two distinct buffers are never considered `equal', even if
+     their textual contents are the same.
+
+   The test for equality is implemented recursively; for example, given
+two cons cells X and Y, `(equal X Y)' returns `t' if and only if both
+the expressions below return `t':
+
+     (equal (car X) (car Y))
+     (equal (cdr X) (cdr Y))
+
+   Because of this recursive method, circular lists may therefore cause
+infinite recursion (leading to an error).
+
+
+File: elisp,  Node: Numbers,  Next: Strings and Characters,  Prev: Lisp Data Types,  Up: Top
+
+Numbers
+*******
+
+   GNU Emacs supports two numeric data types: "integers" and "floating
+point numbers".  Integers are whole numbers such as -3, 0, 7, 13, and
+511.  Their values are exact.  Floating point numbers are numbers with
+fractional parts, such as -4.5, 0.0, or 2.71828.  They can also be
+expressed in exponential notation: 1.5e2 equals 150; in this example,
+`e2' stands for ten to the second power, and that is multiplied by 1.5.
+Floating point values are not exact; they have a fixed, limited amount
+of precision.
+
+* Menu:
+
+* Integer Basics::            Representation and range of integers.
+* Float Basics::	      Representation and range of floating point.
+* Predicates on Numbers::     Testing for numbers.
+* Comparison of Numbers::     Equality and inequality predicates.
+* Numeric Conversions::	      Converting float to integer and vice versa.
+* Arithmetic Operations::     How to add, subtract, multiply and divide.
+* Rounding Operations::       Explicitly rounding floating point numbers.
+* Bitwise Operations::        Logical and, or, not, shifting.
+* Math Functions::            Trig, exponential and logarithmic functions.
+* Random Numbers::            Obtaining random integers, predictable or not.
+
+
+File: elisp,  Node: Integer Basics,  Next: Float Basics,  Up: Numbers
+
+Integer Basics
+==============
+
+   The range of values for an integer depends on the machine.  The
+minimum range is -134217728 to 134217727 (28 bits; i.e., -2**27 to
+2**27 - 1), but some machines may provide a wider range.  Many examples
+in this chapter assume an integer has 28 bits.
+
+   The Lisp reader reads an integer as a sequence of digits with
+optional initial sign and optional final period.
+
+      1               ; The integer 1.
+      1.              ; The integer 1.
+     +1               ; Also the integer 1.
+     -1               ; The integer -1.
+      268435457       ; Also the integer 1, due to overflow.
+      0               ; The integer 0.
+     -0               ; The integer 0.
+
+   In addition, the Lisp reader recognizes a syntax for integers in
+bases other than 10: `#BINTEGER' reads INTEGER in binary (radix 2),
+`#OINTEGER' reads INTEGER in octal (radix 8), `#XINTEGER' reads INTEGER
+in hexadecimal (radix 16), and `#RADIXrINTEGER' reads INTEGER in radix
+RADIX (where RADIX is between 2 and 36, inclusivley).  Case is not
+significant for the letter after `#' (`B', `O', etc.) that denotes the
+radix.
+
+   To understand how various functions work on integers, especially the
+bitwise operators (*note Bitwise Operations::), it is often helpful to
+view the numbers in their binary form.
+
+   In 28-bit binary, the decimal integer 5 looks like this:
+
+     0000  0000 0000  0000 0000  0000 0101
+
+(We have inserted spaces between groups of 4 bits, and two spaces
+between groups of 8 bits, to make the binary integer easier to read.)
+
+   The integer -1 looks like this:
+
+     1111  1111 1111  1111 1111  1111 1111
+
+-1 is represented as 28 ones.  (This is called "two's complement"
+notation.)
+
+   The negative integer, -5, is creating by subtracting 4 from -1.  In
+binary, the decimal integer 4 is 100.  Consequently, -5 looks like this:
+
+     1111  1111 1111  1111 1111  1111 1011
+
+   In this implementation, the largest 28-bit binary integer value is
+134,217,727 in decimal.  In binary, it looks like this:
+
+     0111  1111 1111  1111 1111  1111 1111
+
+   Since the arithmetic functions do not check whether integers go
+outside their range, when you add 1 to 134,217,727, the value is the
+negative integer -134,217,728:
+
+     (+ 1 134217727)
+          => -134217728
+          => 1000  0000 0000  0000 0000  0000 0000
+
+   Many of the functions described in this chapter accept markers for
+arguments in place of numbers.  (*Note Markers::.)  Since the actual
+arguments to such functions may be either numbers or markers, we often
+give these arguments the name NUMBER-OR-MARKER.  When the argument
+value is a marker, its position value is used and its buffer is ignored.
+
+
+File: elisp,  Node: Float Basics,  Next: Predicates on Numbers,  Prev: Integer Basics,  Up: Numbers
+
+Floating Point Basics
+=====================
+
+   Floating point numbers are useful for representing numbers that are
+not integral.  The precise range of floating point numbers is
+machine-specific; it is the same as the range of the C data type
+`double' on the machine you are using.
+
+   The read-syntax for floating point numbers requires either a decimal
+point (with at least one digit following), an exponent, or both.  For
+example, `1500.0', `15e2', `15.0e2', `1.5e3', and `.15e4' are five ways
+of writing a floating point number whose value is 1500.  They are all
+equivalent.  You can also use a minus sign to write negative floating
+point numbers, as in `-1.0'.
+
+   Most modern computers support the IEEE floating point standard, which
+provides for positive infinity and negative infinity as floating point
+values.  It also provides for a class of values called NaN or
+"not-a-number"; numerical functions return such values in cases where
+there is no correct answer.  For example, `(sqrt -1.0)' returns a NaN.
+For practical purposes, there's no significant difference between
+different NaN values in Emacs Lisp, and there's no rule for precisely
+which NaN value should be used in a particular case, so Emacs Lisp
+doesn't try to distinguish them.  Here are the read syntaxes for these
+special floating point values:
+
+positive infinity
+     `1.0e+INF'
+
+negative infinity
+     `-1.0e+INF'
+
+Not-a-number
+     `0.0e+NaN'.
+
+   In addition, the value `-0.0' is distinguishable from ordinary zero
+in IEEE floating point (although `equal' and `=' consider them equal
+values).
+
+   You can use `logb' to extract the binary exponent of a floating
+point number (or estimate the logarithm of an integer):
+
+ - Function: logb number
+     This function returns the binary exponent of NUMBER.  More
+     precisely, the value is the logarithm of NUMBER base 2, rounded
+     down to an integer.
+
+          (logb 10)
+               => 3
+          (logb 10.0e20)
+               => 69
+
+
+File: elisp,  Node: Predicates on Numbers,  Next: Comparison of Numbers,  Prev: Float Basics,  Up: Numbers
+
+Type Predicates for Numbers
+===========================
+
+   The functions in this section test whether the argument is a number
+or whether it is a certain sort of number.  The functions `integerp'
+and `floatp' can take any type of Lisp object as argument (the
+predicates would not be of much use otherwise); but the `zerop'
+predicate requires a number as its argument.  See also
+`integer-or-marker-p' and `number-or-marker-p', in *Note Predicates on
+Markers::.
+
+ - Function: floatp object
+     This predicate tests whether its argument is a floating point
+     number and returns `t' if so, `nil' otherwise.
+
+     `floatp' does not exist in Emacs versions 18 and earlier.
+
+ - Function: integerp object
+     This predicate tests whether its argument is an integer, and
+     returns `t' if so, `nil' otherwise.
+
+ - Function: numberp object
+     This predicate tests whether its argument is a number (either
+     integer or floating point), and returns `t' if so, `nil' otherwise.
+
+ - Function: wholenump object
+     The `wholenump' predicate (whose name comes from the phrase
+     "whole-number-p") tests to see whether its argument is a
+     nonnegative integer, and returns `t' if so, `nil' otherwise.  0 is
+     considered non-negative.
+
+     `natnump' is an obsolete synonym for `wholenump'.
+
+ - Function: zerop number
+     This predicate tests whether its argument is zero, and returns `t'
+     if so, `nil' otherwise.  The argument must be a number.
+
+     These two forms are equivalent: `(zerop x)' == `(= x 0)'.
+
+
+File: elisp,  Node: Comparison of Numbers,  Next: Numeric Conversions,  Prev: Predicates on Numbers,  Up: Numbers
+
+Comparison of Numbers
+=====================
+
+   To test numbers for numerical equality, you should normally use `=',
+not `eq'.  There can be many distinct floating point number objects
+with the same numeric value.  If you use `eq' to compare them, then you
+test whether two values are the same _object_.  By contrast, `='
+compares only the numeric values of the objects.
+
+   At present, each integer value has a unique Lisp object in Emacs
+Lisp.  Therefore, `eq' is equivalent to `=' where integers are
+concerned.  It is sometimes convenient to use `eq' for comparing an
+unknown value with an integer, because `eq' does not report an error if
+the unknown value is not a number--it accepts arguments of any type.
+By contrast, `=' signals an error if the arguments are not numbers or
+markers.  However, it is a good idea to use `=' if you can, even for
+comparing integers, just in case we change the representation of
+integers in a future Emacs version.
+
+   Sometimes it is useful to compare numbers with `equal'; it treats
+two numbers as equal if they have the same data type (both integers, or
+both floating point) and the same value.  By contrast, `=' can treat an
+integer and a floating point number as equal.
+
+   There is another wrinkle: because floating point arithmetic is not
+exact, it is often a bad idea to check for equality of two floating
+point values.  Usually it is better to test for approximate equality.
+Here's a function to do this:
+
+     (defvar fuzz-factor 1.0e-6)
+     (defun approx-equal (x y)
+       (or (and (= x 0) (= y 0))
+           (< (/ (abs (- x y))
+                 (max (abs x) (abs y)))
+              fuzz-factor)))
+
+     Common Lisp note: Comparing numbers in Common Lisp always requires
+     `=' because Common Lisp implements multi-word integers, and two
+     distinct integer objects can have the same numeric value.  Emacs
+     Lisp can have just one integer object for any given value because
+     it has a limited range of integer values.
+
+ - Function: = number-or-marker1 number-or-marker2
+     This function tests whether its arguments are numerically equal,
+     and returns `t' if so, `nil' otherwise.
+
+ - Function: /= number-or-marker1 number-or-marker2
+     This function tests whether its arguments are numerically equal,
+     and returns `t' if they are not, and `nil' if they are.
+
+ - Function: < number-or-marker1 number-or-marker2
+     This function tests whether its first argument is strictly less
+     than its second argument.  It returns `t' if so, `nil' otherwise.
+
+ - Function: <= number-or-marker1 number-or-marker2
+     This function tests whether its first argument is less than or
+     equal to its second argument.  It returns `t' if so, `nil'
+     otherwise.
+
+ - Function: > number-or-marker1 number-or-marker2
+     This function tests whether its first argument is strictly greater
+     than its second argument.  It returns `t' if so, `nil' otherwise.
+
+ - Function: >= number-or-marker1 number-or-marker2
+     This function tests whether its first argument is greater than or
+     equal to its second argument.  It returns `t' if so, `nil'
+     otherwise.
+
+ - Function: max number-or-marker &rest numbers-or-markers
+     This function returns the largest of its arguments.  If any of the
+     argument is floating-point, the value is returned as floating
+     point, even if it was given as an integer.
+
+          (max 20)
+               => 20
+          (max 1 2.5)
+               => 2.5
+          (max 1 3 2.5)
+               => 3.0
+
+ - Function: min number-or-marker &rest numbers-or-markers
+     This function returns the smallest of its arguments.  If any of
+     the argument is floating-point, the value is returned as floating
+     point, even if it was given as an integer.
+
+          (min -4 1)
+               => -4
+
+ - Function: abs number
+     This function returns the absolute value of NUMBER.
+
+
+File: elisp,  Node: Numeric Conversions,  Next: Arithmetic Operations,  Prev: Comparison of Numbers,  Up: Numbers
+
+Numeric Conversions
+===================
+
+   To convert an integer to floating point, use the function `float'.
+
+ - Function: float number
+     This returns NUMBER converted to floating point.  If NUMBER is
+     already a floating point number, `float' returns it unchanged.
+
+   There are four functions to convert floating point numbers to
+integers; they differ in how they round.  These functions accept
+integer arguments also, and return such arguments unchanged.
+
+ - Function: truncate number
+     This returns NUMBER, converted to an integer by rounding towards
+     zero.
+
+          (truncate 1.2)
+               => 1
+          (truncate 1.7)
+               => 1
+          (truncate -1.2)
+               => -1
+          (truncate -1.7)
+               => -1
+
+ - Function: floor number &optional divisor
+     This returns NUMBER, converted to an integer by rounding downward
+     (towards negative infinity).
+
+     If DIVISOR is specified, `floor' divides NUMBER by DIVISOR and
+     then converts to an integer; this uses the kind of division
+     operation that corresponds to `mod', rounding downward.  An
+     `arith-error' results if DIVISOR is 0.
+
+          (floor 1.2)
+               => 1
+          (floor 1.7)
+               => 1
+          (floor -1.2)
+               => -2
+          (floor -1.7)
+               => -2
+          (floor 5.99 3)
+               => 1
+
+ - Function: ceiling number
+     This returns NUMBER, converted to an integer by rounding upward
+     (towards positive infinity).
+
+          (ceiling 1.2)
+               => 2
+          (ceiling 1.7)
+               => 2
+          (ceiling -1.2)
+               => -1
+          (ceiling -1.7)
+               => -1
+
+ - Function: round number
+     This returns NUMBER, converted to an integer by rounding towards
+     the nearest integer.  Rounding a value equidistant between two
+     integers may choose the integer closer to zero, or it may prefer
+     an even integer, depending on your machine.
+
+          (round 1.2)
+               => 1
+          (round 1.7)
+               => 2
+          (round -1.2)
+               => -1
+          (round -1.7)
+               => -2
+
+
+File: elisp,  Node: Arithmetic Operations,  Next: Rounding Operations,  Prev: Numeric Conversions,  Up: Numbers
+
+Arithmetic Operations
+=====================
+
+   Emacs Lisp provides the traditional four arithmetic operations:
+addition, subtraction, multiplication, and division.  Remainder and
+modulus functions supplement the division functions.  The functions to
+add or subtract 1 are provided because they are traditional in Lisp and
+commonly used.
+
+   All of these functions except `%' return a floating point value if
+any argument is floating.
+
+   It is important to note that in Emacs Lisp, arithmetic functions do
+not check for overflow.  Thus `(1+ 134217727)' may evaluate to
+-134217728, depending on your hardware.
+
+ - Function: 1+ number-or-marker
+     This function returns NUMBER-OR-MARKER plus 1.  For example,
+
+          (setq foo 4)
+               => 4
+          (1+ foo)
+               => 5
+
+     This function is not analogous to the C operator `++'--it does not
+     increment a variable.  It just computes a sum.  Thus, if we
+     continue,
+
+          foo
+               => 4
+
+     If you want to increment the variable, you must use `setq', like
+     this:
+
+          (setq foo (1+ foo))
+               => 5
+
+ - Function: 1- number-or-marker
+     This function returns NUMBER-OR-MARKER minus 1.
+
+ - Function: + &rest numbers-or-markers
+     This function adds its arguments together.  When given no
+     arguments, `+' returns 0.
+
+          (+)
+               => 0
+          (+ 1)
+               => 1
+          (+ 1 2 3 4)
+               => 10
+
+ - Function: - &optional number-or-marker &rest more-numbers-or-markers
+     The `-' function serves two purposes: negation and subtraction.
+     When `-' has a single argument, the value is the negative of the
+     argument.  When there are multiple arguments, `-' subtracts each of
+     the MORE-NUMBERS-OR-MARKERS from NUMBER-OR-MARKER, cumulatively.
+     If there are no arguments, the result is 0.
+
+          (- 10 1 2 3 4)
+               => 0
+          (- 10)
+               => -10
+          (-)
+               => 0
+
+ - Function: * &rest numbers-or-markers
+     This function multiplies its arguments together, and returns the
+     product.  When given no arguments, `*' returns 1.
+
+          (*)
+               => 1
+          (* 1)
+               => 1
+          (* 1 2 3 4)
+               => 24
+
+ - Function: / dividend divisor &rest divisors
+     This function divides DIVIDEND by DIVISOR and returns the
+     quotient.  If there are additional arguments DIVISORS, then it
+     divides DIVIDEND by each divisor in turn.  Each argument may be a
+     number or a marker.
+
+     If all the arguments are integers, then the result is an integer
+     too.  This means the result has to be rounded.  On most machines,
+     the result is rounded towards zero after each division, but some
+     machines may round differently with negative arguments.  This is
+     because the Lisp function `/' is implemented using the C division
+     operator, which also permits machine-dependent rounding.  As a
+     practical matter, all known machines round in the standard fashion.
+
+     If you divide an integer by 0, an `arith-error' error is signaled.
+     (*Note Errors::.)  Floating point division by zero returns either
+     infinity or a NaN if your machine supports IEEE floating point;
+     otherwise, it signals an `arith-error' error.
+
+          (/ 6 2)
+               => 3
+          (/ 5 2)
+               => 2
+          (/ 5.0 2)
+               => 2.5
+          (/ 5 2.0)
+               => 2.5
+          (/ 5.0 2.0)
+               => 2.5
+          (/ 25 3 2)
+               => 4
+          (/ -17 6)
+               => -2
+
+     The result of `(/ -17 6)' could in principle be -3 on some
+     machines.
+
+ - Function: % dividend divisor
+     This function returns the integer remainder after division of
+     DIVIDEND by DIVISOR.  The arguments must be integers or markers.
+
+     For negative arguments, the remainder is in principle
+     machine-dependent since the quotient is; but in practice, all
+     known machines behave alike.
+
+     An `arith-error' results if DIVISOR is 0.
+
+          (% 9 4)
+               => 1
+          (% -9 4)
+               => -1
+          (% 9 -4)
+               => 1
+          (% -9 -4)
+               => -1
+
+     For any two integers DIVIDEND and DIVISOR,
+
+          (+ (% DIVIDEND DIVISOR)
+             (* (/ DIVIDEND DIVISOR) DIVISOR))
+
+     always equals DIVIDEND.
+
+ - Function: mod dividend divisor
+     This function returns the value of DIVIDEND modulo DIVISOR; in
+     other words, the remainder after division of DIVIDEND by DIVISOR,
+     but with the same sign as DIVISOR.  The arguments must be numbers
+     or markers.
+
+     Unlike `%', `mod' returns a well-defined result for negative
+     arguments.  It also permits floating point arguments; it rounds the
+     quotient downward (towards minus infinity) to an integer, and uses
+     that quotient to compute the remainder.
+
+     An `arith-error' results if DIVISOR is 0.
+
+          (mod 9 4)
+               => 1
+          (mod -9 4)
+               => 3
+          (mod 9 -4)
+               => -3
+          (mod -9 -4)
+               => -1
+          (mod 5.5 2.5)
+               => .5
+
+     For any two numbers DIVIDEND and DIVISOR,
+
+          (+ (mod DIVIDEND DIVISOR)
+             (* (floor DIVIDEND DIVISOR) DIVISOR))
+
+     always equals DIVIDEND, subject to rounding error if either
+     argument is floating point.  For `floor', see *Note Numeric
+     Conversions::.
+
+
+File: elisp,  Node: Rounding Operations,  Next: Bitwise Operations,  Prev: Arithmetic Operations,  Up: Numbers
+
+Rounding Operations
+===================
+
+   The functions `ffloor', `fceiling', `fround', and `ftruncate' take a
+floating point argument and return a floating point result whose value
+is a nearby integer.  `ffloor' returns the nearest integer below;
+`fceiling', the nearest integer above; `ftruncate', the nearest integer
+in the direction towards zero; `fround', the nearest integer.
+
+ - Function: ffloor float
+     This function rounds FLOAT to the next lower integral value, and
+     returns that value as a floating point number.
+
+ - Function: fceiling float
+     This function rounds FLOAT to the next higher integral value, and
+     returns that value as a floating point number.
+
+ - Function: ftruncate float
+     This function rounds FLOAT towards zero to an integral value, and
+     returns that value as a floating point number.
+
+ - Function: fround float
+     This function rounds FLOAT to the nearest integral value, and
+     returns that value as a floating point number.
+
