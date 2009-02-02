@@ -6749,6 +6749,9 @@ using cygpath"
 
 ;;}}}
 
+;;{{{  Start the Emacs server
+(server-start)
+;;}}}
 ;;{{{  Project-specific functions
 
 ;; For CCWeb project:
