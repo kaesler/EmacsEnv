@@ -37,6 +37,13 @@
     :pointmax 56874
     :unmatched-syntax 'nil
     )
+   (semanticdb-table "add-face.el"
+    :major-mode 'emacs-lisp-mode
+    :tags '(("internal-change-region-face" function (:arguments ("START" "END" "face")) nil [2258 2353]) ("add-face-to-region" function (:arguments ("START" "END" "face")) nil [2355 2582]) ("remove-face-from-region" function (:arguments ("START" "END")) nil [2584 2688]) ("make-region-bold" function (:arguments ("START" "END")) nil [2690 2793]) ("make-region-underline" function (:arguments ("START" "END")) nil [2795 2908]) ("make-region-italic" function (:arguments ("START" "END")) nil [2910 3017]) ("make-region-bold-italic" function (:arguments ("START" "END")) nil [3019 3136]) ("find-text-properties" function (:arguments ("bufname")) nil [3138 3747]) ("save-text-properties" function nil nil [3749 4604]) ("write-text-properties" function nil nil [4606 4728]) ("read-text-properties" function nil nil [4730 4811]) ("add-hook" code nil nil [4813 4864]) ("add-hook" code nil nil [4865 4914]))
+    :file "add-face.el"
+    :pointmax 4923
+    :unmatched-syntax 'nil
+    )
    )
   :file "semantic.cache"
   :semantic-tag-version "2.0beta2"

@@ -2465,6 +2465,11 @@ for common operations.
 
 ;;}}}
 
+;;{{{  Git-Emacs
+
+(require 'git-emacs)
+
+;;}}}
 ;;{{{  ClearCase Mode.
 
 ;; Load Clearcase/Eacs integration
