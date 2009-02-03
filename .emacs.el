@@ -4000,6 +4000,14 @@ Spam or UCE message follows:
 (add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
 
 ;;}}}
+
+;;{{{  Haskell Mode
+
+(load-library "haskell-site-file")
+(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+(add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+
+;;}}}
 ;;{{{  Smalltalk Mode
 (setq auto-mode-alist
       (append  '(("\\.st$" . smalltalk-mode))
