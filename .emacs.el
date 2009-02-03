@@ -5038,8 +5038,8 @@ paragraph."
 
 ;; Enable recursive deletes and copies.
 ;;
-(setq dired-recursive-deletes t)
-(setq dired-recursive-copies t)
+(setq dired-recursive-deletes 'top)
+(setq dired-recursive-copies 'top)
 
 ;; Which args to apply to "ls":
 ;;
