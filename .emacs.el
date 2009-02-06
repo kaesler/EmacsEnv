@@ -22,6 +22,10 @@
 
 ;;{{{  Set some global variables.
 
+(defun running-off-usb-drive ()
+  (and (boundp 'usb-drive-letter)
+       (not (null usb-drive-letter))))
+
 (defvar esler-elisp-directory "~/apps/emacs/elisp")
 
 (defvar esler-verizon-storage-root "/ftp:kevin.a.esler@members.verizon.net:")
@@ -100,11 +104,11 @@
     (setq at-site-home t))))
 
 (if (and at-site-ibm
-         (string= "KAESLER-T60" (system-name)))
-    (setq sytem-name "kaesler-t60.lexma.ibm.com"))
+         (string= "KAESLER-T60P" (system-name)))
+    (setq system-name "kaesler-t60p.lexma.ibm.com"))
 (if (and at-site-ibm
          (string= "KAESLER-TC" (system-name)))
-    (setq sytem-name "kaesler-tc.lexma.ibm.com"))
+    (setq system-name "kaesler-tc.lexma.ibm.com"))
 
 (defvar esler-small-screen (< (display-pixel-width) 1600))
 (add-hook 'before-make-frame-hook
@@ -196,15 +200,13 @@
 
 ;;{{{ Find Cygwin and Bash
 
-
 (defun find-cygwin-root ()
-  (if (and (boundp 'usb-drive-letter)
-           (not (null usb-drive-letter)))
-      (let ((root (concat usb-drive-letter "cygwin")))
-        (if (file-exists-p (concat root "/bin/cygwin1.dll"))
+  (if (running-off-usb-drive)
+      (let ((root (concat usb-drive-letter ":\\cygwin")))
+        (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
             root))
-    (let ((root (concat "c:/" "cygwin")))
-      (if (file-exists-p (concat root "/bin/cygwin1.dll"))
+    (let ((root (concat "c:\\" "cygwin")))
+      (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
           root))))
 
 (defvar cygwin-root nil)
@@ -213,7 +215,7 @@
     (progn
       (setq cygwin-root (find-cygwin-root))
       (if (not (null cygwin-root))
-          (setq cygwin-bash-location (concat cygwin-root "/bin/bash.exe")))))
+          (setq cygwin-bash-location (concat cygwin-root "\\bin\\bash.exe")))))
 
 ;;}}}
 ;;{{{  My identity
@@ -1576,7 +1578,9 @@ and/or the vertical-line."
                (if (not (numberp index))
                    (setq index (length system-name)))
                (list (concat "Emacs" "@"
-                             (substring system-name 0 index)
+                             (if (running-off-usb-drive)
+                                 "USB"
+                               (substring system-name 0 index))
                              ": %17b"))))
 
 ;; Get line number display in the mode line,
@@ -2267,16 +2271,9 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
-;;{{{ NXML
+;;{{{ NXHTML
 
 ;;(load "~/apps/emacs/elisp/Installed-packages/nxhtml-1.26-080325/nxml/autostart.el")
-
-;;(setq auto-mode-alist (cons '("\\.html$" . nxhtml-mode) auto-mode-alist))
-;; (load-library "rng-auto")
-
-;; (setq auto-mode-alist
-;;       (cons '("\\.\\(xml\\|xsl\\|rng\\|xhtml\\)" . nxml-mode)
-;;             auto-mode-alist))
 
 ;;}}}
 ;;{{{ CCrypt
@@ -3967,6 +3964,25 @@ Spam or UCE message follows:
 
 ;;}}}
 ;;{{{  Programming language packages
+
+;;{{{ Groovy
+
+(autoload 'groovy-mode "groovy-mode"
+  "Mode for editing groovy source files" t)
+(setq auto-mode-alist
+      (append '(("\\.groovy$" . groovy-mode)) auto-mode-alist))
+(setq interpreter-mode-alist (append '(("groovy" . groovy-mode))
+                                     interpreter-mode-alist))
+
+(autoload 'run-groovy "inf-groovy" "Run an inferior Groovy process")
+(autoload 'inf-groovy-keys "inf-groovy" "Set local key defs for inf-groovy in groovy-mode")
+
+(add-hook 'groovy-mode-hook
+          '(lambda ()
+             (inf-groovy-keys)
+             ))
+
+;;}}}
 
 ;;{{{ ECB
 
@@ -6526,6 +6542,15 @@ This must be bound to a mouse click."
 
 ;;}}}
 
+;;{{{ USB drive
+
+(if (running-off-usb-drive)
+    (progn
+      (setenv "PATH"
+              (concat usb-home-dir "apps\\emacs\\bin;" (getenv "PATH")))
+      (frame-rename "Emacs@USB")))
+
+;;}}}
 ;;}}}
 ;;{{{  Win32-specifics
 
@@ -6782,7 +6807,7 @@ using cygpath"
   (interactive)
   (dired "~/"))
 
-(defvar esler-current-project-notes "~/tasks/Notes.cpt")
+(defvar esler-current-project-notes "~/cpt/Notes.cpt")
 
 (defun esler-edit-current-project-notes ()
   (interactive)
@@ -6790,11 +6815,11 @@ using cygpath"
 
 (defun esler-edit-lore ()
   (interactive)
-  (find-file "~/tasks/Lore.cpt"))
+  (find-file "~/cpt/Lore.cpt"))
 
 (defun esler-edit-creds ()
   (interactive)
-  (find-file "~/tasks/Creds.cpt"))
+  (find-file "~/cpt/Creds.cpt"))
 
 (defun esler-project-dired-java-packages ()
   (interactive)
