@@ -3965,6 +3965,12 @@ Spam or UCE message follows:
 ;;}}}
 ;;{{{  Programming language packages
 
+;;{{{ Scala
+
+(require 'scala-mode-auto)
+
+;;}}}
+
 ;;{{{ Groovy
 
 (autoload 'groovy-mode "groovy-mode"
@@ -3983,7 +3989,6 @@ Spam or UCE message follows:
              ))
 
 ;;}}}
-
 ;;{{{ ECB
 
 (if (and
@@ -3995,14 +4000,12 @@ Spam or UCE message follows:
             'none)))
 
 ;;}}}
-
 ;;{{{ CamelCase
 
 (autoload 'camelCase-mode "camelCase-mode" nil t)
 (add-hook 'java-mode-hook '(lambda () (camelCase-mode 1)))
 
 ;;}}}
-
 ;;{{{  Hideshow Minor Mode
 (load-library "hideshow")
 (add-hook 'c-mode-hook 'hs-minor-mode)
@@ -4016,7 +4019,6 @@ Spam or UCE message follows:
 (add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
 
 ;;}}}
-
 ;;{{{  Haskell Mode
 
 (load-library "haskell-site-file")
