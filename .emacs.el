@@ -3963,11 +3963,19 @@ Spam or UCE message follows:
 ;;}}}
 
 ;;}}}
-;;{{{  Programming language packages
+;;{{{ Programming language packages
 
-;;{{{ Scala
+;;{{{ Scala and yasnippet
 
 (require 'scala-mode-auto)
+(require 'yasnippet)
+(setq yas/my-directory "~/apps/emacs/snippets")
+(yas/initialize)
+(yas/load-directory yas/my-directory)
+(add-hook 'scala-mode-hook
+            '(lambda ()
+               (yas/minor-mode-on)
+               ))
 
 ;;}}}
 
