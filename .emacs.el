@@ -3975,7 +3975,30 @@ Spam or UCE message follows:
 (add-hook 'scala-mode-hook
             '(lambda ()
                (yas/minor-mode-on)
+               (scala-electric-mode t)
+               (kae-extend-scala-menu)
                ))
+
+(defvar esler-scala-book-path "~/library/src/OpenSrc/scala/book/ProgInScala1EdV6.pdf")
+
+(if (and (file-exists-p esler-scala-book-path)
+         (fboundp 'esler-dired-launch-file))
+    (add-hook 'scala-mode-hook
+              '(lambda ()
+                 (kae-extend-scala-menu))))
+
+(defun kae-extend-scala-menu ()
+  (let ((menu (lookup-key scala-mode-map [menu-bar scala])))
+    (define-key-after menu [browse-book]
+      '("Browse Scala book" . kae-browse-scala-book)
+      'browse-api)))
+
+
+(defun kae-browse-scala-book ()
+  (interactive)
+  (w32-shell-execute "open"
+                     (esler-w32-canonicalize-path-seps
+                      (expand-file-name esler-scala-book-path))))
 
 ;;}}}
 
