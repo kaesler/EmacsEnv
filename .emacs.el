@@ -2167,7 +2167,9 @@ otherwise return DIR"
 
       ;; Get font-lock-controlling menu options beneath the Edit menu.
       ;;
-      (require 'font-menus)
+
+      ;;  kae: 23.1
+      ;;(require 'font-menus)
 
       (cond
 
@@ -3968,6 +3970,7 @@ Spam or UCE message follows:
 ;;{{{ Scala and yasnippet
 
 (require 'scala-mode-auto)
+(setq scala-interpreter "c:/scala-2.7.5/bin/scala.bat")
 (require 'yasnippet)
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
