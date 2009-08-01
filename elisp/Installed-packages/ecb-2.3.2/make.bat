@@ -41,10 +41,10 @@ REM required packages (use always FORWARD SLASHES in the paths!)
 
 REM TODO: Supporting the new cedet 1.0 library (see Makefile)
 
-set EMACS=C:/Emacs-21.3/bin/emacs.exe
-set SEMANTIC=../cedet-1.0beta2a/semantic
-set EIEIO=../cedet-1.0beta2a/eieio
-set SPEEDBAR=../cedet-1.0beta2/speedbar
+set EMACS=C:/Emacs-23.1/bin/emacs.exe
+set SEMANTIC=../cedet-1.0pre4/semantic
+set EIEIO=../cedet-1.0pre4/eieio
+set SPEEDBAR=../cedet-1.0pre4/speedbar
 
 REM Call "make" to byte-compile the ECB.
 REM If there are any warning messages during byte-compilation (normally

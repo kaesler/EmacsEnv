@@ -37,6 +37,7 @@
 (defvar esler-emacs20 (= emacs-major-version 20))
 (defvar esler-emacs21 (= emacs-major-version 21))
 (defvar esler-emacs22 (= emacs-major-version 22))
+(defvar esler-emacs23 (= emacs-major-version 23))
 
 ;;}}}
 
@@ -1204,10 +1205,12 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (defvar esler-w32-preferred-font
   (if (or at-site-ibm
           esler-small-screen)
-      "-*-Bitstream Vera Sans Mono-normal-r-*-*-12-90-96-96-c-*-iso8859-1"
+      ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-12-90-96-96-c-*-iso8859-1"
+      "Consolas-12"
     ;; This looks better on my laptop
     ;;
-    "-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"))
+    ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"))
+      "Consolas-10"))
 
 (if (and running-as-w32-client
          (not esler-xemacs))
@@ -1256,7 +1259,8 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (if (and window-system
          (not esler-xemacs)
          (or esler-emacs21
-             esler-emacs22))
+             esler-emacs22)
+             esler-emacs23)
     (progn
       (toggle-scroll-bar nil)
 
@@ -1456,7 +1460,8 @@ It defaults to the most recent such command."
 ;;
 (if (and (not esler-xemacs)
          (not esler-emacs21)
-         (not esler-emacs22))
+         (not esler-emacs22)
+         (not esler-emacs23))
     (progn
       (global-set-key [mouse-3] 'mouse19-global-mouse3-handler)
       (global-set-key [S-mouse-3] 'mouse19-global-mouse3-handler)
@@ -2089,6 +2094,9 @@ otherwise return DIR"
 (if esler-emacs22
     (esler-set-loadpath-emacs22))
 
+(if esler-emacs23
+    (esler-set-loadpath-emacs22))
+
 ;;}}}
 ;;{{{  Colour
 
@@ -2125,7 +2133,8 @@ otherwise return DIR"
 ;;{{{ Font-lock
 
 (if (and window-system
-         (not esler-xemacs))
+         (not esler-xemacs)
+         (not esler-emacs23))
 
     ;; Gnu Emacs
     ;;
@@ -2159,7 +2168,8 @@ otherwise return DIR"
 (if (and window-system
          (not esler-xemacs)
          (not esler-emacs21)
-         (not esler-emacs22))
+         (not esler-emacs22)
+         (not esler-emacs23))
     (progn
       (global-font-lock-mode t)
       (setq font-lock-support-mode 'lazy-lock-mode)
@@ -5775,15 +5785,16 @@ when I invoked it, if that makes sense."
 ;; contents of the system supplied Info directory.  It also contains
 ;; files that I have added.  For example, info on VM.
 
-(require 'info)
-(setq esler-info-directory "~/apps/emacs/info")
+;; kae 23
+;;(require 'info)
+;;(setq esler-info-directory "~/apps/emacs/info")
 
-(if (file-directory-p esler-info-directory)
-    (setq Info-default-directory-list (cons esler-info-directory
-                                            Info-default-directory-list)))
-(if (file-directory-p "/usr/nodelocal/info")
-    (setq Info-default-directory-list (cons "/usr/nodelocal/info"
-                                            Info-default-directory-list)))
+;; (if (file-directory-p esler-info-directory)
+;;     (setq Info-default-directory-list (cons esler-info-directory
+;;                                             Info-default-directory-list)))
+;; (if (file-directory-p "/usr/nodelocal/info")
+;;     (setq Info-default-directory-list (cons "/usr/nodelocal/info"
+;;                                             Info-default-directory-list)))
 
 ;; I prefer to use mouse-3 for following Info nodes,
 ;; because that's what I use to click on pathnames, email messages,
