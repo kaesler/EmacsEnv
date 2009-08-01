@@ -2290,7 +2290,7 @@ for common operations.
 ;;}}}
 ;;{{{ CCrypt
 
-(require 'jka-compr-ccrypt)
+(require 'ps-ccrypt "ps-ccrypt.el")
 
 ;;}}}
 
