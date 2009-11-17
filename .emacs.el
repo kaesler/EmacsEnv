@@ -2534,14 +2534,6 @@ for common operations.
 
 ;;}}}
 
-;;{{{  Records
-
-(if (and at-site-ibm
-         (not running-as-w32-client))
-    (load "/net/isophorone/export/home/esler/.emacs-records"))
-
-;;}}}
-
 ;;{{{  VC
 
 ;; Make a VC menu-bar entry visible.
@@ -5084,12 +5076,6 @@ paragraph."
 ;;}}}
 ;;{{{  Dired Mode.
 
-;;{{{  ls-lisp
-
-(eval-after-load "dired" (load-library "ls-lisp"))
-
-;;}}}
-
 ;; Regexp matching "trivial" files at the start of a buffer:
 ;;  .
 ;;  ..
@@ -5110,10 +5096,6 @@ paragraph."
 ;;
 (setq dired-recursive-deletes 'top)
 (setq dired-recursive-copies 'top)
-
-;; Which args to apply to "ls":
-;;
-(setq dired-listing-switches "-al")
 
 ;; Which operations I don't want confirmed:
 ;;
