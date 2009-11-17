@@ -198,7 +198,6 @@
 
 ;;}}}
 
-
 ;;{{{ Find Cygwin and Bash
 
 (defun find-cygwin-root ()
