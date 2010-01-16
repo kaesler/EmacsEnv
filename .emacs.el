@@ -1801,7 +1801,7 @@ and/or the vertical-line."
 ;;{{{ Add a "Mirrored" menu bar entry
 
 (add-hook 'menu-bar-final-items 'Mirrored)
-(defvar esler-mirrored-files-directory "~/cpt/")
+(defvar esler-mirrored-files-directory "~/AmazonArchivedDocuments/Cpt/")
 
 (defun esler-make-mirrored-files-menu (ignored)
   "Dynamically construct a menu keymap from the contents of my mirrored files directory"
