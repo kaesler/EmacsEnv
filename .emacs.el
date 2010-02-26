@@ -95,7 +95,7 @@
      (string-match "atria\\.com" domain-name)
      (string-match "KAESLER-TC" host-name)
      (string-match "kaesler-sun" host-name)
-     (string-match "KAESLER-T60P" host-name)
+     (string-match "KAESLER-W500" host-name)
      )
     (setq at-site-ibm t))
 
@@ -3976,8 +3976,10 @@ Spam or UCE message follows:
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
 (yas/load-directory yas/my-directory)
+
 (add-hook 'scala-mode-hook
             '(lambda ()
+               (setq show-trailing-whitespace t)
                (yas/minor-mode-on)
                (scala-electric-mode t)
                (kae-extend-scala-menu)
