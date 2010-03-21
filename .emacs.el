@@ -3971,7 +3971,7 @@ Spam or UCE message follows:
 ;;{{{ Scala and yasnippet
 
 (require 'scala-mode-auto)
-(setq scala-interpreter "c:/scala-2.7.5/bin/scala.bat")
+(setq scala-interpreter "c:/scala-2.8.0.Beta1-prerelease/bin/scala.bat")
 (require 'yasnippet)
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
