@@ -2384,9 +2384,10 @@ for common operations.
 ;;{{{  CEDET
 
 ;; Configuration variables here:
+
 (setq semantic-load-turn-useful-things-on t)
 ;; Load CEDET
-(load-file "~/apps/emacs/elisp/Installed-packages/cedet-1.0pre4/common/cedet.el")
+(load-file "~/apps/emacs/elisp/Installed-packages/cedet-1.0pre7/common/cedet.el")
 
 ;;}}}
 ;;{{{  Message Mode
@@ -4028,13 +4029,14 @@ Spam or UCE message follows:
 ;;}}}
 ;;{{{ ECB
 
-(if (and
-     (not esler-xemacs))
-    (progn
-      (require 'ecb)
-      (setq ecb-tip-of-the-day nil)
-      (setq ecb-major-modes-activate
-            'none)))
+;; Didn't work in 23.2
+;; (if (and
+;;      (not esler-xemacs))
+;;     (progn
+;;       (require 'ecb)
+;;       (setq ecb-tip-of-the-day nil)
+;;       (setq ecb-major-modes-activate
+;;             'none)))
 
 ;;}}}
 ;;{{{ CamelCase
