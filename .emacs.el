@@ -59,7 +59,7 @@
 
 ;;{{{  Determine what site we're at.
 
-(defvar at-site-ibm nil)
+(defvar at-site-work nil)
 (defvar at-site-home nil)
 
 (defun esler-command-output-first-line-as-string (command)
@@ -87,29 +87,18 @@
    ;; Heuristically decide where we're running.
    ;;
    ((or
-     (string-match "IBM\\.com" host-name)
-     (string-match "ibm\\.com" host-name)
-     (string-match "Rational\\.com" host-name)
-     (string-match "rational\\.com" host-name)
-     (string-match "atria\\.com" host-name)
-     (string-match "atria\\.com" domain-name)
-     (string-match "KAESLER-TC" host-name)
-     (string-match "kaesler-sun" host-name)
-     (string-match "KAESLER-W500" host-name)
+     (string-equal "01ENWKESLER" host-name)
      )
-    (setq at-site-ibm t))
+    (setq at-site-work t))
 
    ((or
      (string-match "DURIF" host-name)
      )
     (setq at-site-home t))))
 
-(if (and at-site-ibm
-         (string= "KAESLER-T60P" (system-name)))
-    (setq system-name "kaesler-t60p.lexma.ibm.com"))
-(if (and at-site-ibm
-         (string= "KAESLER-TC" (system-name)))
-    (setq system-name "kaesler-tc.lexma.ibm.com"))
+(if (and at-site-work
+         (string= "01ENWKESLER" (system-name)))
+    (setq system-name "01ENWKESLER.38corp.net"))
 
 (defvar esler-small-screen (< (display-pixel-width) 1600))
 (add-hook 'before-make-frame-hook
@@ -228,11 +217,11 @@
 ;; Identify myself to GNUS.
 ;;
 (cond
- (at-site-ibm
+ (at-site-work
   (progn
-    (setq mail-host-address "us.ibm.com")
-    (setq user-mail-address "kaesler@us.ibm.com")
-    (setq message-user-organization "IBM Rational Software, Lexington, MA, USA")))
+    (setq mail-host-address "38studios.com")
+    (setq user-mail-address "kaesler@38studios.com")
+    (setq message-user-organization "38 Studios, Maynard, MA, USA")))
 
  (at-site-home
   (progn
@@ -352,7 +341,7 @@
 ;;{{{  Load .emacs.custom
 
 (if (and running-as-w32-client
-         at-site-ibm)
+         at-site-work)
     (setq custom-file "k:/apps/emacs/.emacs.custom")
   (setq custom-file "~/apps/emacs/.emacs.custom"))
 (if (file-exists-p custom-file)
@@ -1202,7 +1191,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 ;; Configure a readable fixed-width font.
 ;;
 (defvar esler-w32-preferred-font
-  (if (or at-site-ibm
+  (if (or at-site-work
           esler-small-screen)
       ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-12-90-96-96-c-*-iso8859-1"
       "Consolas-12"
@@ -1672,7 +1661,7 @@ and/or the vertical-line."
               "---------------------------------"
               ["Browse maple repository"
                (dired "//maple/dfs")
-               :included (and at-site-ibm running-as-w32-client)
+               :included (and at-site-work running-as-w32-client)
                ]
               )))
 (add-hook 'menu-bar-final-items 'KAE)
@@ -2147,7 +2136,7 @@ otherwise return DIR"
       (set-face-background 'trailing-whitespace "bisque")
       (cond
 
-       (at-site-ibm
+       (at-site-work
         (progn
           (make-face 'comment)
           (set-face-foreground 'comment "DarkGreen")
@@ -2182,7 +2171,7 @@ otherwise return DIR"
 
       (cond
 
-       (at-site-ibm
+       (at-site-work
         (progn
           (make-face 'comment)
           (set-face-foreground 'comment "DarkGreen")
@@ -2483,26 +2472,31 @@ for common operations.
 
 ;; Load Clearcase/Eacs integration
 ;;
-(setq clearcase-minimise-menus t)
-(load "clearcase")
-(autoload 'clearcase-dired-mode "clearcase" "" t)
+;; (setq clearcase-minimise-menus t)
+;; (load "clearcase")
+;; (autoload 'clearcase-dired-mode "clearcase" "" t)
 
-;; Command to print the current ClearCase view tag.
-;;
-(defun pwv ()
-  (interactive)
-  "Print the working ClearCase view."
+;; ;; Command to print the current ClearCase view tag.
+;; ;;
+;; (defun pwv ()
+;;   (interactive)
+;;   "Print the working ClearCase view."
 
-  (let ((tag (clearcase-viewtag)))
-    (if tag
-        (message tag))))
+;;   (let ((tag (clearcase-viewtag)))
+;;     (if tag
+;;         (message tag))))
 
-(setenv "ATRIA_NO_BOLD" "TRUE")
+;; (setenv "ATRIA_NO_BOLD" "TRUE")
 
-(setq clearcase-dired-show-view t)
+;; (setq clearcase-dired-show-view t)
 
 ;;}}}
-
+;;{{{  Perforce
+;; (if at-site-work
+;;     (progn
+;;       (load-library "p4")
+;;       (p4-set-p4-executable "c:/Program Files/Perforce/p4.exe")))
+;;}}}
 ;;{{{  MMM
 
 ;; When I'm editing HTML code, turn on MMM automatically
@@ -2568,7 +2562,7 @@ for common operations.
        ;;
        (at-site-home "kevin.esler.1989@alum.bu.edu")
 
-       (at-site-ibm "kaesler@us.ibm.com")))
+       (at-site-work "kesler@38studios.com")))
 
 
 ;; Get a copy of all sent mail
@@ -2606,7 +2600,7 @@ for common operations.
 
      ;; Use bog-ordinary SMTP.
      ;;
-     (at-site-ibm
+     (at-site-work
       (progn
         (setq send-mail-function 'smtpmail-send-it)
         ;; nyi: no longer valid after IBM changes
@@ -2958,7 +2952,7 @@ Spam or UCE message follows:
       (cond
        ;; At work: keep folders on Unix for backup purposes, even if we're reading on NT.
        ;;
-       ((and at-site-ibm running-as-w32-client) "k:/mail/folders/saved/")
+       ((and at-site-work running-as-w32-client) "k:/mail/folders/saved/")
 
        ;; At home:
        ;;
@@ -2970,7 +2964,7 @@ Spam or UCE message follows:
       (cond
        ;; At work: keep folders on Unix for backup purposes, even if we're reading on NT.
        ;;
-       ((and at-site-ibm running-as-w32-client) "k:/mail/folders/incoming/inbox")
+       ((and at-site-work running-as-w32-client) "k:/mail/folders/incoming/inbox")
 
        ;; At home:
        ;;
@@ -2991,7 +2985,7 @@ Spam or UCE message follows:
                         ;;(concat "mail.verizon.net:110:pass:" esler-verizon-user-name ":*")))
                         (concat "incoming.verizon.net:110:pass:" esler-verizon-user-name ":*")))
 
-         (at-site-ibm (list
+         (at-site-work (list
                        (list vm-primary-inbox
                              ;; nyi: no longer valid after IBM changes.
 
@@ -3017,7 +3011,7 @@ Spam or UCE message follows:
 
 (setq vm-summary-uninteresting-senders
       (cond
-       (at-site-ibm "^esler\\(@[Rr]ational.com\\)*")
+       (at-site-work "^esler\\(@[Rr]ational.com\\)*")
        (at-site-home
         (concat
          "\\(^esler@ultranet\\.com.*\\)"
@@ -3102,7 +3096,7 @@ Spam or UCE message follows:
        ;;
        (at-site-home "kevin.esler.1989@alum.bu.edu")
 
-       (at-site-ibm "kaesler@us.ibm.com")))
+       (at-site-work "kaesler@us.ibm.com")))
 
 (setq vm-keep-sent-messages t)
 (setq vm-check-folder-types t)
@@ -3398,7 +3392,7 @@ Spam or UCE message follows:
 (setq gnus-select-method
       (cond
        (at-site-home '(nntp "news.verizon.net"))
-       (at-site-ibm  '(nntp "news.verizon.net"))
+       (at-site-work  '(nntp "news.verizon.net"))
        (t '(nntp "news"))))
 
 ;; Locate my .newsrc.
@@ -3412,7 +3406,7 @@ Spam or UCE message follows:
 (setq gnus-article-save-directory
       (cond
        ;; Keep this on a backup-up Unix-resident disk for now.
-       ((and at-site-ibm running-as-w32-client) "k:/mail/folders/saved")
+       ((and at-site-work running-as-w32-client) "k:/mail/folders/saved")
 
        ;; At home:
        ;;
@@ -3467,7 +3461,7 @@ Spam or UCE message follows:
 ;;       ;;
 ;;       (require 'w3-auto "w3-auto")
 
-;;       (if at-site-ibm
+;;       (if at-site-work
 ;;           (progn
 ;;             (setq url-proxy-services
 ;;                   '(("ftp"      . "gw:1001")
@@ -3502,7 +3496,7 @@ Spam or UCE message follows:
 ;; (Windows only at this stage.)
 ;;
 (if running-as-w32-client
-    (if at-site-ibm
+    (if at-site-work
         (progn
           (defvar mozilla-location "C:/Program Files/Mozilla.org/Mozilla/mozilla.exe"))
       (progn
@@ -3981,6 +3975,8 @@ Spam or UCE message follows:
 (add-hook 'scala-mode-hook
             '(lambda ()
                (setq show-trailing-whitespace t)
+               (setq scala-mode-indent:step 4)
+               (setq tab-width 4)
                (yas/minor-mode-on)
                (scala-electric-mode t)
                (kae-extend-scala-menu)
@@ -4259,7 +4255,7 @@ Spam or UCE message follows:
       (if (and file-name
                (string-match "^/vobs/.*" file-name))
           (setq result "atria"))
-      (if (and at-site-ibm running-as-w32-client
+      (if (and at-site-work running-as-w32-client
                file-name)
           (setq result "atria")))
     result))
@@ -4275,7 +4271,7 @@ Spam or UCE message follows:
 ;; Try to turn on C++ mode for .h files in Windows when appropriate.
 ;;
 (defun esler-c-mode-hook ()
-  (if (and at-site-ibm running-as-w32-client)
+  (if (and at-site-work running-as-w32-client)
       (if (and (buffer-file-name)
                (string-match "\\.h$" (buffer-file-name))
                (esler-file-seems-to-be-MFC))
@@ -6453,7 +6449,7 @@ This must be bound to a mouse click."
 
 ;;{{{ Rational
 
-(if at-site-ibm
+(if at-site-work
 
     (progn
       ;;{{{  PC Printing
@@ -6538,7 +6534,7 @@ This must be bound to a mouse click."
 
       )                                 ; progn
 
-  )                                     ; at-site-ibm
+  )                                     ; at-site-work
 
 ;;}}}
 
@@ -6815,7 +6811,8 @@ using cygpath"
 ;;}}}
 
 ;;{{{  Start the Emacs server
-(server-start)
+;; TODO: Breaks at 38s
+;;(server-start)
 ;;}}}
 ;;{{{  Project-specific functions
 
