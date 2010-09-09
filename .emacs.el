@@ -87,7 +87,7 @@
    ;; Heuristically decide where we're running.
    ;;
    ((or
-     (string-equal "01ENWKESLER" host-name)
+     (string-equal "KESLER-DEVD" host-name)
      )
     (setq at-site-work t))
 
@@ -97,8 +97,8 @@
     (setq at-site-home t))))
 
 (if (and at-site-work
-         (string= "01ENWKESLER" (system-name)))
-    (setq system-name "01ENWKESLER.38corp.net"))
+         (string= "KESLER-DEVD" (system-name)))
+    (setq system-name "KESLER-DEVD.vmware.com"))
 
 (defvar esler-small-screen (< (display-pixel-width) 1600))
 (add-hook 'before-make-frame-hook
@@ -219,9 +219,9 @@
 (cond
  (at-site-work
   (progn
-    (setq mail-host-address "38studios.com")
-    (setq user-mail-address "kaesler@38studios.com")
-    (setq message-user-organization "38 Studios, Maynard, MA, USA")))
+    (setq mail-host-address "vmware.com")
+    (setq user-mail-address "kesler@vmware.com")
+    (setq message-user-organization "VMWare, Cambridge, MA, USA")))
 
  (at-site-home
   (progn
@@ -2560,9 +2560,9 @@ for common operations.
       (cond
        ;; Use forwarding from BU.
        ;;
-       (at-site-home "kevin.esler.1989@alum.bu.edu")
+       (at-site-home "kevin.esler@alum.bu.edu")
 
-       (at-site-work "kesler@38studios.com")))
+       (at-site-work "kesler@vmware.com")))
 
 
 ;; Get a copy of all sent mail
