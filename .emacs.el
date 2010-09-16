@@ -4042,10 +4042,12 @@ Spam or UCE message follows:
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
+
 (load-library "hideshow")
 (add-hook 'c-mode-hook 'hs-minor-mode)
 (add-hook 'c++-mode-hook 'hs-minor-mode)
 (add-hook 'emacs-lisp-mode-hook 'hs-minor-mode)
+
 ;;}}}
 ;;{{{  Eldoc Minor Mode
 
@@ -4096,6 +4098,28 @@ Spam or UCE message follows:
 
 ;;{{{ Indentation styles
 
+;;{{{ The VMWare style
+
+(defconst vmware-c-style-description
+  '((c-basic-offset . 3)
+    (c-comment-only-line-offset . 0)
+    (c-hanging-braces-alist . ((substatement-open before after)))
+    (c-offsets-alist . ((topmost-intro        . 0)
+                        (topmost-intro-cont   . 0)
+                        (substatement         . 3)
+                        (substatement-open    . 0)
+                        (statement-case-open  . 3)
+                        (statement-cont       . 3)
+                        (access-label         . -3)
+                        (inclass              . 3)
+                        (inline-open          . 3)
+                        (innamespace          . 0)
+                        ))))
+
+
+(add-hook 'c-mode-common-hook (lambda () (c-set-style "vmware")))
+
+;;}}}
 ;;{{{ The Esler style
 
 (defconst esler-c-style-description
@@ -4241,6 +4265,7 @@ Spam or UCE message follows:
 (c-add-style "esler" esler-c-style-description)
 (c-add-style "atria" atria-c-style-description)
 (c-add-style "mfc" mfc-c-style-description)
+(c-add-style "vmware" vmware-c-style-description)
 
 (defun esler-file-seems-to-be-MFC ()
   (save-excursion
@@ -4257,7 +4282,7 @@ Spam or UCE message follows:
           (setq result "atria"))
       (if (and at-site-work running-as-w32-client
                file-name)
-          (setq result "atria")))
+          (setq result "vmware")))
     result))
 
 ;;}}}
@@ -6579,6 +6604,7 @@ This must be bound to a mouse click."
       (frame-rename "Emacs@USB")))
 
 ;;}}}
+
 ;;}}}
 ;;{{{  Win32-specifics
 
