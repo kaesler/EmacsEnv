@@ -988,9 +988,9 @@ displays the documentation string for VARIABLE."
   (- (line-end-position) (line-beginning-position)))
 
 (defun next-long-line ()
-  "Find the next line that is longer than permitted by Atria coding standards."
+  "Find the next line that is longer than permitted by Vmwarea coding standards."
   (interactive)
-  (while (and (<= (current-line-length) 79)
+  (while (and (<= (current-line-length) 90)
               (not (eobp)))
     (forward-line 1))
   (message "%d" (current-line-length)))
@@ -1254,6 +1254,8 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
              '(top . 0))
 (add-to-list 'default-frame-alist
              '(left . 85))
+(add-to-list 'default-frame-alist
+             '(background-color . "white smoke"))
 
 ;;}}}
 
@@ -4179,6 +4181,8 @@ Spam or UCE message follows:
   (c-set-style (esler-c-choose-style))
   (if (string-equal c-indentation-style "atria")
       (setq fill-column 79))
+  (if (string-equal c-indentation-style "vmware")
+      (setq fill-column 90))
   (if (string-equal c-indentation-style "mfc")
       (setq tab-width 4)))
 
