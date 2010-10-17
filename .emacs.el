@@ -33,10 +33,6 @@
 
 ;;{{{  Determine what version of Emacs is running
 
-(defvar esler-xemacs (string-match "XEmacs" emacs-version))
-(defvar esler-emacs20 (= emacs-major-version 20))
-(defvar esler-emacs21 (= emacs-major-version 21))
-(defvar esler-emacs22 (= emacs-major-version 22))
 (defvar esler-emacs23 (= emacs-major-version 23))
 
 ;;}}}
@@ -180,8 +176,7 @@
 
 ;; Inserting text deletes the current selection.
 ;;
-(if (not esler-xemacs)
-    (delete-selection-mode t))
+(delete-selection-mode t)
 
 ;;}}}
 
@@ -993,9 +988,9 @@ displays the documentation string for VARIABLE."
   (- (line-end-position) (line-beginning-position)))
 
 (defun next-long-line ()
-  "Find the next line that is longer than permitted by Atria coding standards."
+  "Find the next line that is longer than permitted by Vmwarea coding standards."
   (interactive)
-  (while (and (<= (current-line-length) 79)
+  (while (and (<= (current-line-length) 90)
               (not (eobp)))
     (forward-line 1))
   (message "%d" (current-line-length)))
@@ -1200,9 +1195,8 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
     ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"))
       "Consolas-10"))
 
-(if (and running-as-w32-client
-         (not esler-xemacs))
-    (set-default-font esler-w32-preferred-font))
+(if running-as-w32-client
+    (set-frame-font esler-w32-preferred-font))
 
 ;; The Bitstream fonts were downloaded from: http://c2.com/cgi/wiki?BitstreamVera
 ;;
@@ -1217,20 +1211,19 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 ;; "-outline-Lucida Sans Typewriter-normal-r-normal-normal-16-120-96-96-c-100-iso10646-1"))
 
 ;; Also look here: http://c2.com/cgi/wiki?GoodProgrammerTypeface
+
 ;;}}}
 ;;{{{  Customise frame appearance.
 
 ;; Get a pencil-shaped mouse cursor.
 ;;
 (if (and (not running-as-w32-client)
-         (not esler-xemacs)
          (not running-as-terminal-client))
     (progn
       (setq x-sensitive-text-pointer-shape x-pointer-hand1)
       (setq x-pointer-shape x-pointer-pencil)))
 
-(if (not esler-xemacs)
-    (set-scroll-bar-mode nil))
+(set-scroll-bar-mode nil)
 
 ;; I like the region highlighted.
 ;;
@@ -1243,43 +1236,26 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (setq pop-up-frames nil)
 (setq pop-up-windows t)
 
-
-(if (and window-system
-         (not esler-xemacs)
-         (or esler-emacs21
-             esler-emacs22)
-             esler-emacs23)
+(if running-as-w32-client
     (progn
-      (toggle-scroll-bar nil)
+      (add-to-list 'default-frame-alist
+                   `(font . ,esler-w32-preferred-font))))
 
-      (let ((alist (list
-                    '(minibuffer . t)
-                    '(auto-raise . nil)
-                    '(auto-lower . nil)
-                    '(vertical-scroll-bars . nil)
-                    '(horizontal-scroll-bars . nil)
-                    '(menu-bar-lines . 1)
-                    ;; gainsboro, lavender, azure2, LemonChiffon2, beige, linen, light steel blue
-                    '(background-color . "lavender")
-                    '(mouse-color . "DarkGreen")
-                    ;; firebrick3,sienna
-                    '(cursor-color . "deep pink")
-                    '(unsplittable . nil)
-
-                    (if esler-small-screen
-                        '(height . 45)
-                      '(height . 60))
-                    '(width . 79)
-
-                    '(top . 0)
-                    '(left . 85))))
-
-        (if running-as-w32-client
-            (setq alist (cons
-                         `(font . ,esler-w32-preferred-font)
-                         alist)))
-
-        (setq default-frame-alist alist))))
+(if esler-small-screen
+    (add-to-list 'default-frame-alist
+                 '(height . 45))
+  (add-to-list 'default-frame-alist
+               '(height . 60)))
+(add-to-list 'default-frame-alist
+             '(height . 58))
+(add-to-list 'default-frame-alist
+             '(width . 79))
+(add-to-list 'default-frame-alist
+             '(top . 0))
+(add-to-list 'default-frame-alist
+             '(left . 85))
+(add-to-list 'default-frame-alist
+             '(background-color . "white smoke"))
 
 ;;}}}
 
@@ -1420,10 +1396,10 @@ It defaults to the most recent such command."
 (global-set-key [f4] 'speedbar)
 (global-set-key [f5] 'find-file-at-point)
 
-(if (not esler-xemacs)
-    (progn
-      (global-set-key [S-up] 'scroll-down-one-line)
-      (global-set-key [S-down] 'scroll-up-one-line)))
+(progn
+  (global-set-key [S-up] 'scroll-down-one-line)
+  (global-set-key [S-down] 'scroll-up-one-line))
+
 (defun scroll-up-one-line ()
   "Scroll text of window up by one line."
   (interactive nil)
@@ -1446,10 +1422,7 @@ It defaults to the most recent such command."
 
 ;; Behaviour: Click on pathname.
 ;;
-(if (and (not esler-xemacs)
-         (not esler-emacs21)
-         (not esler-emacs22)
-         (not esler-emacs23))
+(if (not esler-emacs23)
     (progn
       (global-set-key [mouse-3] 'mouse19-global-mouse3-handler)
       (global-set-key [S-mouse-3] 'mouse19-global-mouse3-handler)
@@ -1540,10 +1513,9 @@ and/or the vertical-line."
 
 ;; Drag mouse-1 always copies to the kill-ring, and the X11 selection buffer.
 ;;
-(if (not esler-xemacs)
-    (defadvice mouse-drag-region (after do-kill-ring-save activate)
-      (if mark-active
-          (kill-new (buffer-substring (region-beginning) (region-end))))))
+(defadvice mouse-drag-region (after do-kill-ring-save activate)
+  (if mark-active
+      (kill-new (buffer-substring (region-beginning) (region-end)))))
 
 ;;}}}
 
@@ -2009,51 +1981,7 @@ otherwise return DIR"
         lisp-subdir
       dir)))
 
-(defun esler-set-loadpath-emacs20 ()
-  ""
-  (setq load-path (append
-
-                   ;; My primary library of Elisp.
-                   ;;
-                   (list (expand-file-name esler-elisp-directory))
-
-                   ;; The lisp-containing directory for each package stored
-                   ;; beneath a designated subdirectory of my primary
-                   ;; library.
-                   ;;
-                   (mapcar 'esler-find-lisp-in-package
-                           (esler-directory-subdirectories
-                            (concat esler-elisp-directory "/Installed-packages")))
-
-                   ;; The standard supplied Emacs code,
-                   ;; without any site customisation, if possible.
-                   ;;
-                   (let
-                       ((gnu-distributed-lisp-dir
-                         (concat (file-name-directory (directory-file-name exec-directory))
-                                 "lisp")))
-                     (if (file-directory-p gnu-distributed-lisp-dir)
-                         ;; NYI: DO this listinf of sub-dirs smarter.
-                         ;;
-                         (list gnu-distributed-lisp-dir
-                               (concat gnu-distributed-lisp-dir "/calendar")
-                               (concat gnu-distributed-lisp-dir "/emacs-lisp")
-                               (concat gnu-distributed-lisp-dir "/emulation")
-                               (concat gnu-distributed-lisp-dir "/gnus")
-                               (concat gnu-distributed-lisp-dir "/international")
-                               (concat gnu-distributed-lisp-dir "/language")
-                               (concat gnu-distributed-lisp-dir "/mail")
-                               (concat gnu-distributed-lisp-dir "/play")
-                               (concat gnu-distributed-lisp-dir "/progmodes")
-                               (concat gnu-distributed-lisp-dir "/term")
-                               (concat gnu-distributed-lisp-dir "/textmodes"))
-
-                       ;; They've really screwed things over here, so
-                       ;; make do with the load-path they are inflicting on me.
-                       ;;
-                       load-path)))))
-
-(defun esler-set-loadpath-emacs21 ()
+(defun esler-set-loadpath-emacs23 ()
   (setq load-path (append
 
                    ;; My primary library of Elisp.
@@ -2070,20 +1998,8 @@ otherwise return DIR"
 
                    load-path)))
 
-(defun esler-set-loadpath-emacs22 ()
-  (esler-set-loadpath-emacs21))
-
-(if esler-emacs20
-    (esler-set-loadpath-emacs20))
-
-(if esler-emacs21
-    (esler-set-loadpath-emacs21))
-
-(if esler-emacs22
-    (esler-set-loadpath-emacs22))
-
 (if esler-emacs23
-    (esler-set-loadpath-emacs22))
+    (esler-set-loadpath-emacs23))
 
 ;;}}}
 ;;{{{  Colour
@@ -2121,7 +2037,6 @@ otherwise return DIR"
 ;;{{{ Font-lock
 
 (if (and window-system
-         (not esler-xemacs)
          (not esler-emacs23))
 
     ;; Gnu Emacs
@@ -2154,9 +2069,6 @@ otherwise return DIR"
        (t nil))))
 
 (if (and window-system
-         (not esler-xemacs)
-         (not esler-emacs21)
-         (not esler-emacs22)
          (not esler-emacs23))
     (progn
       (global-font-lock-mode t)
@@ -2436,8 +2348,7 @@ for common operations.
 
 ;;{{{  Planner
 
-(if (not esler-xemacs)
-    (load "planner"))
+(load "planner")
 
 ;;}}}
 
@@ -2934,8 +2845,7 @@ Spam or UCE message follows:
 (setq vm-complain-stop-received-collect "rational\\.com")
 (setq vm-complain-interactive t)
 
-(if (not esler-xemacs)
-    (define-key menu-bar-file-menu [rmail] '("Read Mail" . vm)))
+(define-key menu-bar-file-menu [rmail] '("Read Mail" . vm))
 
 ;; Because setgid is not honoured across NFS links, I've made a local copy.
 ;;
@@ -3448,48 +3358,6 @@ Spam or UCE message follows:
       "------- end -------\n")
 
 ;;}}}
-;;{{{  W3.
-
-;; (if (not (and esler-emacs21 running-as-w32-client))
-
-;;     ;; Note: the PROBLEMS files for Emacs-21 gives a patch to w3 which is said
-;;     ;; to make it work on Emacs-21.1.  Problem is that it doesn't work on
-;;     ;; Windows because Emacs-21.1 in Windows still has no image support.
-;;     ;;
-;;     (progn
-;;       ;; Emacs/W3 Configuration
-;;       ;;
-;;       (require 'w3-auto "w3-auto")
-
-;;       (if at-site-work
-;;           (progn
-;;             (setq url-proxy-services
-;;                   '(("ftp"      . "gw:1001")
-;;                     ("http"     . "gw:1001")
-;;                     ("gopher"   . "gw:1001")
-;;                     ("wais"     . "gw:1001")
-;;                     ("no_proxy" . "^.*\\(atria\\|rational\\)\.com")))))
-
-;;       ;; Various variables
-;;       ;;
-;;       (setq w3-reuse-buffers 'yes
-;;             w3-temporary-directory "~/tmp"
-;;             ;; From Howard Melman
-;;             ;;
-;;             ;;w3-default-homepage "file:/d:/howard/html/"
-;;             w3-default-stylesheet "~/.w3/style.css"
-;;             w3-hotlist-file "~/.w3/hotlist"
-;;             url-privacy-level '(email os)
-;;             url-keep-history t
-;;             url-be-asynchronous t
-;;             url-mime-language-string "en"
-;;             url-mail-command (get mail-user-agent 'composefunc) ; should be default
-;;             w3-delay-image-loads nil
-;;             w3-min-img-size 5
-;;             w3-user-colors-take-precedence t
-;;             w3-user-fonts-take-precedence t)))
-
-;;}}}
 ;;{{{  Browse-URL
 
 ;; Define some functions so I can use various browsers to display HTML.
@@ -3966,7 +3834,7 @@ Spam or UCE message follows:
 ;;{{{ Scala and yasnippet
 
 (require 'scala-mode-auto)
-(setq scala-interpreter "c:/scala-2.8.0.Beta1-prerelease/bin/scala.bat")
+(setq scala-interpreter "c:/scala-2.8.0.final/bin/scala.bat")
 (require 'yasnippet)
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
@@ -3975,7 +3843,7 @@ Spam or UCE message follows:
 (add-hook 'scala-mode-hook
             '(lambda ()
                (setq show-trailing-whitespace t)
-               (setq scala-mode-indent:step 4)
+               (setq scala-mode-indent:step 2)
                (setq tab-width 4)
                (yas/minor-mode-on)
                (scala-electric-mode t)
@@ -4313,6 +4181,8 @@ Spam or UCE message follows:
   (c-set-style (esler-c-choose-style))
   (if (string-equal c-indentation-style "atria")
       (setq fill-column 79))
+  (if (string-equal c-indentation-style "vmware")
+      (setq fill-column 90))
   (if (string-equal c-indentation-style "mfc")
       (setq tab-width 4)))
 
@@ -4368,8 +4238,7 @@ Spam or UCE message follows:
 ;;
 ;; Also set up colouring of Atria types.
 ;;
-(if (and running-as-w32-client
-         (not esler-xemacs))
+(if running-as-w32-client
     (progn
       ;; Add colouring for MFC's special syntax additions
       ;;
@@ -4750,8 +4619,7 @@ uses CMU comint code"
 (setq auto-mode-alist (cons '("[Mm]akefile\\..*$" . makefile-mode) auto-mode-alist))
 (setq auto-mode-alist (cons '("[Mm]akefile_.*$" . makefile-mode) auto-mode-alist))
 
-(if (and running-as-w32-client
-         (not esler-xemacs))
+(if running-as-w32-client
     (progn
       (setq auto-mode-alist (cons '("\\.[Mm][Aa][Kk]$" . makefile-mode) auto-mode-alist))
 
@@ -4908,8 +4776,7 @@ It must end with a directory separator character.")
 ;;}}}
 ;;{{{  Command-other-frame
 
-(if (and window-system
-         (not esler-xemacs))
+(if window-system
     (progn
       (require 'command-other-frame)
       (autoload 'command-other-frame "command-other-frame"
@@ -5207,82 +5074,78 @@ paragraph."
 ;; When I invoke Dired, position me at the most-recently edited file
 ;; if it can be determined.
 ;;
-(if (not esler-xemacs)
-    (progn
-
-      (defadvice dired (after goto-relevant-file activate)
-        "When I invoke Dired, position at the file I was looking at
+(defadvice dired (after goto-relevant-file activate)
+  "When I invoke Dired, position at the file I was looking at
 when I invoked it, if that makes sense."
-        (esler-dired-advice))
-      (defun esler-dired-advice ()
-        (let ((most-recent-buffer (other-buffer (current-buffer) t)))
-          (if most-recent-buffer
-              (let ((most-recent-file (buffer-file-name most-recent-buffer)))
-                (if most-recent-file
-                    (if (or (file-regular-p most-recent-file)
-                            (file-directory-p most-recent-file))
-                        (let ((most-recent-dir (file-name-directory most-recent-file)))
-                          (if (string= (expand-file-name default-directory)
-                                       (expand-file-name most-recent-dir))
-                              (let ((entry-name (file-name-nondirectory most-recent-file)))
-                                (goto-char (point-min))
+  (esler-dired-advice))
+(defun esler-dired-advice ()
+  (let ((most-recent-buffer (other-buffer (current-buffer) t)))
+    (if most-recent-buffer
+        (let ((most-recent-file (buffer-file-name most-recent-buffer)))
+          (if most-recent-file
+              (if (or (file-regular-p most-recent-file)
+                      (file-directory-p most-recent-file))
+                  (let ((most-recent-dir (file-name-directory most-recent-file)))
+                    (if (string= (expand-file-name default-directory)
+                                 (expand-file-name most-recent-dir))
+                        (let ((entry-name (file-name-nondirectory most-recent-file)))
+                          (goto-char (point-min))
 
-                                ;; Probably should wrap this to ignore errors:
-                                ;;
-                                (dired-goto-file most-recent-file))))))))))
+                          ;; Probably should wrap this to ignore errors:
+                          ;;
+                          (dired-goto-file most-recent-file))))))))))
 
+;; When I use "s" to resort the Dired buffer,
+;; I like to be left at the top again.
+;;
+(defadvice dired-sort-toggle-or-edit (after goto-top activate)
+  "After resorting the dired buffer, go to the top of it."
+  (goto-char (point-min))
+  (dired-goto-next-file))
 
-      ;; When I use "s" to resort the Dired buffer,
-      ;; I like to be left at the top again.
-      ;;
-      (defadvice dired-sort-toggle-or-edit (after goto-top activate)
-        "After resorting the dired buffer, go to the top of it."
-        (goto-char (point-min))
-        (dired-goto-next-file))
+;; If I'm renaming a single file, let me just edit the existing name.
+;;
+(defadvice dired-do-rename (around rename-by-edit activate)
 
-      ;; If I'm renaming a single file, let me just edit the existing name.
-      ;;
-      (defadvice dired-do-rename (around rename-by-edit activate)
+  "If I'm renaming a single file, let me just edit the existing name."
 
-        "If I'm renaming a single file, let me just edit the existing name."
+  ;; Only do this if there's 1 file to be renamed
+  ;;
+  (if (eq 1 (length (dired-get-marked-files)))
+      (let* ((current-name (dired-get-filename))
+             (current-basename (file-name-nondirectory current-name)))
+        current-name
+        (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
+                                         'read-file-name-internal                   ;; table
+                                         default-directory                          ;; predicate
+                                         nil                                        ;; require-match
+                                         current-basename                           ;; initial-input
+                                         'file-name-history)))
+          (setq new-name (expand-file-name new-name))
 
-        ;; Only do this if there's 1 file to be renamed
-        ;;
-        (if (eq 1 (length (dired-get-marked-files)))
-            (let* ((current-name (dired-get-filename))
-                   (current-basename (file-name-nondirectory current-name)))
-              current-name
-              (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
-                                               'read-file-name-internal                   ;; table
-                                               default-directory                          ;; predicate
-                                               nil                                        ;; require-match
-                                               current-basename                           ;; initial-input
-                                               'file-name-history)))
-                (setq new-name (expand-file-name new-name))
+          ;; If the user supplied a directory name after all,
+          ;; compute the target path.
+          ;;
+          (if (file-directory-p new-name)
+              (setq new-name (concat (file-name-as-directory new-name)
+                                     current-basename)))
 
-                ;; If the user supplied a directory name after all,
-                ;; compute the target path.
-                ;;
-                (if (file-directory-p new-name)
-                    (setq new-name (concat (file-name-as-directory new-name)
-                                           current-basename)))
+          ;; Do the rename operation, updating any Emacs buffer info.
+          ;;
+          (dired-rename-file current-name new-name nil)
 
-                ;; Do the rename operation, updating any Emacs buffer info.
-                ;;
-                (dired-rename-file current-name new-name nil)
+          ;; Update the Dired buffer
+          ;;
+          (dired-add-file new-name)))
+    ad-do-it))
 
-                ;; Update the Dired buffer
-                ;;
-                (dired-add-file new-name)))
-          ad-do-it))
-
-      ;; When I use "s" to resort the Dired buffer,
-      ;; I like to be left at the top again.
-      ;;
-      (defadvice dired-sort-toggle-or-edit (after goto-top activate)
-        "After resorting the dired buffer, got to the top of it."
-        (goto-char (point-min))
-        (dired-goto-next-file))))
+;; When I use "s" to resort the Dired buffer,
+;; I like to be left at the top again.
+;;
+(defadvice dired-sort-toggle-or-edit (after goto-top activate)
+  "After resorting the dired buffer, got to the top of it."
+  (goto-char (point-min))
+  (dired-goto-next-file))
 
 ;; Display a "universalised" true pathname of directory at the top.
 ;;
@@ -5324,9 +5187,7 @@ when I invoked it, if that makes sense."
   (setq vm-delete-empty-folders t)
   (vm-visit-folder (dired-get-filename)))
 
-(if (not esler-xemacs)
-    (autoload 'dired-update-file-line "dired-aux")
-  (autoload 'dired-update-file-line "dired"))
+(autoload 'dired-update-file-line "dired-aux")
 (defun esler-dired-edit-linktext ()
   "Replace the contents of a symbolic link."
   (interactive)
@@ -5890,20 +5751,6 @@ including compressed ones."
 ;; Get side-by-side comparison
 ;;
 (setq ediff-split-window-function 'split-window-horizontally)
-
-;; ;; This should speed up ediff comparisons of folded files.
-;; ;;
-;; (add-hook 'ediff-prepare-buffer-hook '(lambda ()
-;;                                          (if folded-file
-;;                                              (folding-open-buffer))))
-
-;; That didn't work so try this:
-;;
-;; (if (not esler-xemacs)
-;;     (defadvice ediff-nuke-selective-display (before kae-ediff-fold-speedup act)
-;;       (if (and (boundp 'folded-file)
-;;                folded-file)
-;;           (folding-open-buffer))))
 
 ;;}}}
 ;;{{{  Changelog Mode.
@@ -6700,29 +6547,26 @@ This must be bound to a mouse click."
     (while (re-search-backward "\C-m$" min t)
       (delete-char 1))))
 
-(if (not esler-xemacs)
-    (progn
-
-      (defun :/-region (start end)
-        "Convert a path in the region START to END from Windows format to CygWin32 format,
+(defun :/-region (start end)
+  "Convert a path in the region START to END from Windows format to CygWin32 format,
 using cygpath"
-        (interactive "r")
-        (shell-command-on-region start end (concat "cygpath --unix '" (buffer-substring-no-properties start end) "'") t t)
-        (goto-char (mark))
-        (backward-delete-char-untabify 1)
-        )
+  (interactive "r")
+  (shell-command-on-region start end (concat "cygpath --unix '" (buffer-substring-no-properties start end) "'") t t)
+  (goto-char (mark))
+  (backward-delete-char-untabify 1)
+  )
 
-      (defalias ':/ ':/-region)
+(defalias ':/ ':/-region)
 
-      (defun /:-region (start end)
-        "Convert a path in the region START to END from CygWin32 format to Windows format,
+(defun /:-region (start end)
+  "Convert a path in the region START to END from CygWin32 format to Windows format,
 using cygpath"
-        (interactive "r")
-        (shell-command-on-region start end (concat "cygpath --windows '" (buffer-substring-no-properties start end) "'") t t)
-        (goto-char (mark))
-        (backward-delete-char-untabify 1))
+  (interactive "r")
+  (shell-command-on-region start end (concat "cygpath --windows '" (buffer-substring-no-properties start end) "'") t t)
+  (goto-char (mark))
+  (backward-delete-char-untabify 1))
 
-      (defalias ':/ ':/-region)))
+(defalias ':/ ':/-region)
 
 ;;}}}
 
@@ -6731,10 +6575,8 @@ using cygpath"
 
       ;; Load the registry interface and mode.
       ;;
-      (if (not esler-xemacs)
-          (progn
-            (require 'w32-reg-int)
-            (require 'w32-registry)))
+      (require 'w32-reg-int)
+      (require 'w32-registry)
 
       (defun esler-w32-canonicalize-path-seps (path)
         (subst-char-in-string ?/ ?\\ path t))
@@ -6838,7 +6680,11 @@ using cygpath"
 
 ;;{{{  Start the Emacs server
 
+;; TODO: If you get a "directory is unsafe" message from this
+;; take ownership of the directory mentioned.
+;;
 (server-start)
+(setq server-window 'pop-to-buffer)
 
 ;;}}}
 ;;{{{  Project-specific functions
