@@ -28,8 +28,6 @@
 
 (defvar esler-elisp-directory "~/apps/emacs/elisp")
 
-(defvar esler-verizon-storage-root "/ftp:kevin.a.esler@members.verizon.net:")
-
 
 ;;{{{  Determine what version of Emacs is running
 
@@ -269,16 +267,18 @@
 
 (defun esler-unregister-emacs-process ()
   (interactive)
-  (let* ((emacs-proc-dir "~/apps/emacs/.emacs_processes")
-         (pid-string (int-to-string (emacs-pid)))
-         (system-subdir (concat emacs-proc-dir "/" (system-name)))
-         (pid-file (concat system-subdir "/" (int-to-string (emacs-pid)))))
-    (esler-cleanup-emacs-process-registry)
-    (if (file-exists-p pid-file)
-        (delete-file pid-file))
-    (if (file-directory-p system-subdir)
-        (if (equal 2 (length (directory-files system-subdir)))
-            (delete-directory system-subdir)))))
+  (condition-case err
+      (let* ((emacs-proc-dir "~/apps/emacs/.emacs_processes")
+             (pid-string (int-to-string (emacs-pid)))
+             (system-subdir (concat emacs-proc-dir "/" (system-name)))
+             (pid-file (concat system-subdir "/" (int-to-string (emacs-pid)))))
+        (esler-cleanup-emacs-process-registry)
+        (if (file-exists-p pid-file)
+            (delete-file pid-file))
+        (if (file-directory-p system-subdir)
+            (if (equal 2 (length (directory-files system-subdir)))
+                (delete-directory system-subdir))))
+    (error nil)))
 
 (defun esler-process-exists (pid-string)
   (zerop
@@ -1565,30 +1565,16 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
-              ["Context" context at-site-home]
-              ["Notes (work)" esler-edit-current-project-notes]
-              ["Lore" esler-edit-lore]
-              ["Creds" esler-edit-creds]
-              "---------------------------------"
-              ["Eclipse" esler-start-eclipse]
-              ["Eclipse - 1gig" esler-start-eclipse-1gig]
-              ["Eclipse -debug" esler-start-eclipse-debug]
-              "---------------------------------"
-              ["My Verizon storage" esler-dired-verizon-storage]
-              "---------------------------------"
-              ["VM" vm t]
-              ["VM - local" esler-vm-get-local-mail t]
-              ["GNUS" esler-gnus-new-frame t]
-              ["Recover inbox" esler-recover-inbox]
-              "---------------------------------"
-              ["Start Gnuserv server" esler-start-gnuserv-server]
-              ["Stop Gnuserv server"  esler-stop-gnuserv-server]
-              "---------------------------------"
-              ["Start Unison server" esler-start-unison-server]
-              "---------------------------------"
-              ["UCM Config Specs" esler-project-dired-ucm-cspecs]
-              ["CCWeb: c:/winnt/java/packages/" esler-project-dired-java-packages]
-              "---------------------------------"
+              ;; ["Context" context at-site-home]
+              ;; ["Notes (work)" esler-edit-current-project-notes]
+              ;; ["Lore" esler-edit-lore]
+              ;; ["Creds" esler-edit-creds]
+              ;; "---------------------------------"
+              ;; ["VM" vm t]
+              ;; ["VM - local" esler-vm-get-local-mail t]
+              ;; ["GNUS" esler-gnus-new-frame t]
+              ;; ["Recover inbox" esler-recover-inbox]
+              ;; "---------------------------------"
               ["My ELisp" esler-project-dired-my-elisp]
               ["Emacs' ELisp" esler-project-dired-emacs-elisp]
               "---------------------------------"
@@ -1612,12 +1598,7 @@ and/or the vertical-line."
                :active mark-active]
               ["Delete trailing whitespace in buffer" delete-trailing-whitespace]
               "---------------------------------"
-              ["Microsoft Java SDK Docs" esler-read-ms-jdk-docs
-               running-as-w32-client]
-              ["Sun JDK Docs" esler-read-sun-jdk-docs
-               running-as-w32-client]
               ["Insert ISO date" esler-insert-iso-date t]
-              ["SlashDot.org" slashdot t]
               "---------------------------------"
               ["Windows Explorer"
                (start-process-shell-command "Windows Explorer"
@@ -1649,35 +1630,6 @@ and/or the vertical-line."
 (defun esler-recover-inbox ()
   (interactive)
   (recover-file vm-primary-inbox))
-
-(defun esler-dired-verizon-storage ()
-  (interactive)
-  (dired esler-verizon-storage-root))
-
-(defun esler-read-ms-jdk-docs ()
-  (interactive)
-  (let ((file "C:/ms_java_sdk_4.0/Docs/sdkdocs.chm"))
-    (w32-shell-execute "open" file)))
-
-(defun esler-read-sun-jdk-docs ()
-  (interactive)
-  (cond
-   ((file-exists-p "C:/j2sdk1.4.2/readme.html")
-    (w32-shell-execute "open" "C:/j2sdk1.4.2/readme.html"))
-
-   ((file-exists-p "C:/jdk1.3.1_01/readme.html")
-    (w32-shell-execute "open" "C:/jdk1.3.1_01/readme.html"))
-
-   ((file-exists-p "C:/jdk1.1.8/docs/index.html")
-    (w32-shell-execute "open" "C:/jdk1.1.8/docs/index.html"))))
-
-(defun esler-start-unison-server (port-number)
-  "Start a Unison server listening on PORT-NUMBER. Pop to its buffer."
-  (interactive "nPort number: ")
-  (pop-to-buffer  (make-comint "unison-server"
-                               (executable-find "unison")
-                               nil
-                               "-socket" (int-to-string port-number))))
 
 ;;}}}
 
@@ -2187,6 +2139,21 @@ for common operations.
 
 ;;(load "~/apps/emacs/elisp/Installed-packages/nxhtml-1.26-080325/nxml/autostart.el")
 
+(defun esler-pretty-print-xml-region (begin end)
+  "Pretty format XML markup in region. You need to have nxml-mode
+http://www.emacswiki.org/cgi-bin/wiki/NxmlMode installed to do
+this.  The function inserts linebreaks to separate tags that have
+nothing but whitespace between them.  It then indents the markup
+by using nxml's indentation rules."
+  (interactive "r")
+  (save-excursion
+      (nxml-mode)
+      (goto-char begin)
+      (while (search-forward-regexp "\>[ \\t]*\<" nil t) 
+        (backward-char) (insert "\n"))
+      (indent-region begin end))
+    (message "Ah, much better!"))
+
 ;;}}}
 ;;{{{ CCrypt
 
@@ -2203,54 +2170,6 @@ for common operations.
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
-
-;;}}}
-
-;;{{{ Eclipse launching
-
-(defvar esler-default-eclipse-program
-  (cond
-   ((file-executable-p "c:/eclipse-3.0.1/eclipse.exe")
-    "c:/eclipse-3.0.1/eclipse.exe")
-   ((file-executable-p "c:/eclipse-3.0/eclipse.exe")
-    "c:/eclipse-3.0/eclipse.exe")
-   ((file-executable-p "c:/eclipse/eclipse.exe")
-    "c:/eclipse/eclipse.exe")))
-
-(defun esler-start-eclipse (heap-megabytes)
-  "Start Eclipse with HEAP-MEGABYTES of heap"
-  (interactive "nMegabytes of heap: ")
-  (if (file-executable-p esler-default-eclipse-program)
-      (start-process "eclipse" nil
-                     esler-default-eclipse-program
-                     "-showlocation"
-                     ;; Supply a healthy amount of memory
-                     ;;
-                     "-vmargs" (format "-Xmx%dm" heap-megabytes))
-    (error "%s not executable" esler-default-eclipse-program)))
-
-(defun esler-start-eclipse-1gig ()
-  (interactive)
-  (esler-start-eclipse 1024))
-
-(defun esler-start-eclipse-debug ()
-  (interactive)
-  (if (file-executable-p esler-default-eclipse-program)
-      ;; For this to work on Windows it seems necessary to
-      ;; have an intermediate shell:
-      ;;
-      ;; cmd /c eclipse.exe -debug
-      (start-process "eclipse-debug" nil
-                     ;; For some reason this dance was necessary:
-                     ;;
-                     "cmd" "/c"
-                     esler-default-eclipse-program
-                     "-debug"
-                     "-showlocation"
-                     ;; Supply a healthy amount of memory
-                     ;;
-                     "-vmargs" "-Xmx512m")
-    (error "%s not executable" esler-default-eclipse-program)))
 
 ;;}}}
 
@@ -2304,32 +2223,6 @@ for common operations.
 
 ;;{{{  Eshell
 (setq eshell-directory-name "~/apps/emacs/.eshell/")
-;;}}}
-
-;;{{{  Mirror
-
-(require 'mirror)
-
-;; Hook to avoid accidentally overwriting the wrong mirror.
-;; Check that the mirror file name matches the original file name.
-;;
-(defun esler-check-mirror-filename ()
-  (if (and mirror-file-path
-           (not (equal (file-name-nondirectory mirror-file-path)
-                       (file-name-nondirectory (buffer-file-name)))))
-      (progn
-        (setq mirror-file-path nil)
-        (error "mirror-file-path appears to be set wrong: %s" mirror-file-path))))
-
-(add-hook 'find-file-hooks 'esler-check-mirror-filename)
-
-(defvar esler-remote-mirror-dir (concat esler-verizon-storage-root "/cpt/"))
-(defun esler-standard-mirroring ()
-  (setq mirror-update-on-save t)
-  (setq mirror-file-path
-        (concat esler-remote-mirror-dir
-                (file-name-nondirectory buffer-file-name))))
-
 ;;}}}
 
 ;;{{{  IDO
@@ -2403,10 +2296,12 @@ for common operations.
 
 ;;}}}
 ;;{{{  Perforce
-;; (if at-site-work
-;;     (progn
-;;       (load-library "p4")
-;;       (p4-set-p4-executable "c:/Program Files/Perforce/p4.exe")))
+(if at-site-work
+    (progn
+      (load-library "p4")
+      (p4-set-p4-executable "c:/Program Files/Perforce/p4.exe")
+
+      (require 'vc-p4)))
 ;;}}}
 ;;{{{  MMM
 
@@ -3456,13 +3351,6 @@ Spam or UCE message follows:
 
 ;;}}}
 
-;;{{{  Slashdot
-
-(autoload 'slashdot
-  "slashdot"
-  "Read the headlines from http://slashdot.org" t)
-
-;;}}}
 ;;{{{  Watson
 
 (autoload 'watson
@@ -6734,19 +6622,6 @@ using cygpath"
 (defun esler-project-dired-emacs-elisp ()
   (interactive)
   (dired (concat exec-directory "/../lisp")))
-
-(defun esler-project-dired-ucm-cspecs ()
-  (interactive)
-  (if running-as-w32-client
-      (let ((path "//maple/dfs/clearcase/cspecs/UCM"))
-        (if (file-exists-p path)
-            (dired path)
-          ;; This didn't work:
-          (start-process-shell-command "Windows NT Explorer"
-                                       nil
-                                       "explorer"
-                                       (concat path ",/e"))))
-    (dired "/net/apgsun8/export/home/builder/cspecs/ucm/")))
 
 ;;}}}
 
