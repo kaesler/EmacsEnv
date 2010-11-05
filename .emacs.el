@@ -317,21 +317,6 @@
 (add-hook 'kill-emacs-hook 'esler-unregister-emacs-process)
 
 ;;}}}
-;;{{{  Configure the Lisp function "advice" facility.
-
-;; Automatically start advice when this file gets loaded.
-;;
-;; obsolete ?(setq ad-start-advice-on-load t)
-
-;; This enables me to forward advise functions, that is to advise them
-;; when they are not yet defined or defined as autoloads.
-;;
-;; BUT... it seems to screw up byte-compilation, so
-;; turn it off.
-;;
-;; obsolete ?(setq ad-activate-on-definition nil)
-
-;;}}}
 
 ;;{{{  Load .emacs.custom
 
@@ -1565,23 +1550,11 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
-              ;; ["Context" context at-site-home]
-              ;; ["Notes (work)" esler-edit-current-project-notes]
-              ;; ["Lore" esler-edit-lore]
-              ;; ["Creds" esler-edit-creds]
-              ;; "---------------------------------"
-              ;; ["VM" vm t]
-              ;; ["VM - local" esler-vm-get-local-mail t]
-              ;; ["GNUS" esler-gnus-new-frame t]
-              ;; ["Recover inbox" esler-recover-inbox]
-              ;; "---------------------------------"
               ["My ELisp" esler-project-dired-my-elisp]
               ["Emacs' ELisp" esler-project-dired-emacs-elisp]
               "---------------------------------"
               ["~/" esler-project-dired-homedir]
               ["Windows Profile Directory" esler-project-dired-windows-profile
-               running-as-w32-client]
-              ["~esler on Unix" esler-project-dired-unix-homedir
                running-as-w32-client]
               "---------------------------------"
               ["Find files" find-lisp-find-dired]
@@ -1611,11 +1584,6 @@ and/or the vertical-line."
                (w32-shell-execute "open" "cmd.exe")
                :included running-as-w32-client
                ]
-              "---------------------------------"
-              ["Browse maple repository"
-               (dired "//maple/dfs")
-               :included (and at-site-work running-as-w32-client)
-               ]
               )))
 (add-hook 'menu-bar-final-items 'KAE)
 
@@ -1630,6 +1598,22 @@ and/or the vertical-line."
 (defun esler-recover-inbox ()
   (interactive)
   (recover-file vm-primary-inbox))
+
+(defun esler-project-dired-windows-profile ()
+  (interactive)
+  (dired (getenv "USERPROFILE")))
+
+(defun esler-project-dired-homedir ()
+  (interactive)
+  (dired "~/"))
+
+(defun esler-project-dired-my-elisp ()
+  (interactive)
+  (dired esler-elisp-directory))
+
+(defun esler-project-dired-emacs-elisp ()
+  (interactive)
+  (dired (concat exec-directory "/../lisp")))
 
 ;;}}}
 
@@ -2137,8 +2121,6 @@ for common operations.
 
 ;;{{{ NXHTML
 
-;;(load "~/apps/emacs/elisp/Installed-packages/nxhtml-1.26-080325/nxml/autostart.el")
-
 (defun esler-pretty-print-xml-region (begin end)
   "Pretty format XML markup in region. You need to have nxml-mode
 http://www.emacswiki.org/cgi-bin/wiki/NxmlMode installed to do
@@ -2173,27 +2155,6 @@ by using nxml's indentation rules."
 
 ;;}}}
 
-;;{{{ Worklog
-
-;; (require 'worklog)
-;; (setq worklog-automatic-login t)
-;; (add-hook 'emacs-startup-hook
-;;           (function (lambda ()
-;;                       (condition-case err
-;;                           (worklog-do-task "Hacking emacs" t)
-;;                         (error nil)))))
-
-;; (add-hook 'kill-emacs-hook
-;;           (function (lambda ()
-;;                       (condition-case err
-;;                           (progn
-;;                             (worklog-do-task "logout" t)
-;;                             (worklog-finish))
-;;                         (error nil)))))
-
-;; (setq worklog-file "~/apps/emacs/.worklog")
-
-;;}}}
 ;;{{{  Project
 
 (require 'project)
@@ -2222,20 +2183,8 @@ by using nxml's indentation rules."
 ;;}}}
 
 ;;{{{  Eshell
+
 (setq eshell-directory-name "~/apps/emacs/.eshell/")
-;;}}}
-
-;;{{{  IDO
-
-;;(require 'ido)
-;;(ido-mode t)
-
-;;}}}
-
-;;{{{  Table
-
-;;(require 'table)
-;;(add-hook 'text-mode-hook 'table-recognize)
 
 ;;}}}
 
@@ -2247,23 +2196,25 @@ by using nxml's indentation rules."
 
 ;;{{{  Ibuffer
 
-(autoload 'ibuffer "ibuffer" "" t)
-(global-set-key "\C-x\C-b" 'ibuffer)
-(defun esler-ibuffer-mode-bindings ()
-  (define-key ibuffer-mode-map " " 'ibuffer-visit-buffer)
-  (define-key ibuffer-mode-map "f" 'ibuffer-visit-buffer))
+;; Obsolete?
 
-(setq ibuffer-formats '((mark modified read-only " " (name 25 25) " "
-                              (size 6 -1 :right) " " (mode 16 16 :center)
-                              " " (process 8 -1) " " filename)
-                        (mark " " (name 16 -1) " " filename))
-      ibuffer-elide-long-columns t
-      ibuffer-eliding-string "&")
+;; (autoload 'ibuffer "ibuffer" "" t)
+;; (global-set-key "\C-x\C-b" 'ibuffer)
+;; (defun esler-ibuffer-mode-bindings ()
+;;   (define-key ibuffer-mode-map " " 'ibuffer-visit-buffer)
+;;   (define-key ibuffer-mode-map "f" 'ibuffer-visit-buffer))
 
-;; For some reason, this doesn't work: anymore:
-;;
-(eval-after-load "ibuffer" '(esler-ibuffer-mode-bindings))
-(add-hook 'ibuffer-mode-hooks 'esler-ibuffer-mode-bindings)
+;; (setq ibuffer-formats '((mark modified read-only " " (name 25 25) " "
+;;                               (size 6 -1 :right) " " (mode 16 16 :center)
+;;                               " " (process 8 -1) " " filename)
+;;                         (mark " " (name 16 -1) " " filename))
+;;       ibuffer-elide-long-columns t
+;;       ibuffer-eliding-string "&")
+
+;; ;; For some reason, this doesn't work: anymore:
+;; ;;
+;; (eval-after-load "ibuffer" '(esler-ibuffer-mode-bindings))
+;; (add-hook 'ibuffer-mode-hooks 'esler-ibuffer-mode-bindings)
 
 ;;}}}
 
@@ -2272,65 +2223,28 @@ by using nxml's indentation rules."
 (require 'git-emacs)
 
 ;;}}}
-;;{{{  ClearCase Mode.
-
-;; Load Clearcase/Eacs integration
-;;
-;; (setq clearcase-minimise-menus t)
-;; (load "clearcase")
-;; (autoload 'clearcase-dired-mode "clearcase" "" t)
-
-;; ;; Command to print the current ClearCase view tag.
-;; ;;
-;; (defun pwv ()
-;;   (interactive)
-;;   "Print the working ClearCase view."
-
-;;   (let ((tag (clearcase-viewtag)))
-;;     (if tag
-;;         (message tag))))
-
-;; (setenv "ATRIA_NO_BOLD" "TRUE")
-
-;; (setq clearcase-dired-show-view t)
-
-;;}}}
 ;;{{{  Perforce
+
 (if at-site-work
     (progn
       (load-library "p4")
       (p4-set-p4-executable "c:/Program Files/Perforce/p4.exe")
 
       (require 'vc-p4)))
-;;}}}
-;;{{{  MMM
-
-;; When I'm editing HTML code, turn on MMM automatically
-;; and allow me to edit imbedded Javascript in Java mode.
-;;
-(require 'mmm-auto)
-(setq mmm-global-mode 'maybe)
-(mmm-add-mode-ext-class 'html-helper-mode ".html" 'universal)
 
 ;;}}}
 
 ;;{{{  Ishl (highlight interactive searches)
 
-(require 'ishl)
-(ishl-mode 1)
+;; Obsolete?
+;; (require 'ishl)
+;; (ishl-mode 1)
 
 ;;}}}
 
 ;;{{{  ELL
 
 (autoload 'ell-packages "ell" "Browse list of Emacs Lisp packages" t)
-
-;;}}}
-
-;;{{{  ESheet
-
-(autoload 'esheet-mode "esheet" "Makes Emacs act like a spreadsheet" t)
-(setq auto-mode-alist (cons (cons "\\.esh\\'" 'esheet-mode) auto-mode-alist))
 
 ;;}}}
 
@@ -2351,8 +2265,9 @@ by using nxml's indentation rules."
 
 ;;{{{  Power-macros
 
-(require 'power-macros)
-;;(power-macros-mode)
+;;Obsolete?
+;; (require 'power-macros)
+;; ;;(power-macros-mode)
 
 ;;}}}
 
@@ -3335,27 +3250,21 @@ Spam or UCE message follows:
 ;; or similarly for the other browsers.
 
 ;;}}}
-;;{{{  Archie.
-
-(autoload 'archie "archie" "Archie interface" t)
-
-(setq archie-program "archie")
-
-(setq archie-server "archie.ans.net")
-
-;;}}}
 ;;{{{  Webjump
 
-(autoload 'webjump "webjump" "Cause Web-browser to go to a specified site" t)
-(global-set-key "\C-c\C-j" 'webjump)
+;; Obsolete
+;; (autoload 'webjump "webjump" "Cause Web-browser to go to a specified site" t)
+;; (global-set-key "\C-c\C-j" 'webjump)
 
 ;;}}}
 
 ;;{{{  Watson
 
-(autoload 'watson
-  "watson"
-  "Do web searches" t)
+;; Obsolete?
+;; (autoload 'watson
+;;   "watson"
+;;   "Do web searches" t)
+
 ;;}}}
 
 ;;}}}
@@ -4546,31 +4455,6 @@ file modes."
 ;;}}}
 
 ;;}}}
-;;{{{  Speedbar tool
-
-;;(autoload 'speedbar-frame-mode "speedbar" "Popup a speedbar frame" t)
-;;(autoload 'speedbar-get-focus "speedbar" "Jump to speedbar frame" t)
-;;
-;;(define-key-after (lookup-key global-map [menu-bar Shortcuts])
-;;  [speedbar] '("Speedbar" . speedbar-frame-mode) [Links])
-;;(define-key global-map [f4] 'speedbar-get-focus)
-
-;;}}}
-
-;;{{{  OOBR
-
-(defvar br-directory (concat esler-elisp-directory "/OOBR/")
-  "Directory where the OO-Browser executable code is kept.
-It must end with a directory separator character.")
-
-(autoload 'oo-browser (expand-file-name "br-start" br-directory)
-  "Invoke the OO-Browser" t)
-(autoload 'br-env-browse (expand-file-name "br-start" br-directory)
-  "Browse an existing OO-Browser Environment" t)
-
-;;(global-set-key "\C-c\C-o" 'oo-browser)
-
-;;}}}
 
 ;;{{{  Greedy Delete
 
@@ -4592,6 +4476,8 @@ It must end with a directory separator character.")
 ;;}}}
 ;;{{{  Id-select
 
+;; Obsolete?
+
 (autoload 'id-select-and-kill-thing
   "id-select" "Kill syntactical region selection" t)
 (autoload 'id-select-and-copy-thing
@@ -4603,23 +4489,10 @@ It must end with a directory separator character.")
 (autoload 'id-select-thing-with-mouse
   "id-select" "Single mouse click syntactical region selection" t)
 
-;; The following caused cc-mode-5.21 to loop when entering the opening brace
-;; of a function.
-;;(add-hook 'java-mode-hook
-;;          (function
-;;           (lambda ()
-;;             (setq defun-prompt-regexp
-;;                   "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f]*\\)+\\)?\\s-*"))))
-;;
-;;(add-hook 'c++-mode-hook
-;;          (function
-;;           (lambda ()
-;;             (setq defun-prompt-regexp
-;;		   "^[ \t]*\\(template[ \t\n\r]*<[^>;.{}]+>[ \t\n\r]*\\)?\\(\\(\\(auto\\|const\\|explicit\\|extern[ \t\n\r]+\"[^\"]+\"\\|extern\\|friend\\|inline\\|mutable\\|overload\\|register\\|static\\|typedef\\|virtual\\)[ \t\n\r]+\\)*\\(\\([[<a-zA-Z][]_a-zA-Z0-9]*\\(::[]_a-zA-Z0-9]+\\)?[ \t\n\r]*<[_<>a-zA-Z0-9 ,]+>[ \t\n\r]*[*&]*\\|[[<a-zA-Z][]_<>a-zA-Z0-9]*\\(::[[<a-zA-Z][]_<>a-zA-Z0-9]+\\)?[ \t\n\r]*[*&]*\\)[*& \t\n\r]+\\)\\)?\\(\\(::\\|[[<a-zA-Z][]_a-zA-Z0-9]*[ \t\n\r]*<[^>;{}]+>[ \t\n\r]*[*&]*::\\|[[<a-]_~<>a-zA-Z0-9]*[ \t\n\r]*[*&]*::\\)[ \t\n\r]*\\)?\\(operator[ \t\n\r]*[^ \t\n\r:;.,?~{}]+\\([ \t\n\r]*\\[\\]\\)?\\|[_~<a-zA-Z][^][ \t:;.,~{}()]*\\|[*&]?\\([_~<a-zA-Z][_a-zA-Z0-9]*[ \t\n\r]*<[^>;{}]+[ \t\n\r>]*>\\|[_~<a-zA-Z][_~<>a-zA-Z0-9]*\\)\\)[ \t\n\r]*\\(([^{;]*)\\(\\([ \t\n\r]+const\\|[ \t\n\r]+mutable\\)?\\([ \t\n\r]*[=:][^;{]+\\)?\\)?\\)\\s-*"))))
-
 ;;}}}
 ;;{{{  Igrep
 
+;; Obsolete ?
 (autoload (function igrep) "igrep"
   "*Run `grep' to match EXPRESSION in FILES..." t)
 (autoload (function egrep) "igrep"
@@ -4632,34 +4505,6 @@ It must end with a directory separator character.")
   "*Run `egrep' recursively..." t)
 (autoload (function fgrep-recursively) "igrep"
   "*Run `fgrep' recursively..." t)
-
-;;}}}
-;;{{{  Uniquify
-
-;; This seems to break on 19.34.
-;;
-;;(require 'uniquify)
-
-;;}}}
-;;{{{  Framepop
-
-;; (if window-system
-;;     (progn
-;;       ;;(require 'framepop)
-;;       (load-library "framepop")
-;;       (setq framepop-auto-resize t)
-;;       (define-key global-map [f3] framepop-map)
-;;       (setq framepop-frame-parameters
-;;             '((name . nil)                     ; use buffer name
-;;               (unsplittable . t)               ; always include this
-;;               (menu-bar-lines . 0)             ; no menu bar
-;;               (minibuffer . nil)               ;    or minubuffer
-;;               (left . -1)                      ; top right corner of screen,
-;;               (top . 30)                       ;    away from my main frame
-;;               (width . 71)                     ; narrower, so it fits nicely
-;;               (background-color . "White")
-;;               (foreground-color . "Red")
-;;               (font . "-*-courier-bold-o-*-*-12-*-*-*-m-*-*-*")))))
 
 ;;}}}
 ;;{{{  Command-other-frame
@@ -5485,13 +5330,6 @@ when I invoked it, if that makes sense."
 (add-hook 'diary-hook 'appt-make-list)
 
 ;;}}}
-;;{{{  Dismal spreadsheet
-
-;; It's well named.
-;;(load "dismal-mode-defaults")
-;;(autoload 'dismal-mode "dismal" "The dismal code." t)
-
-;;}}}
 ;;{{{  Buffer Menu Mode.
 
 (define-key Buffer-menu-mode-map [mouse-3]
@@ -5512,58 +5350,6 @@ when I invoked it, if that makes sense."
                   (let ((buf (current-buffer)))
                     (Buffer-menu-this-window)
                     (bury-buffer buf)))))))
-
-;;(defun buffer-menu (&optional arg)
-;;     "Make a menu of buffers so you can save, delete or select them.
-;;With argument, show only buffers that are visiting files.
-;;Type ? after invocation to get help on commands available.
-;;Type q immediately to make the buffer menu go away and to restore
-;;previous window configuration."
-;;     (interactive "P")
-;;     (let ((temp-buffer-show-function
-;;            (function (lambda (buffer)
-;;                        nil))))
-;;       (list-buffers arg)
-;;       (let ((newpoint (save-excursion (set-buffer "*Buffer List*")
-;;                                       (point))))
-;;         (switch-to-buffer "*Buffer List*")
-;;         (goto-char newpoint))
-;;       (message
-;;        "Commands: d, s, x, u; f, o, 1, 2, m, v; ~, %%; q to quit; ? for help.")))))
-
-;;}}}
-;;{{{  Info Mode.
-
-;;
-
-;; I maintain my own Info directory.  It contains links to the
-;; contents of the system supplied Info directory.  It also contains
-;; files that I have added.  For example, info on VM.
-
-;; kae 23
-;;(require 'info)
-;;(setq esler-info-directory "~/apps/emacs/info")
-
-;; (if (file-directory-p esler-info-directory)
-;;     (setq Info-default-directory-list (cons esler-info-directory
-;;                                             Info-default-directory-list)))
-;; (if (file-directory-p "/usr/nodelocal/info")
-;;     (setq Info-default-directory-list (cons "/usr/nodelocal/info"
-;;                                             Info-default-directory-list)))
-
-;; I prefer to use mouse-3 for following Info nodes,
-;; because that's what I use to click on pathnames, email messages,
-;; and news articles.
-;;
-;;(autoload 'Info-last "info")
-;;(eval-after-load
-;; "info"
-;; (progn
-;;   (define-key Info-mode-map [mouse-3] 'Info-follow-nearest-node)
-;;
-;;   ;; Make "b" act like Netscape "Back":
-;;   ;;
-;;   (define-key Info-mode-map "b" 'Info-last)))
 
 ;;}}}
 ;;{{{  Tar Mode
@@ -5609,7 +5395,6 @@ including compressed ones."
   (define-key archive-mode-map "5" 'split-window-horizontally))
 
 (eval-after-load "arc-mode" '(esler-archive-mode-bindings))
-
 
 ;;}}}
 ;;{{{  Emerge Mode.
@@ -6139,208 +5924,6 @@ This must be bound to a mouse click."
 
 ;;}}}
 
-;;{{{  ASCII-display/dialup support.
-
-;;{{{  Xterm mouse support.
-
-(if running-as-xterm-client
-
-    (progn
-
-      ;; Load my mechanism for xterm mousing.
-      ;;
-      (load-library "xterm-mouse")
-      (add-hook 'kill-emacs-hook 'xterm-mouse-disable)
-      (add-hook 'suspend-hook 'xterm-mouse-disable)
-      (add-hook 'suspend-resume-hook 'xterm-mouse-enable)
-
-      ;; New with 19.30
-      ;; (This causes a startup-time error.)
-      ;;(xterm-mouse-mode)
-      ))
-
-;;}}}
-
-;; Here's the setup for when I'm dialed in from home.
-
-(if running-as-terminal-client
-
-    (progn
-
-      (global-set-key "\C-h" 'backward-delete-char-untabify)
-
-      ;; C-s gets swallowed by the terminal server.
-      ;; So, consistently replace it with C-z.
-      ;;
-      (global-set-key "\C-z" 'isearch-forward)
-      (define-key isearch-mode-map "\C-z" 'isearch-repeat-forward)
-
-      (add-hook 'folding-mode-hook
-                '(lambda ()
-                   (local-set-key "\C-c\C-z" 'folding-shift-in)))
-
-      (global-set-key "\C-x\C-z" 'save-buffer)
-      (global-set-key "\M-\C-z" 'isearch-forward-regexp)
-      (add-hook 'c-mode-hook
-                '(lambda ()
-                   (local-set-key "\C-c\C-z" 'c-show-syntactic-information)))
-      (add-hook 'c++-mode-hook
-                '(lambda ()
-                   (local-set-key "\C-c\C-z" 'c-show-syntactic-information)))
-
-      ;; C-q gets swallowed by the terminal server.
-      ;; So, consistently replace it with "`".
-      ;;
-      (global-set-key "`" 'quoted-insert)
-      (define-key isearch-mode-map "`" 'isearch-quote-char)
-
-      ;; Use the package which allows multiple virtual screens.
-      ;; Use mouse-3 for selecting screens from the screen menu.
-      ;;
-      (require 'screens)
-      (define-key screen-menu-mode-map [mouse-3]
-        '(lambda (click)
-           (interactive)
-           (mouse-set-point click)
-           (screen-menu-select)))))
-
-;;}}}
-;;{{{  Site-specifics.
-
-;;{{{ Rational
-
-(if at-site-work
-
-    (progn
-      ;;{{{  PC Printing
-
-      ;; As of Emacs 20.4 this is all you need:
-      ;;
-      (setq printer-name "//apgmisntsrv/apgeng1")
-
-      ;;}}}
-
-      ;;{{{  Distinguished buffer names for Makefiles
-
-      (defun fix-makefile-names ()
-        (if (eq (string-match "Makefile\\(<[0-9]+>\\)?$" (buffer-name)) 0)
-            (rename-buffer (concat (file-name-nondirectory
-                                    (directory-file-name
-                                     (file-name-directory buffer-file-name)))
-                                   "/Makefile")
-                           t)))
-      (add-hook 'find-file-hooks 'fix-makefile-names)
-
-      ;;}}}
-
-      ;;{{{  Ange-ftp via a gateway.
-
-      (setq ange-ftp-binary-file-name-regexp ".")
-      (setq ange-ftp-default-user "anonymous")
-      ;; nyi: Probably no longer valid after IBM changes.
-      ;;
-      (setq ange-ftp-default-password "guest@gw.rational.com")
-
-      (setq ange-ftp-ftp-program-name "ftp")
-      (setq ange-ftp-gateway-program "telnet")
-
-      ;;}}}
-
-      ;;{{{  Canonicalise current directory
-
-      (cd "~/")
-
-      ;;}}}
-
-      ;;{{{  Misc.
-
-      ;; So I can invoke as "emacs -funcall esler-run-vm"
-      ;; Eventually I'll set special fonts, geometries,
-      ;; gnuserv socket paths, etc.
-      ;;
-      (defun esler-run-vm ()
-        (vm))
-
-      (define-global-abbrev "mm" "/vobs/atria/bin/mmake")
-
-      (setq compile-command "/usr/atria/bin/clearmake")
-
-      ;; So I can invoke as "emacs -funcall esler-run-gnus"
-      ;;
-      (defun esler-run-gnus ()
-        (gnus))
-
-      (defun esler-create-initial-frames ()
-        (save-excursion
-
-          ;;
-          (info)
-          (iconify-frame (make-frame))
-
-
-          (find-file "~/tasks/context")
-          (iconify-frame (make-frame))
-
-          (shell)
-          (iconify-frame (make-frame))))
-
-      ;;}}}
-
-      ;;{{{  Nightly build log scanner
-
-      (load-library "nightly")
-
-      ;;}}}
-
-      )                                 ; progn
-
-  )                                     ; at-site-work
-
-;;}}}
-
-;;{{{ Home
-
-(if at-site-home
-
-    (progn
-
-      ;;{{{  Ange-ftp.
-
-      (setq ange-ftp-ftp-program-name "ftp")
-      (setq ange-ftp-binary-file-name-regexp ".")
-      (setq ange-ftp-default-user "anonymous")
-      (setq ange-ftp-default-password
-
-            ;; Used to be "capone". It seems to depend on which version
-            ;; of rftp we use.
-            ;;
-            (concat (user-real-login-name) "@kaesler.verizon.net"))
-
-      ;; Some FTP servers insist on the client host appearing in the password.
-      ;; In our case it's usually our proxy host.
-      ;;
-      (setq ange-ftp-generate-anonymous-password
-            (concat (user-real-login-name) "@kaesler.verizon.net"))
-
-      ;;}}}
-
-      )                                 ; progn
-
-  )                                     ; at-site-home
-
-;;}}}
-
-;;{{{ USB drive
-
-(if (running-off-usb-drive)
-    (progn
-      (setenv "PATH"
-              (concat usb-home-dir "apps\\emacs\\bin;" (getenv "PATH")))
-      (frame-rename "Emacs@USB")))
-
-;;}}}
-
-;;}}}
 ;;{{{  Win32-specifics
 
 ;;{{{ Some Bash support
@@ -6573,62 +6156,6 @@ using cygpath"
 ;;
 (server-start)
 (setq server-window 'pop-to-buffer)
-
-;;}}}
-;;{{{  Project-specific functions
-
-;; For CCWeb project:
-;;   - menu entry for pointing the browser at the local CCWEB server.
-
-(defun esler-project-browse-local-ccweb ()
-  (interactive)
-  (let ((url (concat "http://" (system-name) "/ccase/bin/ccweb.exe")))
-    (esler-browse-url-with-default-browser url)))
-
-(defun esler-project-dired-windows-profile ()
-  (interactive)
-  (dired (getenv "USERPROFILE")))
-
-(defun esler-project-dired-unix-homedir ()
-  (interactive)
-  (dired "/esler@isophorone.lexma.ibm.com:"))
-
-(defun esler-project-dired-homedir ()
-  (interactive)
-  (dired "~/"))
-
-(defvar esler-current-project-notes "~/cpt/Notes.cpt")
-
-(defun esler-edit-current-project-notes ()
-  (interactive)
-  (find-file esler-current-project-notes))
-
-(defun esler-edit-lore ()
-  (interactive)
-  (find-file "~/cpt/Lore.cpt"))
-
-(defun esler-edit-creds ()
-  (interactive)
-  (find-file "~/cpt/Creds.cpt"))
-
-(defun esler-project-dired-java-packages ()
-  (interactive)
-  (dired "c:/winnt/java/packages"))
-
-(defun esler-project-dired-my-elisp ()
-  (interactive)
-  (dired esler-elisp-directory))
-
-(defun esler-project-dired-emacs-elisp ()
-  (interactive)
-  (dired (concat exec-directory "/../lisp")))
-
-;;}}}
-
-;;{{{  Warn about being invoked as root.
-
-(if (zerop (user-uid))
-    (error "Warning: you have invoked Emacs as root !"))
 
 ;;}}}
 

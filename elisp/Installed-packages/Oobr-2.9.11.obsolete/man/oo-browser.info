@@ -1,0 +1,79 @@
+This is Info file oo-browser.info, produced by Makeinfo-1.63 from the
+input file oo-browser.texi.
+
+
+Indirect:
+oo-browser.info-1: 99
+oo-browser.info-2: 48395
+oo-browser.info-3: 98300
+
+Tag Table:
+(Indirect)
+Node: Top99
+Node: Introduction5399
+Node: Environments7868
+Node: Creating Environments10527
+Node: Building Environments12219
+Node: Loading Environments14361
+Node: Saving Environments15093
+Node: Usage15668
+Node: Invoking16733
+Node: Top-Level Classes19122
+Node: Moving to Entries20363
+Node: Saving Listings20806
+Node: Children and Parents21393
+Node: Descendants and Ancestors21777
+Node: Viewing and Editing23448
+Node: Browsing Elements27582
+Node: Browsing Categories29648
+Node: Browsing Protocols31263
+Node: Browsing Implementors33315
+Node: Exiting a Listing34263
+Node: Quitting and Refreshing35132
+Node: Using the Mouse36070
+Node: Getting Help39507
+Node: Locating Entries40073
+Node: Filtering Entries41892
+Node: Ordering Entries43440
+Node: Statistics44295
+Node: Class Info45217
+Node: Adding and Deleting Classes46055
+Node: Completing Names47491
+Node: Graphical Browsing48395
+Node: Options52149
+Node: External Viewing52664
+Node: Keep Viewed Classes54653
+Node: Inhibit Version55531
+Node: Invert Ancestors56255
+Node: Save All57034
+Node: Use Children57575
+Node: Sort Options58027
+Node: Customization58832
+Node: Standalone60008
+Node: Languages63910
+Node: C Specifics64177
+Node: C++ Specifics65601
+Node: C++ Element Selection65909
+Node: C++ Settings68758
+Node: CLOS Specifics69337
+Node: CLOS Method Handling69555
+Node: CLOS Settings70845
+Node: Eiffel Specifics72677
+Node: Eiffel Listings73135
+Node: Eiffel Element Selection73892
+Node: Eiffel Settings75355
+Node: Java Specifics76620
+Node: Objective-C Specifics77989
+Node: Objective-C Categories79041
+Node: Objective-C Protocols79685
+Node: Objective-C Element Selection80403
+Node: Objective-C Settings82176
+Node: Features82793
+Node: Commands87978
+Node: Glossary98300
+Node: References104038
+Node: Keys104823
+Node: Command Index109523
+Node: Concepts118577
+
+End Tag Table

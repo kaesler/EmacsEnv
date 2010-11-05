@@ -1,0 +1,699 @@
+This is Info file oo-browser.info, produced by Makeinfo-1.63 from the
+input file oo-browser.texi.
+
+
+File: oo-browser.info,  Node: Glossary,  Next: References,  Prev: Commands,  Up: Top
+
+Glossary
+********
+
+   Concepts pertinent to operational usage of the OO-Browser are defined
+here.
+
+   If some GNU Emacs terms are unfamiliar to you, see `[Stallman 87]'.
+
+`Ancestors'
+     All classes above a class in the inheritance hierarchy.
+
+`Category'
+     Under most languages, a logical grouping of related classes.  The
+     OO-Browser does not yet have any support for this kind of category.
+
+     Under Objective-C, a partial class definition that implements a
+     related set of methods.  The full class definitions is formed from
+     the conjunction of all of the class' categories.  The OO-Browser
+     supports Objective-C category browsing.
+
+`Children'
+     First level of classes below a class in the inheritance hierarchy.
+     Those that directly inherit from a class.
+
+`Class'
+     A category from which object instances are created.  The OO-Browser
+     can display classes along with their elements, categories and formal
+     protocols.
+
+`Class at Point'
+     Class name in a listing buffer whose name appears on the same line as
+     point.
+
+`Declaration'
+     A specification of a programatic entity, for reference by other
+     parts of a program.  See also `Definition'.  The declaration of a
+     method specifies its signature but not its body.
+
+`Default Class'
+     A class that the OO-Browser creates to simplify browsing a particular
+     category of objects such as class protocols or global functions.
+     Default class names begin and end with square bracket delimiters, as
+     in `[protocol]'.
+
+`Definition'
+     Programmatic definition of an entity, e.g. defining the body of a
+     method.
+
+`Completion'
+     The act of filling in the non-ambiguous part of a requested item,
+     such as a class name or a file name.
+
+`Decendants'
+     All classes below a class in the inheritance hierarchy.
+
+`Element'
+     A feature or an instance of a class.
+
+`Environment'
+     A series of browser lookup tables and control variables that specify
+     the set of classes and inter-class relationships with which the
+     browser works.
+
+`Environment File'
+     A file used to store browser Environments.
+
+`Environment Specification'
+     Unambiguously tells the browser what to include in the construction
+     of an Environment.
+
+`Feature'
+     An element (method/attribute/component) of a class.
+
+`Formal Protocol'
+     See `Protocol'.
+
+`Implementor'
+     A class in which a particular element is defined.  This does not
+     include classes which inherit an element.
+
+`Initialization File'
+     See `Personal Initialization File'.
+
+`Instance'
+     An object which has a particular class as its type.  The class
+     serves as a template for instance creation.
+
+`Library Classes'
+     Stable, seldomly changed classes that have been released for general
+     usage.
+
+`Listing Window'
+     One of a number of browser windows used to display lists of classes.
+     Inheritance relations are shown by class name indentation and by the
+     class level numbers in the listing buffer mode lines.
+
+`Lookup Table'
+     A store used to help the browser quickly determine inter-class
+     relationships.
+
+`Member'
+     See `Feature'.
+
+`Method'
+     A callable function defined within one or more classes.
+
+`Minibuffer Window'
+     The single line window at the bottom of an Emacs frame.  It is used
+     to interact with the user by displaying messages and prompting for
+     input.
+
+`Parents'
+     First level of classes above a class in the inheritance hierarchy.
+     Those from which a class directly inherits.
+
+`Personal Initialization File'
+     The optional file, `~/.br-init.el', which sets user-specific options
+     affecting operation of the OO-Browser, thereby configuring the
+     browser for personal use.
+
+`Point'
+     The point in the current buffer in front of the character which the
+     Emacs cursor is over but after any prior character.
+
+`Protocol'
+     An interface specification to which a class conforms.  Some languages
+     use abstract classes for this purpose.  Under Objective-C, one may
+     also define formal protocols which include a set of method
+     signatures which a class must implement if it conforms to the
+     protocol.  Also under Objective-C, one protocol may inherit from a
+     list of other protocols, and thus expand the set of methods which a
+     conforming class must implement.
+
+`Routine'
+     See `Method'.
+
+`Signature'
+     An interface specification for a method.  It includes the method's
+     class, type of return value and the types of its formal parameters.
+
+`Smart System'
+     The Smart System is another handy program that helps you to work
+     smarter and faster.  It consists of two parts, the Smart Key System,
+     a direct manipulation keyboard interface that gives you control of
+     most GNU Emacs subsystems by using only two keys, and the Smart Menu
+     System.  This provides a hierarchy of menus within Emacs that you
+     use instead of keyboard commands.  Just point and click on a menu
+     entry.  One of its uses is to invoke the OO-Browser on any desired
+     language Environment.  (The Smart Key System is included with the
+     Smart Menu System.)
+
+`Smart Menu System'
+     See `Smart System'.
+
+`System Classes'
+     Classes still in development whose interfaces are likely to change.
+     They are typically part of a specific project and are often not
+     meant to be reused elsewhere.
+
+`Top-Level Classes'
+     Classes without parents.  Those at the top of the inheritance tree
+     for a given Environment.
+
+`Viewer Window'
+     The largest, bottom-most window in the browser used for displaying
+     class source and help information.
+
+
+File: oo-browser.info,  Node: References,  Next: Keys,  Prev: Glossary,  Up: Top
+
+References
+**********
+
+[Meyer 88]
+     Meyer, Bertrand.  Object-oriented Software Construction.  Prentice
+     Hall International: UK, 1988.
+
+[Meyer 89]
+     Meyer, Bertrand.  Eiffel: The Language.  Interactive Software
+     Engineering: Santa Barbara, CA, 1989.  (Also being republished by
+     Prentice Hall.)
+
+[Goldberg 83]
+     Goldberg, Adele and David Robson.  *Smalltalk-80: The Language and
+     its Implementation*.  Addison-Wesley, 1983.
+
+[Stallman 87]
+     Stallman, Richard.  *GNU Emacs Manual*.  Free Software Foundation,
+     Cambridge: MA, March 1987.
+
+[Java 95]
+     *The Java Language Specification*.  Sun Microsystems Computer
+     Corporation, Mountain View, CA, February 1, 1995.
+
+
+File: oo-browser.info,  Node: Keys,  Next: Command Index,  Prev: References,  Up: Top
+
+Key Binding Index
+*****************
+
+* Menu:
+
+* #:                                    Statistics.
+* 1 (one):                              Viewing and Editing.
+* a:                                    Descendants and Ancestors.
+* Action Key:                           Using the Mouse.
+* Assist Key:                           Using the Mouse.
+* c:                                    Children and Parents.
+* C:                                    Browsing Categories.
+* C-c #:                                Inhibit Version.
+* C-c ^:                                Adding and Deleting Classes.
+* C-c C-c:                              Creating Environments.
+* C-c C-d:                              Adding and Deleting Classes.
+* C-c C-e:                              Building Environments.
+* C-c C-f:                              Standalone.
+* C-c C-k:                              Viewing and Editing.
+* C-c C-o <1>:                          Invoking.
+* C-c C-o <1>:                          Standalone.
+* C-c C-o:                              Loading Environments.
+* C-c C-r:                              Quitting and Refreshing.
+* C-c C-s:                              Saving Environments.
+* C-c C-v:                              Viewing and Editing.
+* C-c C-w <1>:                          Saving Listings.
+* C-c C-w:                              Standalone.
+* C-g:                                  Invoking.
+* C-h k:                                Getting Help.
+* C-M-i:                                Standalone.
+* C-n:                                  Moving to Entries.
+* C-p:                                  Moving to Entries.
+* C-u C-c C-o:                          Invoking.
+* C-u q:                                Graphical Browsing.
+* C-x 1:                                Viewing and Editing.
+* C-x k:                                Viewing and Editing.
+* C-x n w:                              Viewing and Editing.
+* C-x w:                                Viewing and Editing.
+* d:                                    Descendants and Ancestors.
+* DEL:                                  Viewing and Editing.
+* e <1>:                                Browsing Protocols.
+* e <1>:                                Browsing Categories.
+* e <1>:                                Browsing Implementors.
+* e <1>:                                Browsing Elements.
+* e:                                    Viewing and Editing.
+* F:                                    Browsing Implementors.
+* f:                                    Browsing Protocols.
+* F:                                    Browsing Elements.
+* f <1>:                                Browsing Categories.
+* f:                                    Browsing Elements.
+* H:                                    Using the Mouse.
+* h:                                    Getting Help.
+* i:                                    Class Info.
+* I:                                    Browsing Implementors.
+* L:                                    Building Environments.
+* l:                                    Top-Level Classes.
+* m:                                    Locating Entries.
+* M:                                    Filtering Entries.
+* M-c:                                  Statistics.
+* M-d:                                  Graphical Browsing.
+* M-e:                                  Statistics.
+* M-f:                                  Graphical Browsing.
+* M-g:                                  Graphical Browsing.
+* M-k:                                  Graphical Browsing.
+* M-TAB:                                Standalone.
+* o:                                    Ordering Entries.
+* p:                                    Children and Parents.
+* P:                                    Browsing Protocols.
+* q:                                    Quitting and Refreshing.
+* r:                                    Browsing Elements.
+* S:                                    Building Environments.
+* s:                                    Top-Level Classes.
+* SPC:                                  Viewing and Editing.
+* t:                                    Top-Level Classes.
+* v <1>:                                Browsing Protocols.
+* v <1>:                                Browsing Categories.
+* v <1>:                                Browsing Implementors.
+* v <1>:                                Viewing and Editing.
+* v:                                    Browsing Elements.
+* V:                                    C++ Element Selection.
+* w:                                    Locating Entries.
+* x:                                    Exiting a Listing.
+
+
+File: oo-browser.info,  Node: Command Index,  Next: Concepts,  Prev: Keys,  Up: Top
+
+Command and Variable Index
+**************************
+
+* Menu:
+
+* br-add-class-file <1>:                Commands.
+* br-add-class-file <1>:                Standalone.
+* br-add-class-file:                    Adding and Deleting Classes.
+* br-ancestors <1>:                     Descendants and Ancestors.
+* br-ancestors:                         Commands.
+* br-at:                                Commands.
+* br-buffer-menu:                       Commands.
+* br-c-tags-flag:                       C Specifics.
+* br-children <1>:                      Children and Parents.
+* br-children:                          Commands.
+* br-class-list-hook:                   Customization.
+* br-class-path:                        Standalone.
+* br-class-stats <1>:                   Commands.
+* br-class-stats:                       Statistics.
+* br-complete-type:                     Standalone.
+* br-copyright:                         Commands.
+* br-count <1>:                         Statistics.
+* br-count:                             Commands.
+* br-delete <1>:                        Adding and Deleting Classes.
+* br-delete:                            Commands.
+* br-descendants <1>:                   Commands.
+* br-descendants:                       Descendants and Ancestors.
+* br-edit-entry <1>:                    Commands.
+* br-edit-entry <1>:                    Browsing Elements.
+* br-edit-entry:                        Viewing and Editing.
+* br-edit-file-function:                Viewing and Editing.
+* br-editor-cmd:                        External Viewing.
+* br-entry-info <1>:                    Class Info.
+* br-entry-info:                        Commands.
+* br-env-create <1>:                    Creating Environments.
+* br-env-create:                        Commands.
+* br-env-default-file:                  Loading Environments.
+* br-env-load <1>:                      Standalone.
+* br-env-load:                          Commands.
+* br-env-rebuild <1>:                   Commands.
+* br-env-rebuild:                       Building Environments.
+* br-env-save <1>:                      Commands.
+* br-env-save:                          Saving Environments.
+* br-env-stats <1>:                     Statistics.
+* br-env-stats:                         Commands.
+* br-exit-level <1>:                    Commands.
+* br-exit-level:                        Exiting a Listing.
+* br-feature-signature <1>:             Commands.
+* br-feature-signature:                 Browsing Elements.
+* br-features <1>:                      Browsing Elements.
+* br-features:                          Commands.
+* br-file-dir-regexp:                   Customization.
+* br-find <1>:                          Standalone.
+* br-find <1>:                          Commands.
+* br-find:                              Standalone.
+* br-find-class:                        Standalone.
+* br-help <1>:                          Commands.
+* br-help:                              Getting Help.
+* br-help-ms <1>:                       Using the Mouse.
+* br-help-ms:                           Commands.
+* br-implementors <1>:                  Browsing Implementors.
+* br-implementors:                      Commands.
+* br-inherited-features-flag:           Commands.
+* br-inhibit-version:                   Inhibit Version.
+* br-invert-ancestors:                  Descendants and Ancestors.
+* br-keep-viewed-classes <1>:           Keep Viewed Classes.
+* br-keep-viewed-classes <1>:           Commands.
+* br-keep-viewed-classes:               Keep Viewed Classes.
+* br-kill <1>:                          Commands.
+* br-kill:                              Viewing and Editing.
+* br-lib-rebuild <1>:                   Building Environments.
+* br-lib-rebuild:                       Commands.
+* br-lib-top-classes <1>:               Top-Level Classes.
+* br-lib-top-classes:                   Commands.
+* br-match <1>:                         Commands.
+* br-match:                             Locating Entries.
+* br-match-entries <1>:                 Filtering Entries.
+* br-match-entries:                     Commands.
+* br-mode-hook:                         Customization.
+* br-narrow-view-to-class:              Viewing and Editing.
+* br-next-entry <1>:                    Moving to Entries.
+* br-next-entry:                        Commands.
+* br-order <1>:                         Ordering Entries.
+* br-order:                             Commands.
+* br-parents <1>:                       Children and Parents.
+* br-parents:                           Commands.
+* br-prev-entry <1>:                    Commands.
+* br-prev-entry:                        Moving to Entries.
+* br-quit <1>:                          Quitting and Refreshing.
+* br-quit <1>:                          Graphical Browsing.
+* br-quit:                              Commands.
+* br-refresh <1>:                       Quitting and Refreshing.
+* br-refresh:                           Commands.
+* br-resize-narrow:                     Commands.
+* br-resize-widen:                      Commands.
+* br-skip-dir-regexps:                  Customization.
+* br-sort-options:                      Sort Options.
+* br-sys-rebuild <1>:                   Building Environments.
+* br-sys-rebuild:                       Commands.
+* br-sys-top-classes <1>:               Commands.
+* br-sys-top-classes:                   Top-Level Classes.
+* br-to-from-viewer <1>:                Commands.
+* br-to-from-viewer:                    Viewing and Editing.
+* br-toggle-c-tags:                     C Specifics.
+* br-toggle-keep-viewed <1>:            Keep Viewed Classes.
+* br-toggle-keep-viewed:                Commands.
+* br-top-classes <1>:                   Commands.
+* br-top-classes:                       Top-Level Classes.
+* br-tree <1>:                          Graphical Browsing.
+* br-tree:                              Commands.
+* br-tree-features-toggle <1>:          Graphical Browsing.
+* br-tree-features-toggle:              Commands.
+* br-tree-graph <1>:                    Graphical Browsing.
+* br-tree-graph:                        Commands.
+* br-tree-kill <1>:                     Graphical Browsing.
+* br-tree-kill:                         Commands.
+* br-unique:                            Commands.
+* br-version <1>:                       Inhibit Version.
+* br-version:                           Commands.
+* br-view-entry <1>:                    Browsing Elements.
+* br-view-entry <1>:                    Commands.
+* br-view-entry:                        Viewing and Editing.
+* br-view-file-function:                Viewing and Editing.
+* br-view-friend <1>:                   C++ Element Selection.
+* br-view-friend:                       Commands.
+* br-view-full-frame <1>:               Commands.
+* br-view-full-frame:                   Viewing and Editing.
+* br-viewer-cmd:                        External Viewing.
+* br-viewer-scroll-down <1>:            Commands.
+* br-viewer-scroll-down:                Viewing and Editing.
+* br-viewer-scroll-up <1>:              Viewing and Editing.
+* br-viewer-scroll-up:                  Commands.
+* br-where <1>:                         Locating Entries.
+* br-where:                             Commands.
+* br-write-buffer <1>:                  Commands.
+* br-write-buffer:                      Saving Listings.
+* c++-browse:                           Invoking.
+* c++-class-keyword:                    C++ Settings.
+* c++-cpp-include-dirs:                 C++ Element Selection.
+* c++-include-dirs:                     C++ Element Selection.
+* c++-src-file-regexp:                  C++ Settings.
+* clos-browse:                          Invoking.
+* clos-def-form-with-args-regexp:       CLOS Settings.
+* clos-element-type-alist:              CLOS Settings.
+* delete-other-windows:                 Viewing and Editing.
+* describe-key:                         Getting Help.
+* eif-browse:                           Invoking.
+* eif-get-parents-from-source:          Eiffel Settings.
+* file, .br-init.el <1>:                Customization.
+* file, .br-init.el:                    Glossary.
+* file, BR-README:                      Top.
+* file, OOBR:                           Loading Environments.
+* info-browse:                          Invoking.
+* Java-class-keyword:                   Java Specifics.
+* keyboard-quit:                        Invoking.
+* kill-buffer:                          Viewing and Editing.
+* objc-browse:                          Invoking.
+* objc-class-keyword:                   Objective-C Settings.
+* objc-cpp-include-dirs:                Objective-C Element Selection.
+* objc-include-dirs:                    Objective-C Element Selection.
+* objc-src-file-regexp:                 Objective-C Settings.
+* oo-browser:                           Invoking.
+* oo-browser command:                   Loading Environments.
+* smt-browse:                           Invoking.
+* widen:                                Viewing and Editing.
+* window-system:                        External Viewing.
+
+
+File: oo-browser.info,  Node: Concepts,  Prev: Command Index,  Up: Top
+
+Concept Index
+*************
+
+* Menu:
+
+* #import:                              Objective-C Element Selection.
+* #include:                             C++ Element Selection.
+* aborting:                             Invoking.
+* abstract method:                      Java Specifics.
+* Action Key:                           Using the Mouse.
+* ancestors:                            Descendants and Ancestors.
+* ancestors, inverted:                  Descendants and Ancestors.
+* anonymous ftp:                        Top.
+* arguments:                            Commands.
+* Assist Key:                           Using the Mouse.
+* attribute:                            Browsing Elements.
+* attributes:                           Class Info.
+* browsing elements:                    Browsing Elements.
+* browsing, ancestors:                  Descendants and Ancestors.
+* browsing, children:                   Children and Parents.
+* browsing, descendants:                Descendants and Ancestors.
+* browsing, parents:                    Children and Parents.
+* C:                                    Introduction.
+* C++ <1>:                              Introduction.
+* C++:                                  C++ Element Selection.
+* C++ feature listings:                 C++ Element Selection.
+* canceling:                            Invoking.
+* category <1>:                         Objective-C Categories.
+* category:                             Browsing Categories.
+* children:                             Children and Parents.
+* class category:                       Browsing Categories.
+* class count:                          Statistics.
+* class definition keywords <1>:        Objective-C Settings.
+* class definition keywords <1>:        Java Specifics.
+* class definition keywords:            C++ Settings.
+* class info:                           Statistics.
+* class protocol:                       Browsing Protocols.
+* class statistics:                     Statistics.
+* class, adding to Environment:         Adding and Deleting Classes.
+* class, deleting from Environment:     Adding and Deleting Classes.
+* class, friend:                        C++ Element Selection.
+* class, narrowing view to:             Viewing and Editing.
+* class, replacing in Environment:      Adding and Deleting Classes.
+* class, source file:                   Locating Entries.
+* class, where is:                      Locating Entries.
+* classes, all:                         Top-Level Classes.
+* classes, editing:                     Viewing and Editing.
+* classes, finding:                     Locating Entries.
+* classes, matching names:              Locating Entries.
+* classes, name completion:             Viewing and Editing.
+* classes, others same file:            Viewing and Editing.
+* classes, top-level:                   Top-Level Classes.
+* classes, viewing:                     Viewing and Editing.
+* CLOS <1>:                             Features.
+* CLOS <1>:                             Introduction.
+* CLOS:                                 Browsing Elements.
+* CLOS methods:                         CLOS Method Handling.
+* CLOS types:                           CLOS Method Handling.
+* CLOS, the class t:                    CLOS Method Handling.
+* command documentation:                Commands.
+* Common Lisp:                          Browsing Elements.
+* completion:                           Viewing and Editing.
+* conformance to protocol:              Browsing Protocols.
+* constructor <1>:                      Java Specifics.
+* constructor:                          C++ Element Selection.
+* copyright:                            Commands.
+* credits:                              Top.
+* current Environment:                  Invoking.
+* default class:                        CLOS Settings.
+* default Environment:                  Loading Environments.
+* deferred function <1>:                C++ Element Selection.
+* deferred function:                    Java Specifics.
+* descendancy view:                     Graphical Browsing.
+* descendants:                          Descendants and Ancestors.
+* destructor <1>:                       Java Specifics.
+* destructor:                           C++ Element Selection.
+* directory scanning:                   Customization.
+* edit element:                         Browsing Elements.
+* editing a class:                      Viewing and Editing.
+* editing, externally:                  External Viewing.
+* Eiffel <1>:                           Eiffel Element Selection.
+* Eiffel:                               Introduction.
+* Eiffel, error parsing:                Eiffel Settings.
+* Eiffel, flat:                         Class Info.
+* Eiffel, info:                         Class Info.
+* Eiffel, short:                        Class Info.
+* element <1>:                          Browsing Elements.
+* element:                              Browsing Implementors.
+* element browsing:                     Browsing Elements.
+* element type:                         CLOS Settings.
+* element, source file:                 Locating Entries.
+* element, where is:                    Locating Entries.
+* Emacs 19:                             Using the Mouse.
+* entries, matching names:              Filtering Entries.
+* entries, ordering:                    Ordering Entries.
+* entry attributes:                     Class Info.
+* entry, next:                          Moving to Entries.
+* entry, previous:                      Moving to Entries.
+* entry, where is:                      Locating Entries.
+* Environment building:                 Building Environments.
+* Environment building, batch:          Building Environments.
+* Environment file:                     Invoking.
+* Environment loading:                  Loading Environments.
+* Environment spec summary:             Statistics.
+* Environment specification:            Creating Environments.
+* Environment statistics:               Statistics.
+* Environment, adding classes:          Adding and Deleting Classes.
+* Environment, adding individual classes: Adding and Deleting Classes.
+* Environment, current:                 Invoking.
+* Environment, default:                 Environments.
+* Environment, deleting classes:        Adding and Deleting Classes.
+* Environment, ordering classes:        Top-Level Classes.
+* Environment, prompting for:           Invoking.
+* Environment, replacing classes:       Adding and Deleting Classes.
+* Environment, the:                     Environments.
+* error parsing:                        Eiffel Settings.
+* exiting a listing level:              Exiting a Listing.
+* feature:                              Browsing Elements.
+* file suffixes <1>:                    C++ Settings.
+* file suffixes:                        Objective-C Settings.
+* filtering entries:                    Filtering Entries.
+* finding a class:                      Standalone.
+* finding an element:                   Standalone.
+* finding classes:                      Locating Entries.
+* formal arguments:                     Commands.
+* formal protocol:                      Browsing Protocols.
+* friend:                               C++ Element Selection.
+* function, friend:                     C++ Element Selection.
+* function, pure virtual:               C++ Element Selection.
+* GNU Emacs:                            Features.
+* graphical browsing:                   Graphical Browsing.
+* implementor:                          Browsing Implementors.
+* implementor, category:                Browsing Categories.
+* implementor, protocol:                Browsing Protocols.
+* include files <1>:                    Objective-C Element Selection.
+* include files:                        C++ Element Selection.
+* Info:                                 Introduction.
+* InfoDock:                             Using the Mouse.
+* InfoDock, obtaining:                  Top.
+* initialization file <1>:              Customization.
+* initialization file <1>:              Adding and Deleting Classes.
+* initialization file:                  Creating Environments.
+* installation:                         Top.
+* instance browsing:                    Browsing Elements.
+* invoking the OO-Browser:              Invoking.
+* Java feature listings:                Java Specifics.
+* language support:                     Invoking.
+* large Environments:                   Building Environments.
+* Library search list:                  Environments.
+* listing buffer:                       Introduction.
+* listing options:                      Sort Options.
+* listing order:                        Sort Options.
+* listing window:                       Introduction.
+* listing, editing:                     Saving Listings.
+* listing, writing to a file:           Saving Listings.
+* loading an Environment:               Loading Environments.
+* locating classes:                     Locating Entries.
+* locating Entries:                     Filtering Entries.
+* matching to class names:              Locating Entries.
+* matching to listing entries:          Filtering Entries.
+* Menu Key:                             Using the Mouse.
+* method, abstract:                     Java Specifics.
+* method, native:                       Java Specifics.
+* methods, specialized parameters:      CLOS Method Handling.
+* mouse control:                        Using the Mouse.
+* movement:                             Moving to Entries.
+* movement, to or from viewer:          Viewing and Editing.
+* multiple inheritance:                 Features.
+* native method:                        Java Specifics.
+* next entry:                           Moving to Entries.
+* NEXTSTEP OO-Browser:                  Graphical Browsing.
+* number of classes:                    Statistics.
+* Objective-C <1>:                      Introduction.
+* Objective-C:                          Objective-C Element Selection.
+* Objective-C category:                 Objective-C Categories.
+* Objective-C protocol:                 Objective-C Protocols.
+* OO-Browser:                           Introduction.
+* OO-Browser commands:                  Commands.
+* OO-Browser, obtaining:                Top.
+* oo-browser, restarting:               Invoking.
+* operator delete:                      C++ Element Selection.
+* operator new:                         C++ Element Selection.
+* ordering listings:                    Ordering Entries.
+* parents <1>:                          Children and Parents.
+* parents:                              Class Info.
+* personal initialization:              Customization.
+* prefix argument:                      Invoking.
+* previous entry:                       Moving to Entries.
+* programming:                          Commands.
+* protocol <1>:                         Browsing Protocols.
+* protocol:                             Objective-C Protocols.
+* pure virtual function:                C++ Element Selection.
+* quitting, permanently:                Quitting and Refreshing.
+* quitting, temporarily:                Quitting and Refreshing.
+* README file:                          Top.
+* refreshing the browser display:       Quitting and Refreshing.
+* routine:                              Browsing Elements.
+* routine calls:                        Class Info.
+* scanning, skip directories:           Customization.
+* scrolling viewer:                     Viewing and Editing.
+* searching for a class:                Standalone.
+* searching for an element:             Standalone.
+* signature <1>:                        Browsing Elements.
+* signature:                            Browsing Implementors.
+* Smalltalk:                            Introduction.
+* sorting listings:                     Ordering Entries.
+* sorting options:                      Sort Options.
+* source code:                          Features.
+* specialized parameters:               CLOS Method Handling.
+* starting the OO-Browser:              Invoking.
+* support:                              Inhibit Version.
+* System search list:                   Environments.
+* textual interface:                    Introduction.
+* UNIX:                                 Features.
+* user interface:                       Introduction.
+* version, browser:                     Inhibit Version.
+* vi:                                   External Viewing.
+* view element:                         Browsing Elements.
+* viewer window:                        Introduction.
+* viewer, full frame:                   Viewing and Editing.
+* viewer, killing displayed buffer:     Viewing and Editing.
+* viewer, scrolling:                    Viewing and Editing.
+* viewing a class:                      Viewing and Editing.
+* viewing, externally:                  External Viewing.
+* X OO-Browser picture:                 Graphical Browsing.
+* XEmacs:                               Using the Mouse.
+* xmore:                                External Viewing.
+* xoobr:                                Graphical Browsing.
+* xoobr picture:                        Graphical Browsing.
+* xoobr, descendants:                   Graphical Browsing.
+* xoobr, displaying features:           Graphical Browsing.
+* xoobr, graphical view:                Graphical Browsing.
+* xoobr, help:                          Graphical Browsing.
+* xoobr, killing:                       Graphical Browsing.
+* xoobr, node menu:                     Graphical Browsing.
+* xoobr, quitting:                      Graphical Browsing.
+* xoobr, terminating:                   Graphical Browsing.
+* xoobr, view:                          Graphical Browsing.
+
+

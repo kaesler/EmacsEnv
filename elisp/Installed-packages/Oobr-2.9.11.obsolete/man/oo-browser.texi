@@ -1,0 +1,2983 @@
+\input psfig
+\input texinfo  @c -*-texinfo-*-
+
+@c
+@c SUMMARY:      The OO-Browser User Manual for V2
+@c USAGE:        Hardcopy man from TeX; Info man from 'texinfo-format-buffer'.
+@c
+@c AUTHOR:       Bob Weiner
+@c ORG:          Motorola Inc., PPG
+@c ORIG-DATE:    10-Apr-90
+@c LAST-MOD:      6-Oct-95 at 22:36:02 by Bob Weiner
+@c
+@c DESCRIPTION:  
+@c DESCRIP-END.
+
+@c %**start of header (This is for running Texinfo on a region.)
+@setfilename oo-browser.info
+@settitle The OO-Browser User Manual
+@c %**end of header (This is for running Texinfo on a region.)
+@synindex vr fn
+
+@iftex
+@finalout
+@end iftex
+
+@titlepage
+@sp 4
+@center @titlefont{The OO-Browser User Manual}
+@sp 1
+@center The Multi-language Object-Oriented Code Browser
+@sp 5
+@center Bob Weiner
+@center Motorola Inc.
+@center E-mail: <oo-browser@@hub.ucsb.edu>  (This is a mailing list.)
+@sp 2
+@center Edition 2.9.10
+@sp 2
+@center September 1995
+
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1989-1995  Free Software Foundation, Inc.
+
+All trademarks referenced herein are trademarks of their respective
+holders.
+@setchapternewpage on
+@end titlepage
+@page
+
+@node Top, Introduction, (dir), (dir)
+@c  node-name,  next,  previous,  up
+@unnumbered Preface
+
+@ifinfo
+@noindent
+Copyright @copyright{} 1989-1995  Free Software Foundation, Inc.
+
+All trademarks referenced herein are trademarks of their respective holders.
+
+@end ifinfo
+This edition of the OO-Browser User Manual is for use with any version
+2.9.10 or greater of the OO-Browser.  The OO-Browser is available for
+free use, distribution, and modification under the terms of version 2 or
+later of the GNU Public License (GPL).  No representations are made
+about the suitability of this software for any purpose.  It is provided
+"as is" without express or implied warranty.
+
+@cindex credits
+@cindex InfoDock, obtaining
+@cindex OO-Browser, obtaining
+@cindex anonymous ftp
+The OO-Browser was designed and written by Bob Weiner.  Motorola,
+Inc. funded and donated this work for free redistribution as part of the
+InfoDock integrated productivity toolset.  Torgeir Veimo and Mark Stern
+helped write the X OO-Browser core.  Don Yacktman helped write the
+NEXTSTEP OO-Browser core.  Jeff Sparkes helped with the Java language
+support.
+
+@vindex file, BR-README
+@cindex README file
+@cindex installation
+The OO-Browser and InfoDock can be obtained via anonymous ftp on the
+Internet from: @file{/anonymous@@cs.uiuc.edu:/pub/xemacs/infodock}.
+Installation instructions for the OO-Browser can be found in the
+@file{BR-README} file in the OO-Browser distribution.
+
+This manual documents the user interface and operation of the OO-Browser
+multi-language browser.  It assumes a very basic familiarity in the use
+of the GNU Emacs editor as documented in @cite{[Stallman 87]}.  It also
+assumes familiarity with object-oriented software concepts.  However,
+many technical terms used in this manual are given precise meaning in
+the glossary.  @xref{Glossary}.  The OO-Browser is meant to be easy to
+use, so you can point and click to use it, rather than learning all of
+the key stroke commands.@refill
+
+Chapter 1 of the manual focuses on OO-Browser Environments to provide
+the reader with a picture of how to organize work for use with the
+OO-Browser (@pxref{Environments,,Working with Environments}).
+@xref{Usage,,Using the OO-Browser}, if you would rather start with the
+interactive features of the browser.  @xref{Features,,OO-Browser
+Features}, for a quick overview of the browser's features.@refill
+
+Throughout this manual, sequences of key strokes are delimited by braces,
+@{@}, command names are delimited by parentheses, (), and variable names
+are emphasized.@refill
+
+We hope that you enjoy using the OO-Browser and that it improves your
+productivity.
+
+@menu
+* Introduction::                Introduction
+* Environments::                Working with Environments
+* Usage::                       Using the OO-Browser
+* Options::                     OO-Browser Options
+* Customization::               Personal Customization
+* Standalone::                  Using Standalone OO-Browser Features
+* Languages::                   Language-Specific Notes
+* Features::                    OO-Browser Features
+* Commands::                    OO-Browser Command Descriptions
+* Glossary::                    Glossary
+* References::                  References
+* Keys::                        Key Binding Index
+* Command Index::               Command and Variable Index
+* Concepts::                    Concept Index
+
+ --- The Detailed Node Listing ---
+
+Working with Environments
+
+* Creating Environments::
+* Building Environments::
+* Loading Environments::
+* Saving Environments::
+
+Using the OO-Browser
+
+* Invoking::                    Invoking the OO-Browser
+* Top-Level Classes::           Displaying Top-Level Classes
+* Moving to Entries::
+* Saving Listings::             Writing a Listing to a File
+* Children and Parents::        Browsing Children and Parents
+* Descendants and Ancestors::   Browsing Descendants and Ancestors
+* Viewing and Editing::         Viewing and Editing Classes
+* Browsing Elements::
+* Browsing Categories::
+* Browsing Protocols::
+* Browsing Implementors::
+* Exiting a Listing::
+* Quitting and Refreshing::     Quitting and Refreshing the OO-Browser
+* Using the Mouse::
+* Getting Help::
+* Locating Entries::
+* Filtering Entries::
+* Ordering Entries::
+* Statistics::                  Environment and Class Summaries
+* Class Info::                  Language-Specific Class Information
+* Adding and Deleting Classes::
+* Completing Names::
+* Graphical Browsing::          Graphical OO-Browser Interfaces
+
+OO-Browser Options
+
+* External Viewing::            Using An External Viewer or Editor
+* Keep Viewed Classes::         
+* Inhibit Version::             Inhibit Version Screen
+* Invert Ancestors::            Invert Ancestor Trees
+* Save All::                    Save All Lookup Tables
+* Use Children::                Build Children Lookup Table
+* Sort Options::                Controlling Class Listing Order
+
+Language-Specific Notes
+
+* C Specifics::               
+* C++ Specifics::               
+* CLOS Specifics::              
+* Eiffel Specifics::            
+* Java Specifics::               
+* Objective-C Specifics::              
+
+C++ Specifics
+
+* C++ Element Selection::       Source Code Element Selection
+* C++ Settings::
+
+CLOS Specifics
+
+* CLOS Method Handling::        Method Handling
+* CLOS Settings::
+
+Eiffel Specifics
+
+* Eiffel Listings::
+* Eiffel Element Selection::    Source Code Element Selection
+* Eiffel Settings::
+
+Objective-C Specifics
+
+* Objective-C Categories::
+* Objective-C Protocols::
+* Objective-C Element Selection::  Source Code Element Selection
+* Objective-C Settings::
+@end menu
+
+@node Introduction, Environments, Top, Top
+@c  node-name,  next,  previous,  up
+@unnumbered Introduction
+
+@cindex OO-Browser
+@cindex Smalltalk
+The @dfn{OO-Browser} is a multi-windowed, interactive, object-oriented
+class browser designed for professional use.  Its user interface is
+similar to the well-known Smalltalk browsers @cite{[Goldberg 83]}, yet
+it is much more flexible and easy to use.
+
+@cindex Eiffel
+@cindex C++
+@cindex C
+@cindex Objective-C
+@cindex CLOS
+@cindex Smalltalk
+@cindex Info
+@noindent
+The OO-Browser is unique in several respects:
+@itemize @bullet
+@item
+It currently supports six object-oriented languages (Eiffel, C++,
+Objective-C, CLOS (Lisp), Java and Smalltalk), one non-object-oriented
+language (C), and one documentation language, (GNU Info).
+
+@item
+It may be used for both system exploration and for browsing purposes as
+part of a professional software development tool chest.
+
+@item
+It quickly displays and provides views of complicated inheritance trees,
+making it an important tool for understanding object-oriented systems.
+
+@item
+It has a completely direct-manipulation interface with multiple modalities.
+
+@item
+It is integrated with a powerful editing environment that can be
+customized to meet personal work styles.
+@end itemize
+
+@cindex listing buffer
+@cindex listing window
+@cindex viewer window
+@cindex user interface
+The picture on the following page highlights the major components of
+the OO-Browser user interface.  (If you are reading the online Info
+version of this manual, see the last paragraph of this node for a link
+to the aforementioned picture.)
+
+The windows across the top of the OO-Browser frame are called @dfn{class
+listing windows}; they display @dfn{listing buffers} with a single class
+name per line.  The @dfn{viewer window} fills the bottom half of the
+frame.  It is used to display class source and summary information.  It
+is also used to display help on the OO-Browser command set.  Pictured
+here in the viewer window is part of the browser help buffer,
+summarizing its command key bindings.
+
+All key bindings described throughout this manual are effective only
+within listing buffers, unless otherwise indicated.  This means
+that the keys may not be used within the buffers displayed in the class
+viewer window.  Instead, all normal editing keys are available in most
+buffers displayed in the viewer window.
+
+@cindex textual interface
+@iftex
+@sp 2
+@centerline{@psfig{figure=im/oobr-text.eps}}
+@end iftex
+@ifinfo
+Mouse click on the following filename to view a picture of
+the textual OO-Browser: "im/oobr-text.eps".  Under InfoDock, use the
+middle mouse button.  Under Emacs with the Hyperbole system loaded, use
+the shift-middle mouse button or shift-left on a two button mouse.
+Otherwise, there is no built-in way to view the picture.
+@end ifinfo
+
+@node Environments, Usage, Introduction, Top
+@c  node-name,  next,  previous,  up
+@chapter Working with Environments
+
+@cindex Environment, the
+@cindex Library search list
+@cindex System search list
+Whenever the OO-Browser is in use, an Environment is selected.  An
+Environment may be built or simply specified.  An @dfn{Environment
+specification} tells the browser what to include in the construction of
+an Environment.  (@xref{Creating Environments}, for more information.)
+An OO-Browser @dfn{Environment} includes a set of inter-class
+relationships together with a few browser settings.  The phrase,
+@dfn{the Environment}, refers to the current OO-Browser Environment.
+Many browser commands depend on information in the Environment.@refill
+
+The set of classes included in an Environment is specified by two lists
+of directories, below which all of the Environment's class source files
+are to be found.  (The OO-Browser will automatically search
+sub-directories below the directories specified.)  The first list of
+directories is called the @dfn{Library search list}; it defines the
+locations of stable, typically reusable classes that have been released
+for general use.  The second list is called the @dfn{System search
+list}; it defines the locations of unreleased classes being developed,
+often for a particular system.  All class names within a single
+Environment must be unique to ensure proper operation of the browser.
+
+The OO-Browser lets one create, update and save Environments.  Once an
+Environment file has been created, it may be loaded at any time.  The
+browser will then use this Environment for all of its operations until
+another one is loaded.
+
+The browser maintains a separate Environment for each programming
+language on which it is used.  Thus, if one switches from Eiffel to
+C++ browsing and then back to Eiffel browsing, the Eiffel environment
+will not need to be reloaded; it will appear immediately and the
+frame will appear as if the Eiffel OO-Browser were invoked for the
+first time.
+
+@cindex Environment, default
+The recommended default name for Environment files is, @file{OOBR}.
+We recommend that you store each Environment in the top-level directory
+of the first system pathname in the Environment, i.e@. the root
+directory of a system's code.
+
+Environment files are automatically created and loaded by the OO-Browser
+so that you need never become familiar with their format.  You are
+responsible for remembering which Environment files you create and for
+requesting their use whenever desired.  @xref{Invoking,,Invoking the
+OO-Browser}, for information on how to specify a different Environment
+file for use.@refill
+
+@menu
+* Creating Environments::
+* Building Environments::
+* Loading Environments::
+* Saving Environments::
+@end menu
+
+
+@node Creating Environments, Building Environments, Environments, Environments
+@c  node-name,  next,  previous,  up
+@section Creating Environments
+
+@cindex Environment specification
+Environment specifications are useful when one wants to describe a
+number of Environments to the OO-Browser but wants to defer their
+construction until later.  Large environments then can be built
+overnight.  @xref{Building Environments}, for more information.@refill
+
+@kindex C-c C-c
+@findex br-env-create
+@cindex initialization file
+Every Environment must be specified before it can be built or used.
+Thus, specifying an Environment is the first step in creating it.
+Environment specifications are created with the @{@kbd{C-c C-c}@}
+@code{(br-env-create)} command, which prompts for all necessary
+information.  This command may be invoked repeatedly to quickly specify
+a number of different Environments.@refill
+
+@noindent
+Here are the Environment specification components for which you will be
+prompted:
+@table @code
+@item System search directories
+List of directories below which other System directories containing
+class source code and directories of class source files may be found.
+
+@item Library search directories
+List of directories below which Library files of class source code
+and directories of class source files may be found.
+
+@emph{EIFFEL NOTE: We strongly suggest that if you have previous
+versions of library class source below any of these directories, that
+you move them elsewhere, e.g. ISE's Eiffel version "2.1" directory of
+source.  These will cause class naming conflicts that the browser will
+not resolve to your satisfaction.  The basic rule is that every class
+name within a single Environment should be unique.  Use @{@kbd{M-e}@} to
+help find duplicate classes.}
+@end table
+
+
+@node Building Environments, Loading Environments, Creating Environments, Environments
+@c  node-name,  next,  previous,  up
+@section Building Environments
+
+@cindex Environment building
+An Environment specification tells the OO-Browser what to include in the
+Environment, but the Environment still must be built before use.  When a
+new Environment must be built or when a large number of changes have
+been made to classes in the Environment, the following commands are
+useful:
+
+@findex br-env-rebuild
+@findex br-lib-rebuild
+@findex br-sys-rebuild
+@kindex C-c C-e
+@kindex L
+@kindex S
+@table @kbd
+@item @{C-c C-e@}
+build all Env classes @code{(br-env-rebuild)}  (This prompts for whether
+or not to use a background process to build the Environment.)
+@item @{L@}
+build Env Library classes only @code{(br-lib-rebuild)}
+@item @{S@}
+build Env System classes only @code{(br-sys-rebuild)}
+@end table
+
+
+When class names or locations have changed or the Environment's
+inheritance structure is modified, the Environment must be rebuilt.  For
+small Environment changes, one may use the class addition and deletion
+features of the browser.  @xref{Adding and Deleting Classes}, for more
+information.@refill
+
+@cindex Environment building, batch
+@cindex large Environments
+The OO-Browser lets you build large environments in the background so
+you can go on to other work while waiting on a build.  When the build is
+complete, it will ask you whether you want to browse the built Environment.
+
+Alternatively, very large Environments may be built overnight by
+invoking Emacs in batch mode at a scheduled time.  To do this, you must
+first create an Environment specification so that the browser knows what
+to build.  @xref{Creating Environments}.  Then use a shell command
+line of the form below (substitute your local OO-Browser installation
+directory for @emph{<BR-DIR>}):@*
+@example
+emacs -batch -l <BR-DIR>/br-start.el @emph{Env-Spec-File} \
+      ... @emph{Spec File} -f br-env-batch-build > log-file
+@end example
+@noindent
+for example:@*
+@example
+emacs -batch -l br-start.el OOBR -f br-env-batch-build > log-file
+@end example
+
+Typically when using the above command line, one should redirect
+the standard output stream to a log file for later examination, as is
+done in the above example.  This helps ensure that either the
+Environment built successfully or a message indicating the cause of
+failure is provided.
+
+@node Loading Environments, Saving Environments, Building Environments, Environments
+@c  node-name,  next,  previous,  up
+@section Loading Environments
+
+@cindex Environment loading
+@cindex loading an Environment
+@kindex C-c C-o
+@findex oo-browser command
+@vindex br-env-default-file
+@vindex file, OOBR
+@cindex default Environment
+A new Environment may be loaded for use at any time within the
+OO-Browser.  One may either select the load Environment command from the
+OO-Browser command summary or may use the @{@kbd{C-c C-o}@}
+@code{(oo-browser)} command to select a language and environment to load.
+When prompted for the Environment file to load or create, an immediate
+@{@key{RET}@} will browse the most recently loaded Environment, if any.
+Otherwise, it will create and load the Environment file in the current
+directory whose name is given by the @var{br-env-default-file} variable
+(default is @file{OOBR}).
+
+@node Saving Environments,  , Loading Environments, Environments
+@c  node-name,  next,  previous,  up
+@section Saving Environments
+
+The OO-Browser automatically builds and saves Environments in most
+cases.  Occasionally one may find a need to force the Environment to
+be saved to a file, as in the case when one wants to save an Environment
+under a different file name.
+
+@kindex C-c C-s
+@findex br-env-save
+Use @{@kbd{C-c C-s}@}, the @code{(br-env-save)} command to force an
+Environment save to occur.  The command will prompt for a file to save
+to, with the default as the current Environment file name.
+
+
+@node Usage, Options, Environments, Top
+@c  node-name,  next,  previous,  up
+@chapter Using the OO-Browser
+
+@menu
+* Invoking::                    Invoking the OO-Browser
+* Top-Level Classes::           Displaying Top-Level Classes
+* Moving to Entries::
+* Saving Listings::             Writing a Listing to a File
+* Children and Parents::        Browsing Children and Parents
+* Descendants and Ancestors::   Browsing Descendants and Ancestors
+* Viewing and Editing::         Viewing and Editing Classes
+* Browsing Elements::
+* Browsing Categories::
+* Browsing Protocols::
+* Browsing Implementors::
+* Exiting a Listing::
+* Quitting and Refreshing::     Quitting and Refreshing the OO-Browser
+* Using the Mouse::
+* Getting Help::
+* Locating Entries::
+* Filtering Entries::
+* Ordering Entries::
+* Statistics::                  Environment and Class Summaries
+* Class Info::                  Language-Specific Class Information
+* Adding and Deleting Classes::
+* Completing Names::
+* Graphical Browsing::          Graphical OO-Browser Interfaces
+@end menu
+
+@node Invoking, Top-Level Classes, Usage, Usage
+@section Invoking the OO-Browser
+
+@cindex invoking the OO-Browser
+@cindex starting the OO-Browser
+@kindex C-c C-o
+@findex oo-browser
+@cindex language support
+The OO-Browser supports the following languages: C++ or G++, C, Info
+(the online manual format), CLOS (Lisp), Eiffel, Objective-C, Java (as
+documented in @cite{[Java 95]}) and Smalltalk.  The OO-Browser may be
+used on source written in any of these languages by using @{@kbd{C-c
+C-o}@} or, if that key has not been setup, by using @{@kbd{M-x
+oo-browser @key{RET}}@}.  This command will prompt for the language to
+browse, the Environment specification of directories to browse, and then
+will either load the Environment or build it.  After the Environment is
+built, it will display the set of classes (or nodes) in the Environment.
+(Choose C++ if you are browsing plain C code.)
+
+@kindex C-u C-c C-o
+@cindex current Environment
+@cindex Environment, current
+@cindex oo-browser, restarting
+If you have exited the browser using @{@kbd{q}@} and wish to browse the
+same Environment again, use @{@kbd{C-u C-c C-o}@}, which will
+immediately redisplay the browser just as you left it.
+
+@findex c++-browse
+@findex eif-browse
+@findex info-browse
+@findex clos-browse
+@findex objc-browse
+@findex smt-browse
+Alternatively, you can invoke the browser on a specific language
+Environment, e.g@. to bring back the last Environment browsed under that
+language.  The language-specific browser invocation commands are:
+@{@kbd{M-x eif-browse @key{RET}}@}, @{@kbd{M-x c++-browse @key{RET}}@},
+@{@kbd{M-x info-browse @key{RET}}@}, @{@kbd{M-x clos-browse
+@key{RET}}@}, @{@kbd{M-x objc-browse @key{RET}}@}.@refill
+
+@cindex Environment file
+@cindex prefix argument
+@cindex Environment, prompting for
+@noindent
+A prefix argument given to any of these commands will cause it to prompt
+for an Environment file to use as the current Environment.
+
+On startup, if the selected Environment has been saved to a file, it
+will be loaded; otherwise, the user will be asked to specify the
+Environment.  The specification will be saved under the previously given
+file name.  The browser will then load this Environment specification
+file.
+
+@cindex aborting
+@cindex canceling
+@kindex C-g
+@findex keyboard-quit
+If the browser loads an Environment file and finds only a specification,
+it will prompt the user in the minibuffer window with a request to build
+the Environment.  It will continue to prompt the user until a full
+Environment is built or loaded and then the browser will start,
+displaying its multi-windowed interface.  To abort from these prompts
+and to cancel the browser invocation request at any time, use
+@{@kbd{C-g}@} @code{(keyboard-quit)}, the standard way to abort an
+unfinished command within Emacs.
+
+Once an Environment has been loaded, entering and quitting the browser
+are rapid actions, allowing a smooth transition between editing and
+browsing.
+
+
+@node Top-Level Classes, Moving to Entries, Invoking, Usage
+@section Displaying Top-Level Classes
+
+@cindex classes, top-level
+The OO-Browser starts by displaying all top-level classes in the
+Environment.  @dfn{Top-level classes} are those that do not inherit from
+any others.  The browser can show all top-level classes or System or
+Library classes only.  Once in the browser, use:
+
+@kindex s
+@findex br-sys-top-classes
+@kindex l
+@findex br-lib-top-classes
+@kindex t
+@findex br-top-classes
+@table @kbd
+@item @{s@}
+System top-level classes only
+@item @{l@}
+Library top-level classes only
+@item @{t@}
+all top-level classes in Environment
+@end table
+
+Note that selection of any of these commands does not affect the ancestry or
+descendancy trees for any given class.  Each simply limits which trees are
+easily accessible for browsing.  For example, selection of Library
+top-level classes only, followed by the browser show children command,
+@{@kbd{c}@} @code{(br-children)}, would display the name of a System
+class if the System class directly inherits from the selected Library
+class.
+
+@cindex classes, all
+@cindex Environment, ordering classes
+To see an ordered listing of all of the classes in a particular part of
+an Environment, use a prefix argument with the commands given above:
+
+@table @kbd
+@item @{C-u s@}
+all System classes
+@item @{C-u l@}
+all Library classes
+@item @{C-u t@}
+all Environment classes.
+@end table
+
+@node Moving to Entries, Saving Listings, Top-Level Classes, Usage
+@section Moving to Entries
+
+@kindex C-n
+@findex br-next-entry
+@kindex C-p
+@findex br-prev-entry
+@cindex previous entry
+@cindex entry, previous
+@cindex next entry
+@cindex entry, next
+@cindex movement
+Many browser commands operate on the current entry in a listing window.
+@{@kbd{C-n}@} @code{(br-next-entry)} moves point to
+the next entry in a listing buffer.  @{@kbd{C-p}@}
+@code{(br-prev-entry)} moves to the previous entry.  Both take prefix
+arguments and use them as the number of entries by which to move.
+
+@node Saving Listings, Children and Parents, Moving to Entries, Usage
+@section Writing a Listing to a File
+
+@kindex C-c C-w
+@findex br-write-buffer
+@cindex listing, editing
+@cindex listing, writing to a file
+Many standard editing keys are rebound in listing buffers to
+provide a useful set of accessible commands.  Nonetheless, one needs to
+be able to store and to edit listing buffers.  The @{@kbd{C-c
+C-w}@} @code{(br-write-buffer)} command provides this capability.  The
+command prompts for a file name under which to save the current buffer.
+One may then quit the browser, read in the file and edit it as a plain
+text file.
+
+@node Children and Parents, Descendants and Ancestors, Saving Listings, Usage
+@section Browsing Children and Parents
+
+@kindex c
+@findex br-children
+@kindex p
+@findex br-parents
+@cindex browsing, children
+@cindex children
+@cindex browsing, parents
+@cindex parents
+@{@kbd{c}@} displays the children of the class at point; @{@kbd{p}@}
+displays its parents.  @{@kbd{C-u c}@} displays the children of all classes
+in the present listing window; @{@kbd{C-u p}@} does the same for parents.
+
+@node Descendants and Ancestors, Viewing and Editing, Children and Parents, Usage
+@section Browsing Descendants and Ancestors
+
+@cindex browsing, ancestors
+@cindex ancestors
+@cindex browsing, descendants
+@cindex descendants
+The OO-Browser is very fast at computing ancestor and descendant hierarchies,
+accounting for multiple inheritance and cycles where permitted.  Descendant
+and ancestor listings provide an immediate overview of some key relationships
+among class groupings.
+
+@kindex d
+@findex br-descendants
+@kindex a
+@findex br-ancestors
+With point on any class entry line in a listing buffer, @{@kbd{d}@}
+shows descendants for the class and @{@kbd{a}@} shows ancestors.
+@{@kbd{C-u d}@} shows the descendant trees for all classes in the
+current listing buffer and @{@kbd{C-u a}@} does the same for ancestors.
+
+@cindex ancestors, inverted
+@vindex br-invert-ancestors
+The ancestor tree for a given root class is normally shown branching out
+from the root class.  This means that higher-level ancestors, those
+further away from the root class, are shown in descending trees below
+lower-level ancestors.  The leaves of the tree represent the ancestors
+furthest from the root, as one might expect.
+
+This, however, is the inverse of inheritance trees.  Some people prefer
+to see ancestor trees like inheritance trees, with parents above
+children.  This is an @dfn{inverted ancestor tree}.  To obtain this
+view of ancestors use @{@kbd{M- -1 a}@} for ancestors of the current
+class.  For ancestors of all classes in the current buffer, use
+@{@kbd{M- -2 a}@}, or any negative prefix argument lest than -1.
+Inverted ancestor trees may be made the default by setting
+@code{br-invert-ancestors} non-nil, as in:
+
+@display
+	@{@kbd{M-x set-variable @key{RET} br-invert-ancestors @key{RET} t @key{RET}}@}
+@end display
+
+@noindent
+This is a personal setting that affects all Environments used by the browser.
+
+@node Viewing and Editing, Browsing Elements, Descendants and Ancestors, Usage
+@section Viewing and Editing Classes
+
+@kindex v
+@findex br-view-entry
+@cindex classes, viewing
+@cindex viewing a class
+@kindex e
+@findex br-edit-entry
+@cindex classes, editing
+@cindex editing a class
+One of the major uses of the OO-Browser is to view or edit class source
+texts.  @{@kbd{v}@} will view the source for the class or element name
+at point in a read-only mode in the viewer window; it will not select
+the viewer window.  @{@kbd{e}@} does the same, except that it edits the
+element source in a read-write mode, if the user has write permission for
+the source file.  It also selects the viewer window.
+
+@cindex classes, name completion
+@cindex completion
+A prefix argument to either of these commands, as in @{@kbd{C-u v}@} or
+@{@kbd{C-u e}@}, causes them to prompt for the entry to display.
+Full class and element name completion is provided once an Environment
+has been loaded and built.  @xref{Completing Names}.@refill
+
+@vindex br-edit-file-function
+@vindex br-view-file-function
+The value of the variable @var{br-edit-file-function} is the function
+that the browser calls when a source file entity is displayed for editing.
+The value of @var{br-view-file-function} is the function called to view
+a source file entity.  @xref{External Viewing,,Using an External
+Viewer or Editor}, for information on using non-Emacs editors and
+viewers with the browser.
+
+If a user has no read access rights to a file, this will be apparent
+when the browser tries to display the file and fails.  If the user does
+not have write permission to the class source file, the standard
+@var{br-edit-file-function} may display the file in a read-only mode
+(indicated by two percent signs, %%, at the front of the buffer mode
+line).  This is a warning that one should not attempt to edit the file.
+In some cases, one really wants to try to edit such a file; in those
+cases, the buffer may be toggled between read-only and read-write modes
+via the Emacs command, @code{(toggle-read-only)}, usually bound to
+@{@kbd{C-x C-q}@}.
+
+@kindex SPC
+@findex br-viewer-scroll-up
+@kindex DEL
+@findex br-viewer-scroll-down
+@cindex scrolling viewer
+@cindex viewer, scrolling
+Once a class has been displayed for viewing, @{@key{SPC}@} will scroll its
+source text up (forward) almost a windowful; @{@key{DEL}@} will scroll it
+down (backward) almost a windowful.  In fact, this is a general means
+for scrolling the OO-Browser viewer window whenever point, as shown by
+the Emacs cursor, is in a listing window.  When a class is
+selected for editing, @{@kbd{C-v}@} will scroll up, @{@kbd{M-v}@} will
+scroll down, assuming the standard Emacs key bindings. 
+
+@kindex C-c C-v
+@findex br-to-from-viewer
+@cindex movement, to or from viewer
+Sometimes one needs to quickly switch back and forth between the viewer
+window and the current listing window.  The normal Emacs window
+movement commands often are cumbersome in such instances.  Instead
+@code{(br-to-from-viewer)} bound to @{@kbd{C-c C-v}@}, allows the
+desired back and forth movement.  It acts as a toggle switch,
+alternately moving between the buffer in the viewer window and the prior
+listing buffer.
+
+@cindex class, narrowing view to
+@vindex br-narrow-view-to-class
+@cindex classes, others same file
+@kindex C-x n w
+@kindex C-x w
+@findex widen
+By default, the OO-Browser displays class definition files in their
+entirety.  If there are multiple classes in a file, you will be able to
+scroll through all of them.  If you prefer that only the selected class
+be visible, enable the @code{br-narrow-view-to-class} option flag.  When
+set to a non-nil value, this flag narrows the source buffer so that only
+the class of interest and its preceding comments are visible.  To
+examine other classes in the same file, you must execute a @{@kbd{C-x n
+w}@} @code{(widen)} command when in the narrowed buffer.  (Use
+@{@kbd{C-x w}@} under Emacs 18.)
+
+@kindex 1 (one)
+@findex br-view-full-frame
+@kindex C-x 1
+@findex delete-other-windows
+@cindex viewer, full frame
+If the browser is used on a small screen, it may be helpful to use the
+a full frame to view or edit a buffer of source code.  If point is in a
+listing buffer, pressing @{@kbd{1}@}, the number one, will expand the
+viewer window buffer to the full frame.  When the browser is
+re-invoked, it will look just as it did before.  If point is in the
+viewer window, @{@kbd{C-x 1}@} @code{(delete-other-windows)}, will do
+practically the same thing, except that when the browser is re-invoked
+it will not look precisely as it did before.
+
+@kindex C-c C-k
+@findex br-kill
+@kindex C-x k
+@findex kill-buffer
+@cindex viewer, killing displayed buffer
+If point is in a listing window, the buffer displayed in the
+viewer window may be killed with the @{@kbd{C-c C-k}@} @code{(br-kill)}
+command.  (A killed buffer is removed from the current Emacs session.)
+
+If point is in the viewer window, as it will be after editing a class
+buffer, use the standard Emacs command @{@kbd{C-x k}@}
+@code{(kill-buffer)} instead.
+
+@node Browsing Elements, Browsing Categories, Viewing and Editing, Usage
+@section Browsing Elements
+@cindex element
+@cindex browsing elements
+@cindex element browsing
+@cindex instance browsing
+@cindex feature
+@cindex routine
+@cindex attribute
+@cindex Common Lisp
+@cindex CLOS
+A @dfn{feature} of a class is either a routine or attribute defined in
+the class.  An @dfn{element} is either a feature or an instance of a
+class.  A number of OO-Browser languages support feature browsing, as
+documented in @ref{Languages}.  Instance browsing is only supported
+in very limited form, for class instances which exist within the code
+itself.  For example, under Common Lisp and CLOS, a default class called
+@code{[function]} is defined whose instances are all named functions
+defined within the environment.  A @dfn{default class} is a class
+created to categorize elements of the Environment for browsing; default
+classes are not specified within the Environment source code.
+
+@kindex f
+@kindex r
+@findex br-features
+Use @{@kbd{f}@} to display a listing of the features or elements
+of the class at point, including inherited features.
+Generally, this includes only routines.  Use @{@kbd{M-0 f}@} to turn off
+the display of inherited features; use the same command again to
+re-enable display of inherited features.
+
+If inherited features are off and there are no feature definitions for
+the class, the class definition is displayed instead, so that its
+feature declarations may be browsed.
+
+Use @{@kbd{C-u f}@} to display a listing of the features or elements of
+all classes in the present listing window.  Prior versions of the
+OO-Browser used @{@kbd{r}@} to display features.  This key remains for
+backward compatibility but may be used for another purpose in the
+future.
+
+@kindex e
+@findex br-edit-entry
+@cindex edit element
+@kindex v
+@findex br-view-entry
+@cindex view element
+@kindex F
+@findex br-feature-signature
+@cindex signature
+@cindex feature
+Move point to an element name and use @{@kbd{v}@} to view its source
+definition or @{@kbd{e}@} to edit its source.  Use @{@kbd{F}@} to see
+the full signature tag of an element, which includes its argument names
+and types, if any.  @{@kbd{C-u F}@} lists the signatures of all elements
+in the current listing.  This is handy when several elements from the
+same class have the same name but differ in signature.
+
+@xref{Using the Mouse}, for how the Action and Assist Keys may be used
+for browsing elements.
+
+@node Browsing Categories, Browsing Protocols, Browsing Elements, Usage
+@section Browsing Categories
+
+@cindex category
+@cindex class category
+The definition of a @dfn{category} is language-specific.  Some languages such
+as Smalltalk use categories to group related classes together.  The
+OO-Browser does not yet support this kind of category.
+
+A set of Objective-C categories segments a single class into groupings
+of related features.  When a class category is defined, the category
+name appears within a set of parentheses, so the OO-Browser displays
+category names with parentheses around them to distinguish them from
+classes.  The aggregation of all of the categories defined by a class
+and its ancestors represents the complete class definition.  The
+OO-Browser does support this kind of category.
+
+@kindex C
+Use the @{@kbd{C}@} key when point is on a class listing entry to obtain
+a list of the categories defined for the class within the Environment
+source code (this excludes inherited categories).  Use @{@kbd{C-u C}@}
+to list the categories for all classes in the current listing.  Thus, to
+see the full set of categories for a class, use @{@kbd{a}@} to list the
+ancestors of the current class and then @{@kbd{C-u C}@} to show all
+direct and inherited categories of the class.
+
+@cindex implementor, category
+@kindex v
+@kindex e
+Use @{@kbd{v}@} or @{@kbd{e}@} to view or edit the class category
+definition associated with a category entry at point.  @xref{Browsing
+Implementors}, for an explanation of how to browse the classes that
+directly implement a category.
+
+@kindex f
+Use @{@kbd{f}@} with point on the default @code{[category]} class to
+list all categories defined in the Environment.
+
+@node Browsing Protocols, Browsing Implementors, Browsing Categories, Usage
+@section Browsing Protocols
+
+@cindex protocol
+@cindex class protocol
+@cindex conformance to protocol
+@cindex formal protocol
+The definition of a @dfn{protocol} is language-specific.
+It generally refers to an interface specification to which a class is
+said to conform.  A class conforms to a protocol by implementing the set
+of features defined in the protocol.
+
+Presently, the OO-Browser support protocols only under Objective-C.
+Objective-C protocols are sometimes called @emph{formal protocols}.
+Protocol interfaces are specified in a manner similar to classes but their
+features are only implemented in conforming classes.  A single protocol
+can inherit from any number of other protocols; thus, any conforming
+class must conform to all of its ancestor protocols.
+
+Class definitions list the protocols to which they directly conform,
+within a set of angle brackets.  So the OO-Browser displays protocol
+names with angle brackets around them to distinguish them from classes.
+
+@kindex P
+Use the @{@kbd{P}@} key when point is on a class listing entry to obtain
+a list of the protocols to which the class directly conforms
+(this excludes inherited protocols).  Use @{@kbd{C-u P}@}
+to list the direct protocols for all classes in the current listing.
+There is not yet a way to show the complete set of protocols to which a
+class conforms, which includes all protocols inherited from other
+protocols and all protocols inherited from ancestor classes.
+
+@kindex v
+@kindex e
+If you use @{@kbd{P}@} when point is on a class' protocol entry, the
+specification of the protocol will be displayed.  Use @{@kbd{v}@} or
+@{@kbd{e}@} to view or edit the class or class category definition
+associated with a protocol entry at point.
+
+@cindex implementor, protocol
+Use standard class browsing keys when on a protocol entry to examine its
+parents, children, ancestors or descendants.  @xref{Browsing
+Implementors}, for an explanation of how to browse the classes that
+directly conform to a protocol.
+
+@kindex f
+Use @{@kbd{f}@} with point on the default @code{[protocol]} class to
+list all protocols defined in the Environment.
+
+@node Browsing Implementors, Exiting a Listing, Browsing Protocols, Usage
+@section Browsing Implementors
+
+@cindex implementor
+@cindex element
+@kindex I
+@findex br-implementors
+@kindex e
+@kindex v
+@kindex F
+@cindex signature
+Sometimes it is important to see the list of classes that define a
+particular element name.  These are called the element's
+@dfn{implementors}.  With point on an element listing, @{@kbd{I}@} will
+compute and display the element's implementor list.  @{@kbd{C-u I}@} will
+do the same for all elements in the present listing.
+
+Move point to an implementor class name and then use @{@kbd{v}@} or
+@{@kbd{e}@} to view or edit the element associated with the class.  If an
+element name is defined with different signatures in a single class, the
+class will be listed as an implementor multiple times.  Each class entry
+can be used to display a different element.  @{@kbd{C-u F}@} will
+display the element signature associated with each class entry in the
+same order as the class entries in the present listing buffer.
+
+@node Exiting a Listing, Quitting and Refreshing, Browsing Implementors, Usage
+@section Exiting a Listing
+
+@kindex x
+@findex br-exit-level
+@cindex exiting a listing level
+When done with a browser listing buffer, one should clear and exit
+from the buffer's display with @{@kbd{x}@}.  This command also displays
+the previous listing level, if any, and moves point to its
+previous position within this buffer.
+
+In this way, the command provides a quick and clean way to exit back to a
+previous listing level; you may exit a single level at a time or all the way
+back to the top-level listing buffer through repeated invocation of the
+command or by sending a prefix argument value to the command.
+
+There is no need to exit from listing buffers to quit from the browser.  You
+may quit, perform other actions, and then re-invoke the browser at the same
+point from which you left.
+
+@node Quitting and Refreshing, Using the Mouse, Exiting a Listing, Usage
+@section Quitting and Refreshing the OO-Browser
+
+@kindex q
+@findex br-quit
+@cindex quitting, temporarily
+@cindex quitting, permanently
+@{@kbd{q}@} quits from the browser temporarily.  The same command with a
+prefix argument quits from the browser permanently and kills all
+non-modified browser buffers.  It will not kill any of the class source
+buffers.
+
+@kindex C-c C-r
+@findex br-refresh
+@cindex refreshing the browser display
+If you are familiar with Emacs windowing, you may quickly alter the window
+configuration of the frame while in the browser, either intentionally or
+more likely unintentionally.  If you execute non-browser Emacs commands while
+in the browser, you may find other buffers have taken the place of your
+browser buffers.  In either case, you may refresh the browser display and
+restore it to the way it was when you originally invoked it, by using
+@{@kbd{M-x br-refresh @key{RET}}@} or with @{@kbd{C-c C-r}@} when in a
+browser listing buffer.
+
+@node Using the Mouse, Getting Help, Quitting and Refreshing, Usage
+@section Using the Mouse
+
+@cindex mouse control
+@kindex H
+@findex br-help-ms
+@cindex Action Key
+@cindex Assist Key
+@kindex Action Key
+@kindex Assist Key
+@cindex XEmacs
+@cindex Emacs 19
+@cindex InfoDock
+@cindex Menu Key
+Once configured, mouse control within the OO-Browser is helpful and easy
+to use.  Under InfoDock, XEmacs and Emacs 19, the right mouse button,
+called the Menu Key, pops up a menu of OO-Browser commands when clicked
+within an OO-Browser listing buffer.  Under XEmacs and Emacs 19, the
+same menu is added to the menubar used in listing buffers.  Under
+InfoDock with mode-specific menus turned on, the menubar is devoted to
+OO-Browser commands.
+
+Even if the above features are not available to you, if you have mouse
+support in your Emacs, the following features are available.  A single
+mouse button, called the @dfn{Action Key}, is used for most purposes.
+The Action Key is bound to the shift-middle mouse button under standard
+Emacs, to the middle mouse button under InfoDock, or to the shift-left
+button on a two-button mouse.
+
+A second button, called the @dfn{Assist Key}, is used for help and other
+ancillary functions.  The Assist Key is bound to the shift-right button.
+The @file{br-help-ms} file uses a table format to summarize mouse
+control within the browser, it may be displayed within the browser via
+the @{@kbd{H}@} @code{(br-help-ms)} command.
+
+Within an empty listing buffer, clicking the Action Key displays the
+browser command menu; the Assist Key displays a menu listing
+language-specific source files.  Within this menu, the Action Key
+selects a buffer for display, the Assist Key marks the buffer for
+deletion.  To perform the deletes, click the Action Key after the last
+line of the menu.  If the Assist Key is clicked after the last line, the
+deletes are undone and a list of all current editor buffers is shown,
+allowing you to select buffers other than those containing classes.
+
+The mouse buttons can be used to scroll the viewer window a page at a
+time by clicking after the end of any line.  The Action Key scrolls the
+window up (forward) a windowful and the Assist Key scrolls it down
+(backward) a windowful.
+
+The Action Key acts as follows when in an OO-Browser listing buffer.  If
+the button is pressed:
+
+@itemize @bullet
+@item
+on a blank line following all entries or in a blank listing buffer, the
+browser command help menu is displayed in the viewer window
+exited;@refill
+@item
+at the beginning of a (non-single character) class name, the class'
+ancestors are listed;@refill
+@item
+at the end of an entry line, the listing is scrolled up;@refill
+@item
+on the `...', following a class name, point is moved to the class
+descendency expansion;@refill
+@item
+before an element name, the implementor classes of the name are listed;@refill
+@item
+anywhere else on an entry line (i.e. on the entry), the entry's source
+is displayed for editing.@refill
+@end itemize
+
+The Assist Key acts as follows when in a listing buffer.  If it is pressed: 
+
+@itemize @bullet
+@item
+in a blank buffer, a selection list of buffer files is displayed;@refill
+@item
+at the beginning of a (non-single character) class, the class'
+descendants are listed;@refill
+@item
+at the end of an entry line, the listing is scrolled down;@refill
+@item
+on the `...', following a class name, point is moved to the class
+expansion;@refill
+@item
+anywhere else on a class line, the class' elements are listed;@refill
+@item
+anywhere else on an element line, the element's implementor classes are
+listed;@refill
+@item
+on a blank line following all entries, the current listing buffer is
+exited.@refill
+@end itemize
+
+@node Getting Help, Locating Entries, Using the Mouse, Usage
+@section Getting Help
+
+@kindex h
+@findex br-help
+The OO-Browser is very intuitive to operate, but help is always a key or
+button press away when needed.  Besides the online and printed versions
+of this manual, there is an online quick reference built into the
+OO-Browser.  Once the browser windows appear, press @{@kbd{h}@} at any
+time to bring up a buffer full of command help.
+
+@kindex C-h k
+@findex describe-key
+For more extensive documentation on each browser key, use the Emacs command
+@{@kbd{C-h k @var{key-sequence}}@}.
+
+@node Locating Entries, Filtering Entries, Getting Help, Usage
+@section Locating Entries
+
+@kindex w
+@findex br-where
+@cindex class, source file
+@cindex class, where is
+@cindex element, source file
+@cindex element, where is
+@cindex entry, where is
+The @{@kbd{w}@} @code{(br-where)} command can be used to locate the
+source file associated with a listing entry.  It prints the full
+pathname of the source file in the minibuffer window.
+A prefix argument as in, @{@kbd{C-u w}@}, causes the command to prompt
+for the class or element name to locate.  Full completion is
+provided.  @xref{Completing Names}.@refill
+
+@kindex m
+@findex br-match
+@cindex classes, matching names
+@cindex classes, finding
+@cindex matching to class names
+@cindex finding classes
+@cindex locating classes
+
+The @{@kbd{m}@} @code{(br-match)} command provides a quick mechanism for
+locating any classes in the Environment whose names match to an
+expression in part or in whole.  The browser will prompt for the
+expression to use.  All matching names are displayed in ascending order.
+
+By default the expression is treated as a regular expression.  A prefix
+argument sent to the command tells it to treat the expression as a string.
+
+After each search, the command reports the number of matching classes
+found and displays them in the current listing window.  It then prompts
+for another expression to key on.  The selected set is then filtered
+once again.  This cycle continues until the @{@key{RET}@} is pressed
+without giving an expression.  This process allows for easy location of
+desired classes.
+
+When the command is invoked (first time through the loop), if the
+@{@key{RET}@} key is pressed without giving a match expression, the search
+will match to all classes referenced in the Environment.
+
+If you want a regular expression to match to whole class names
+exclusively, begin it with a '^' and end it with a '$' character which
+match to beginning of name and end of name, respectively.  Thus, "^....$"
+would match to class names with exactly four characters.  A string
+match always matches to any class name that contains the matching
+string.
+
+@node Filtering Entries, Ordering Entries, Locating Entries, Usage
+@section Filtering Entries
+
+@kindex M
+@findex br-match-entries
+@cindex entries, matching names
+@cindex matching to listing entries
+@cindex filtering entries
+@cindex locating Entries
+
+The @{@kbd{M}@} @code{(br-match-entries)} command works much like the
+@code{(br-match}) command described in, @ref{Locating Entries}, except
+that it matches only to entries in the current listing buffer.  It thus
+allows you to filter a listing to just those entries that you care to
+browse.  It prompts you for a regular expression of entries to match
+and then deletes entries that don't match.  A prefix argument sent to
+the command tells it to treat the match expression as a string.
+
+After each search, the command reports the number of matching entries
+found and displays them in the current listing window.  It then prompts
+for another expression to match.  The selected set is then filtered
+once again.  This cycle continues until the @{@key{RET}@} is pressed
+without giving an expression.  This process allows for easy incremental
+filtering of listings.
+
+When the command is invoked (first time through the loop), if the
+@{@key{RET}@} key is pressed without giving a match expression, the search
+will match to all entries in the listing, so no filtering will be done.
+
+If you want a regular expression to match to whole entries
+exclusively, begin it with a '^' and end it with a '$' character which
+match to beginning of line and end of line, respectively.  Thus, "^....$"
+would match to entry lines with exactly four characters.  A string
+match always matches to any entry that contains the matching string.
+
+
+@node Ordering Entries, Statistics, Filtering Entries, Usage
+@section Ordering Entries
+
+@kindex o
+@findex br-order
+@cindex entries, ordering
+@cindex ordering listings
+@cindex sorting listings
+Once you have a desired set of names in a browser listing window, you
+may want to re-order.  For a simple ascending order sort by
+name, use @{@kbd{o}@}.  To sort the lines in the current listing window
+accounting for leading whitespace, use a positive prefix argument.  To sort
+the lines in descending order accounting for leading whitespace, use a
+negative prefix argument.  Note that all of the top-level class display
+commands automatically order their output lists.  @xref{Top-Level Classes,,
+Displaying Top-Level Classes}.@refill
+
+To sort in descending order, first sort into ascending order with
+@{@kbd{o}@} to strip any leading whitespace and then use a negative
+prefix argument to sort the names into descending order.
+
+
+@node Statistics, Class Info, Ordering Entries, Usage
+@section Environment and Class Summaries
+
+@kindex #
+@findex br-count
+@cindex number of classes
+@cindex class count
+The @{@kbd{#}@} @code{(br-count)} command displays in the minibuffer the
+number of entries in the present listing buffer.
+
+@kindex M-c
+@findex br-class-stats
+@cindex class info
+@cindex class statistics
+The @{@kbd{M-c}@} @code{(br-class-stats)} command displays in the
+minibuffer window the number of parents and children for the selected
+class; with a prefix argument, it prompts for the class name to use.
+
+@kindex M-e
+@findex br-env-stats
+@cindex Environment statistics
+@cindex Environment spec summary
+The @{@kbd{M-e}@} @code{(br-env-stats)} command displays the
+specification for the current Environment along with a few Environment
+statistics (OO-Browser version used to build the Environment, total
+classes, number of System and Library classes, number of duplicate and
+undefined classes) in the viewer window.  With a prefix argument, it
+displays in the minibuffer window the basic statistics only, leaving the
+contents of the viewer window intact.
+
+@node Class Info, Adding and Deleting Classes, Statistics, Usage
+@section Language-Specific Class Information
+
+@kindex i
+@findex br-entry-info
+@cindex entry attributes
+@cindex parents
+@cindex attributes
+@cindex routine calls
+@cindex Eiffel, info
+Presently, this feature is available only for Eiffel browsing.
+
+With point on a class name in a listing buffer, the command,
+@{@kbd{i}@} @code{(br-entry-info)}, displays the class' parents,
+attributes and routines with routine call summaries.  This is its
+default behavior.
+
+@cindex Eiffel, short
+@cindex Eiffel, flat
+@{@kbd{M-x eif-info-use-short}@} will instead cause the
+@code{(br-entry-info)} command to run the Eiffel 'short' command on a
+class, thereby displaying its specification.
+@{@kbd{M-x eif-info-use-flat}@}, will cause the command to run
+the Eiffel 'flat' command on a class, thereby displaying its complete
+feature set.  Use @{@kbd{M-x eif-info-use-calls}@} to reset this command
+to its default behavior.
+
+
+@node Adding and Deleting Classes, Completing Names, Class Info, Usage
+@section Adding and Deleting Classes
+
+@kindex C-c ^
+@findex br-add-class-file
+@cindex class, adding to Environment
+@cindex class, replacing in Environment
+@cindex Environment, adding classes
+@cindex Environment, replacing classes
+@cindex initialization file
+A file containing class definitions may be added to the Environment with
+the @{@kbd{C-c ^}@} @code{(br-add-class-file)} command.  This will
+prompt for the file name, scan the file, and then update the
+Environment.  If a class defined in the file is already in the
+Environment, its information will be replaced with the information
+gathered from the file; otherwise, the class will be added to the
+Environment.  This command does not update the browser display; one
+must issue a browser command after the add command in order to see any
+change.
+
+@cindex Environment, adding individual classes
+To add a single class from a file containing multiple classes, read the
+file into an Emacs buffer, narrow the buffer to the desired class and
+then execute the add command.  @xref{Narrowing,,Narrowing, emacs, The
+Gnu Emacs Manual}.@refill
+
+@{@kbd{C-c ^}@} is normally globally bound in the OO-Browser
+initialization file, @file{br-init.el}, so that it may be used outside
+of the browser when editing classes.
+
+@kindex C-c C-d
+@findex br-delete
+@cindex class, deleting from Environment
+@cindex Environment, deleting classes
+To delete a class from the Environment, display the class name in a
+listing window using the @{@kbd{m}@} @code{(br-match)} command if
+necessary.  (@xref{Locating Entries}.)  Move point to the desired class
+name and hit @{@kbd{C-c C-d}@} @code{(br-delete)} to delete the class.
+This will remove the class name at point after the class is deleted from
+the Environment.@refill
+
+
+@node Completing Names, Graphical Browsing, Adding and Deleting Classes, Usage
+@section Completing Names
+
+Whenever the browser prompts for a name and an Environment has already
+been loaded or built, one may use the browser's identifier name
+completion facilities to help in entering the name.  These features
+allow you to type as much of the name as you know and then have the
+browser fill in what it can.  The relevant keys are:
+
+@table @key
+@item @{TAB@}
+complete as much as possible of a class or element name
+@item @{SPC@}
+complete up to one word of the class or element name
+@item @{@kbd{?}@}
+show all possible completions for class or element name
+@end table
+
+You may also use the browser's completion facilities outside of the browser,
+for example, when editing code.  @xref{Standalone, ,Using Standalone
+OO-Browser Features}, and the description of
+@code{(br-complete-type)}.@refill
+
+@node Graphical Browsing,  , Completing Names, Usage
+@section Graphical OO-Browser Interfaces
+
+@cindex xoobr
+@cindex NEXTSTEP OO-Browser
+@cindex graphical browsing
+The X interface to the OO-Browser is called, @dfn{xoobr}.  It provides a
+simple but effective means of navigating through OO-Browser hierarchy
+and element relations.  (The NEXTSTEP OO-Browser is very similar to the
+X version, so use the documentation herein if you need any help with it.)
+
+Any number of xoobr sessions may be established at the same time.  Each
+one is used to gain a particular view on an Environment.  The textual
+OO-Browser is used to filter a set of classes for display in an xoobr
+process.  For this reason, xoobr is invoked from within the textual
+OO-Browser.
+
+@page
+@cindex X OO-Browser picture
+@cindex xoobr picture
+@iftex
+Here is a picture of the X OO-Browser.
+@sp 2
+@centerline{@psfig{figure=im/oobr-x.ps}}
+@end iftex
+@ifinfo
+If running under the X window system, Action Key click on the following
+filename to view a picture of the X OO-Browser: "im/oobr-x.xwd".
+@end ifinfo
+
+@kindex M-g
+@findex br-tree-graph
+@cindex xoobr, graphical view
+@{@kbd{M-g}@} @code{(br-tree-graph)} displays the current listing
+buffer's entries in a graphical form.  It ignores the show
+features setting so that you can capture the current listing without
+the need to alter that setting.
+
+@kindex M-d
+@findex br-tree
+@cindex xoobr, descendants
+@{@kbd{M-d}@} @code{(br-tree)} selects the current class and displays
+its descendancy graph in tree-form by starting a new xoobr session.
+With a prefix argument, @{@kbd{C-u M-d}@}, displays descendancy trees
+for all classes at the current browser level.  They are all grouped
+under some imaginary joining node so as to maintain the concept of one
+tree per xoobr view.
+
+@kindex M-f
+@findex br-tree-features-toggle
+@cindex xoobr, displaying features
+@cindex descendancy view
+@{@kbd{M-f}@} @code{(br-tree-features-toggle)} is used before creating a
+graphical descendency view to determine whether or not to include the
+features of each class in the listing as child nodes of the class.
+It toggles between showing features and not showing them in descendancy
+views.  The setting applies across all OO-Browser languages.  The
+default setting is to not add features to the view.
+
+@cindex xoobr, view
+Xoobr views are meant to complement the textual browser interface.
+Therefore, the two most common actions used in the text browser are
+performed in a similar manner within an xoobr view.  A click on a node with
+the left mouse button highlights the node and then displays the appropriate
+class text in the chosen editor, ready for editing.  A click of the
+middle button performs similarly but displays the associated class for
+viewing only.
+
+@cindex xoobr, node menu
+[The right mouse button is disable in this release of the X OO-Browser
+because of an inability to debug a problem in limiting its use to tree
+nodes.]  The right mouse button when depressed over a node displays a
+short menu of commands that may be applied to the node.  The only ones
+of real interest at this point are the collapse and expand entries which
+let you hide and then restore the display of a node's subtree.  This
+allows you precise control over the amount of detail you receive in
+various parts of the hierarchy.
+
+@cindex xoobr, help
+The Help button in the upper right of the an xoobr session window when
+selected displays a few pages of help text regarding the program itself.
+
+@kindex M-k
+@findex br-tree-kill
+@cindex xoobr, terminating
+@cindex xoobr, killing
+The @{@kbd{M-k}@} @code{(br-tree-kill)} command will prompt to see if
+you want to terminate all xoobr sessions started from within the current
+editor session.  If you answer affirmatively, all such processes
+disappear, as your screen will quickly indicate.
+
+@cindex xoobr, quitting
+@kindex C-u q
+@findex br-quit
+The upper left of a session window contains a set of buttons which
+display menus.  The only menu entry you need be concerned with at all is
+found under the file menu, labelled "Quit".  xoobr processes may also be
+terminated by issuing the kill command mentioned just before.  A third
+menas of killing such processes is by sending the permanent
+@code{(br-quit)} command, @{@kbd{C-u q}@}, to the textual browser.  You
+will then be prompted as to whether you want to terminate all xoobr
+sessions started from within the current editor session.
+
+@node Options, Customization, Usage, Top
+@chapter OO-Browser Options
+
+@menu
+* External Viewing::            Using An External Viewer or Editor
+* Keep Viewed Classes::         
+* Inhibit Version::             Inhibit Version Screen
+* Invert Ancestors::            Invert Ancestor Trees
+* Save All::                    Save All Lookup Tables
+* Use Children::                Build Children Lookup Table
+* Sort Options::                Controlling Class Listing Order
+@end menu
+
+@node External Viewing, Keep Viewed Classes, Options, Options
+@comment  node-name,  next,  previous,  up
+@section Using an External Viewer or Editor
+
+@cindex editing, externally
+@cindex viewing, externally
+The OO-Browser allows you to select your desired editor and viewer
+programs when you use a multi-windowed display.  By default, both of
+these tasks are handled by Emacs so that the browser works on text
+terminals.  If you choose an external editor or viewer, Emacs will still
+automatically be used whenever you invoke the browser from a text
+terminal.
+
+@vindex br-editor-cmd
+@cindex vi
+If you wish to edit classes displayed by the browser in an editor other
+than Emacs, set the @var{br-editor-cmd} variable to the command with
+which you wish to edit.  Arguments to the command should be placed in
+the variables named @var{br-ed[1-9]}, with one string argument per
+variable.  Unused variables should have the value @code{nil}.  Bear in
+mind that the command must generate a new window under your window
+system.  For example, the vi editor under UNIX does not create its own
+window, it runs within the window in which it is created.  Under X one
+would create a new xterm window and then invoke vi.  The command line
+would be @emph{xterm -e vi}, the settings in your personal
+initialization file would then be:
+
+@display
+       @code{
+(setq br-editor-cmd "xterm" br-ed1 "-e" br-ed2 "vi"
+      br-ed3 nil br-ed4 nil br-ed5 nil
+      br-ed6 nil br-ed7 nil br-ed8 nil br-ed9 nil)}
+@end display
+
+@vindex window-system
+This editor will only be used when the browser is run under a window
+system external to Emacs, like X.  (In such a case, the Emacs variable
+@var{window-system} will be non-nil).
+
+@vindex br-viewer-cmd
+@cindex xmore
+If you want to view classes in a read-only fashion outside of Emacs, set the
+following @var{br-viewer-cmd} and @var{br-vw[1-9]} variables in a similar
+manner as you did for the editor variables above.
+
+For example, to use @file{xmore}, an X-compatible version of @file{more}, as
+your viewer, use the following settings (assuming all the @var{br-vw}
+variables are already null):
+
+@display
+       @code{(setq br-viewer-cmd "xmore")}
+@end display
+
+
+@node Keep Viewed Classes, Inhibit Version, External Viewing, Options
+@comment  node-name,  next,  previous,  up
+@section Keep Viewed Classes
+
+@vindex br-keep-viewed-classes
+The @var{br-keep-viewed-classes} flag is turned off by default,
+indicating that each time a class is viewed immediately after another
+one, the prior one is deleted.  If it is set to any non-nil value, all
+viewed classes are left around for selection.
+
+In typical use, the burden of having to manage all viewed classes is
+greater than the benefit of leaving them in memory.  This is why the
+flag is off by default.  The class buffer menu can be used to delete
+buffers when you want to trim down the number with which you are dealing.
+@xref{Using the Mouse}, for details on this technique.
+
+@findex br-toggle-keep-viewed
+@vindex br-keep-viewed-classes
+The value of the @var{br-keep-viewed-classes} flag may be easily
+toggled with the @code{(br-toggle-keep-viewed)} command bound to
+@{@kbd{V}@}.
+
+
+@node Inhibit Version, Invert Ancestors, Keep Viewed Classes, Options
+@section Inhibit Version Screen
+
+@vindex br-inhibit-version
+After you are familiar with the opening OO-Browser version screen, you may
+want to disable its display each time the browser is started.  This is done by
+setting @var{br-inhibit-version} non-nil, as in the following line that
+would go in your personal OO-Browser initialization file:
+
+@example
+	@code{(setq br-inhibit-version t)}
+@end example
+
+@kindex C-c #
+@findex br-version
+@cindex version, browser
+@cindex support
+@noindent
+This option has no effect on the display of the help screen which
+follows the version screen.  Even with this option set, you may display
+the version screen at any time from within a browser listing
+window by using @{@kbd{C-c #}@} @code{(br-version)}.
+
+
+@node Invert Ancestors, Save All, Inhibit Version, Options
+@section Invert Ancestor Trees
+
+@xref{Descendants and Ancestors,,Browsing Descendants and Ancestors},
+for more information.@refill
+
+This is a global OO-Browser option, it affects all Environments.
+
+Ancestor trees are normally shown to emphasize how the trees branch out
+from their origin.  An initialization file line such as:
+
+@example
+	@code{(setq br-invert-ancestors t)}
+@end example
+
+@noindent
+will cause the display of ancestor trees to be inverted such that the further
+ancestors appear as roots of the trees and parents (the nearest ancestors)
+appear as leaves in the trees.  This ensures that all listing displays
+reflect the class inheritance structure with children below parents.
+
+
+@node Save All, Use Children, Invert Ancestors, Options
+@section Save All Lookup Tables
+
+This is an Environment-specific option set during Environment
+specification.  @xref{Creating Environments}.@refill
+
+Half of the browser lookup tables can be built whenever an Environment
+is loaded.  If this option is set, these tables will be stored in the
+Environment file instead.  This will speed Environment loading somewhat,
+at the cost of doubling the file size per saved Environment.
+
+@node Use Children, Sort Options, Save All, Options
+@section Build Children Lookup Table
+
+This is an Environment-specific option set during Environment
+specification.  @xref{Creating Environments}.@refill
+
+This is a highly recommended option that allows for fast descendant
+lookups.  The only time one would turn off this option would be when a
+file system is extremely short of space.
+
+@node Sort Options,  , Use Children, Options
+@section Controlling Class Listing Order
+
+@vindex br-sort-options
+@cindex listing order
+@cindex sorting options
+@cindex listing options
+The OO-Browser normally orders classes and elements in listing windows
+according to the ASCII character set.  This sort order is controlled by the
+@var{br-sort-options} variable which specifies the command line options
+sent to the system @code{sort} command.  (Under any Emacs 19 variant,
+this variable is not used by the @code{br-order} command, bound to
+@{@kbd{o}@}.)
+
+The value of this variable should be a single string of options such as
+@code{-fu} (the default) or @code{nil} for no options.  The @code{-f}
+option folds upper and lower case to the same character for sort
+comparisons.  The @code{-u} option leaves only unique elements in the
+listing by eliminating any duplicate entries.
+
+@node Customization, Standalone, Options, Top
+@chapter Personal Customization
+
+@vindex br-skip-dir-regexps
+@cindex scanning, skip directories
+@cindex directory scanning
+The @var{br-skip-dir-regexps} variable is a list of regular expressions
+which match directory names that the OO-Browser will not descend when
+scanning source code trees.
+
+@vindex br-file-dir-regexp
+The @var{br-file-dir-regexp} variable specifies a regular expression
+that matches to file and directory names that the OO-Browser should
+scan.  Any others, including those matched by @var{br-skip-dir-regexps},
+are ignored.
+
+@cindex initialization file
+@cindex personal initialization
+@vindex file, .br-init.el
+The following hook variables are provided so that one may customize what
+happens each time the OO-Browser is invoked.  Set them as you would any
+other Emacs Lisp hook variables in a personal OO-Browser initialization
+file, @file{~/.br-init.el}.  They all default to null operations.
+
+@vindex br-mode-hook
+If you want a set of actions to occur each time after the OO-Browser is
+invoked, attach them to @var{br-mode-hook}.  For language-specific
+actions, a language-specific hook such as @var{br-eif-mode-hook},
+or @var{br-c++-mode-hook} is run after @var{br-mode-hook}.
+
+@vindex br-class-list-hook
+If you want a set of actions to occur after each time that a new browser
+listing buffer is created, set @var{br-class-list-hook}.
+
+
+@node Standalone, Languages, Customization, Top
+@chapter Using Standalone OO-Browser Features
+
+A number of browser features may be used independently of the browser
+user interface, assuming that a site-wide or personal OO-Browser
+initialization file has been loaded into your current Emacs session.
+
+@kindex C-c C-o
+First, an Environment must be selected and loaded into the OO-Browser
+via @{@kbd{C-c C-o}@}.  When the browser user interface is displayed,
+use @{@kbd{q}@} to quit.
+
+@findex br-env-load
+Alternatively, you can load an Environment without invoking the browser
+user interface by using @{@kbd{M-x br-env-load @key{RET}}@}.  The
+standalone browser features will use the newly loaded Environment.
+
+@noindent
+The commands that are available for standalone use include:
+@table @code
+@findex br-add-class-file
+@item br-add-class-file
+Add a file of classes to the current Environment.  @xref{Adding and
+Deleting Classes}.@refill
+
+@item br-find
+@findex br-find
+Interactively complete class or ELEMENT name and jump to its definition.
+
+@findex br-find-class
+@item br-find-class
+Display file of class text matching CLASS-NAME in VIEW-ONLY mode if non-nil.
+
+@findex br-complete-type
+@item br-complete-type
+Perform in-buffer completion of a type or element identifier before point.
+
+@findex br-class-path
+@item br-class-path
+Return full path, if any, to CLASS-NAME.
+With optional prefix argument INSERT non-nil, insert path at point.
+@end table
+
+All of these commands provide full completion.  @xref{Completing Names},
+based upon the current OO-Browser Environment.@refill
+
+@findex br-find
+@cindex finding an element
+@cindex searching for an element
+When editing and debugging code, one often wants to look at a class or
+element definition without having to invoke the browser to locate it.
+The @code{(br-find)} command does exactly that by prompting for a name
+and then displaying for editing the class or element definition given by
+that name.
+
+@findex br-find-class
+@cindex finding a class
+@cindex searching for a class
+The @code{(br-find-class)} command is similar. It prompts for a class name
+and then displays its source file in a viewable, read-only mode.  To
+display a class file in an editable mode, send a prefix argument to this
+command.
+
+@findex br-complete-type
+When writing code and entering class attribute definitions (variable
+definitions), one often has to repetitively enter class names as the
+static types for the attributes.  The @code{(br-complete-type)} command
+completes and inserts a class name at point in the current buffer.
+The traditional key to bind such a command to is @{@kbd{M-@key{TAB}}@}.
+The following example illustrates its usage.
+@display
+	my_list: LIN<-- (point is here)
+
+@{@kbd{M-@key{TAB}}@} is hit:
+
+	my_list: LINKED_LIST
+@end display
+
+@findex br-class-path
+The @code{(br-class-path)} command prompts for a class name and
+displays the full path of the associated class source file in the
+minibuffer.  With a prefix argument, it inserts the path name at point
+in the current buffer.
+
+The following key bindings are recommended when using these standalone
+features:
+
+@kindex C-M-i
+@kindex M-TAB
+@kindex C-c C-f
+@kindex C-c C-w
+@example
+  @code{(define-key eiffel-mode-map    "\C-c\C-f" 'br-find)}
+  @code{(define-key c++-mode-map       "\C-c\C-f" 'br-find)}
+  @code{(define-key lisp-mode-map      "\C-c\C-f" 'br-find)}
+  @code{(define-key objc-mode-map      "\C-c\C-f" 'br-find)}
+  @code{(define-key smalltalk-mode-map "\C-c\C-f" 'br-find)}
+
+  ;; @{@kbd{C-M-i}@} means @{@kbd{M-@key{TAB}}@}.
+  @code{(define-key eiffel-mode-map    "\C-\M-i" 'br-complete-type)}
+  @code{(define-key c++-mode-map       "\C-\M-i" 'br-complete-type)}
+  @code{(define-key lisp-mode-map      "\C-\M-i" 'br-complete-type)}
+  @code{(define-key objc-mode-map      "\C-\M-i" 'br-complete-type)}
+  @code{(define-key smalltalk-mode-map "\C-\M-i" 'br-complete-type)}
+
+  @code{(define-key eiffel-mode-map    "\C-c\C-w" 'br-class-path)}
+  @code{(define-key c++-mode-map       "\C-c\C-w" 'br-class-path)}
+  @code{(define-key lisp-mode-map      "\C-c\C-w" 'br-class-path)}
+  @code{(define-key objc-mode-map      "\C-c\C-w" 'br-class-path)}
+  @code{(define-key smalltalk-mode-map "\C-c\C-w" 'br-class-path)}.
+@end example
+
+@xref{Eiffel Specifics}, for an Eiffel-specific standalone browser
+feature.@refill
+
+@node Languages, Features, Standalone, Top
+@chapter Language-Specific Notes
+
+@menu
+* C Specifics::
+* C++ Specifics::
+* CLOS Specifics::
+* Eiffel Specifics::
+* Java Specifics::
+* Objective-C Specifics::
+@end menu
+
+@node C Specifics, C++ Specifics, Languages, Languages
+@section C Specifics
+
+@vindex br-c-tags-flag
+@findex br-toggle-c-tags
+The @var{br-c-tags-flag} variable controls whether or not C constructs
+are included within C and C-based language Environments.  By default,
+this flag is true.  Use @code{M-x br-toggle-c-tags RET} to toggle its
+value.  If you set it false before building an Environment, then C
+constructs will not be included in the Environment.  (Note that C
+functions are always included in C++ Environments, regardless of this
+flag value.)
+
+If you wish to build an Environment whose source code is entirely C,
+ensure that the @var{br-c-tags-flag} is enabled and then select C++ when
+asked for the language to browse.  In the future, a language setting for
+C will probably be added.
+
+C constructs are grouped into default classes for browsing.  The
+elements of each default class are the instances of the associated
+construct within the Environment.  Use normal element/feature commands
+to browse each instance.
+
+@example
+         DEFAULT CLASS    C CONSTRUCT
+         --------------------------------------
+         [constant]       #define constant
+         [enumeration]    enum @{@}
+         [function]       non-member function()
+         [macro]          #define macro()
+         [structure]      struct @{@}
+         [type]           typedef @{@}
+         [union]          union @{@}
+@end example
+
+@node C++ Specifics, CLOS Specifics, C Specifics, Languages
+@section C++ Specifics
+
+@xref{C Specifics}, for details on C-specific support within C++
+Environments.
+
+@menu
+* C++ Element Selection::       Source Code Element Selection
+* C++ Settings::
+@end menu
+
+@node C++ Element Selection, C++ Settings, C++ Specifics, C++ Specifics
+@subsection Source Code Element Selection
+
+@cindex C++ feature listings
+@cindex pure virtual function
+@cindex function, pure virtual
+@cindex deferred function
+C++ pure virtual function declarations, which specify method interfaces
+but no implementation, appear in class feature listings.  The function
+name is preceded by the @code{"> "} string to identify the function as a
+pure virtual (deferred) function.  Pure virtuals may be treated like any
+other member functions within the browser.  Since there is no definition
+for such a function within the class in which it is listed, its
+declaration will be shown instead, when requested.
+
+@cindex friend
+@cindex function, friend
+@cindex class, friend
+@findex br-view-friend
+@kindex V
+Friend functions and friend classes give members of another class
+access to the private parts of the current class.  They appear
+in class feature listings preceded by the @code{"% "} string.
+The keys, @{@kbd{v}@} or @{@kbd{e}@}, display the friend declaration
+within the current class.  Use @{@kbd{V}@}, @code{(br-view-friend)} to
+view the definition of the friend class or function.
+
+@cindex constructor
+@cindex destructor
+@cindex operator new
+@cindex operator delete
+Methods and operators associated with creating and destroying objects
+are preceded by the @code{"+ "} string in listing buffers.  All other
+method listing entries are preceded by the @code{"- "} string.
+
+@cindex C++
+One can jump from a C++ declaration to its definition by clicking the
+Action Key when within the declaration.  Most importantly, once a class
+header file is displayed, simply click on a method declaration to see
+its corresponding definition.  Each feature declaration should be
+terminated with a semicolon to ensure accurate scanning.  If the method
+is inherited from another class, a message at the bottom of the frame
+will describe which class the method is defined in once the browser
+displays the method definition.
+
+Parent classes may be browsed in a similar manner by clicking on their
+names in an inheritance or declaration clause.  It is therefore
+important to click on the method name part of a declaration when that is
+the element desired.
+
+@vindex c++-include-dirs
+@cindex #include
+@cindex include files
+Include files may be browsed by selecting their inclusion declarations
+(#include ...) within a source file.  Include files delimited by double
+quotes are searched for in the following places:  first, the directory of
+the current source file, then the directories listed in the variable
+@var{c++-include-dirs}, and then in any directories included in the
+current environment.
+
+@vindex c++-cpp-include-dirs
+Include files delimited by angle brackets are searched for in the
+following places:  first, the directories listed in the variable
+@var{c++-include-dirs}, then the directories listed in the variable
+@var{c++-cpp-include-dirs}, and then in any directories included in the
+current environment.  The variable @var{c++-cpp-include-dirs} should
+hold a list of the standard directories searched by your C++ pre-processor.
+Each directory entry must end with a directory separator.  On UNIX
+systems, this is the '/' character.
+
+@node C++ Settings,  , C++ Element Selection, C++ Specifics
+@subsection C++ Settings
+@vindex c++-class-keyword
+@cindex class definition keywords
+By default, @code{class}, @code{struct} and @code{union} definitions all
+constitute class definitions to the C++ OO-Browser.  If you prefer some
+other criteria, you will need to modify the definition of
+@var{c++-class-keyword} in @file{br-c++.el}.
+
+@vindex c++-src-file-regexp
+@cindex file suffixes
+If you find that the browser is not scanning some of your C++ source
+files, you may be using file suffixes which it does not recognize.
+Examine the value of @var{c++-src-file-regexp} and add any special file
+suffixes you use to it.@refill
+
+@node CLOS Specifics, Eiffel Specifics, C++ Specifics, Languages
+@section CLOS Specifics
+
+@menu
+* CLOS Method Handling::        Method Handling
+* CLOS Settings::
+@end menu
+
+@node CLOS Method Handling, CLOS Settings, CLOS Specifics, CLOS Specifics
+@subsection Method Handling
+@cindex CLOS methods
+@cindex CLOS types
+@cindex specialized parameters
+@cindex methods, specialized parameters
+In CLOS, methods may have typed parameters of the form,
+@code{(<parameter-name> <class>)}; these are called @dfn{specialized
+parameters}.  Each such parameter defines the method within
+@code{<class>}.  Thus, a single method definition can generate methods
+associated with many classes.  The OO-Browser lets you navigate to a
+method definition from any of the classes for which it is defined, since
+a method is included as an element of each of its constituent classes.
+
+CLOS permits compile-time computation of the @code{<class>} of a
+specialized parameter, through use of the expression, @code{(eql
+<form>)}.  Since the OO-Browser cannot perform this computation, it
+treats such a parameter as non-specialized.
+
+@cindex CLOS, the class t
+Methods may also contain non-specialized parameters of the form,
+@code{<parameter-name>}.  The type of each such parameter defaults to
+the default root class @code{t} in CLOS.  But a method is only included
+in the class @code{t} by the OO-Browser if none of its parameters are
+specialized.  Otherwise, methods with more specific types which happened
+to include one or more non-specialized parameters would appear to not
+have a more specific type than @code{t}.
+
+@node CLOS Settings,  , CLOS Method Handling, CLOS Specifics
+@subsection CLOS Settings
+The OO-Browser automatically works with CLOS class and method
+definitions.  But Lisp contains many other standard object types such as
+functions, macros and variables which you may wish to browse.  These are
+handled through a configuration variable as explained below.
+
+@vindex clos-element-type-alist
+@cindex default class
+@cindex element type
+The @var{clos-element-type-alist} variable determines the Lisp definition
+constructs that the browser looks for and the associated default class
+under which instances of each construct type are grouped.  Each element
+in the association list is a cons cell whose first part is the function
+name string that defines an instance of a particular type,
+e.g@. @code{"defun"}.
+
+The second part is a default class name, a string, under which to assign
+each instance of the type, e.g@. @code{"function"}.  The OO-Browser
+always displays default class names with square brackets around them,
+e.g@. @code{[function]}, to distinguish them from classes defined within
+the Environment.
+
+@noindent
+Here is the default @var{clos-element-type-alist} setting:
+
+@example
+  '(("defconstant"  . "constant")
+    ("defconst"     . "constant")
+    ("defun"        . "function")
+    ("defgeneric"   . "generic")
+    ("defmacro"     . "macro")
+    ("defpackage"   . "package")
+    ("defparameter" . "parameter")
+    ("defsetf"      . "setfunction")
+    ("defstruct"    . "structure")
+    ("deftype"      . "type")
+    ("defvar"       . "variable")
+    ("fset"         . "function"))
+@end example
+
+@vindex clos-def-form-with-args-regexp
+The @var{clos-def-form-with-args-regexp} is a regular expression which
+includes a subset of the definition symbol names from
+@var{clos-element-type-alist}, namely those which require an argument
+list to uniquely distinguish them from other elements, e.g@. functions.
+
+
+@node Eiffel Specifics, Java Specifics, CLOS Specifics, Languages
+@section Eiffel Specifics
+
+Eiffel support has now been updated to Eiffel version 3, to the best
+of our knowledge.  If you find any problems, please report them
+to <oo-browser@@hub.ucsb.edu> (this is a public mailing list).
+
+@menu
+* Eiffel Listings::
+* Eiffel Element Selection::    Source Code Element Selection
+* Eiffel Settings::
+@end menu
+
+@node Eiffel Listings, Eiffel Element Selection, Eiffel Specifics, Eiffel Specifics
+@subsection Eiffel Listings
+
+Eiffel entities are categorized when shown within OO-Browser listing
+buffers.  Classes are shown by name, without any prefix.  Features
+are shown by name but are preceded by a special character that indicates
+the kind of feature.  The following table describes each prefix.
+
+@table @code
+@item -
+precedes regular routines;
+@item =
+precedes attributes;
+@item 1
+precedes once routines, which create shared objects;
+@item >
+precedes deferred features, which are specified but not defined within
+this class;
+@item /
+precedes external features, which are defined in a non-Eiffel language.
+@end table
+
+@node Eiffel Element Selection, Eiffel Settings, Eiffel Listings, Eiffel Specifics
+@subsection Source Code Element Selection
+@cindex Eiffel
+One can jump from an Eiffel element reference to its definition by
+clicking the Action Key when within the reference.  Selection of a
+feature name in an export clause displays the feature definition, even
+if it is renamed several times within ancestors.  Parent classes may be
+browsed in a similar manner by clicking on their names in an inheritance
+or declaration clause.
+
+The following example of locating a renamed feature is taken from an
+actual set of Eiffel library classes:
+
+@example
+User selects feature @code{subwindow} of @code{POPUP_MENU}
+   inherited from @code{WINDOW} which renames @code{child} as @code{subwindow}
+      inherited from @code{TWO_WAY_TREE} which renames @code{active} as @code{child}
+         inherited from @code{TWO_WAY_LIST}
+            inherited from @code{LINKED_LIST} which defines @code{active}.
+@end example
+
+The browser would display the feature @code{active} and explain to the
+user that feature @code{subwindow} of class @code{POPUP_MENU} is
+inherited from feature @code{active} of class @code{LINKED_LIST}.
+Location of this sort of feature definition would be incredibly tedious
+without programmatic support.
+
+The algorithm used to locate features is dynamic, so if another class
+were inserted into the inheritance structure given above, the feature
+definition would still be located properly.
+
+@node Eiffel Settings,  , Eiffel Element Selection, Eiffel Specifics
+@subsection Eiffel Settings
+
+@findex eif-get-parents-from-source
+Be sure that the 'inherit' and 'feature' clauses in your classes begin in
+column 0; otherwise the browser parser will not work properly.  If you prefer
+some other indentation style, you will need to slightly alter
+@code{(eif-get-parents-from-source)} in @file{br-eif.el}; specifically,
+the lines that contain '^inherit' and '^feature'.
+
+@cindex Eiffel, error parsing
+@cindex error parsing
+Emacs has a feature called error parsing which lets one quickly jump to
+the line of code that supposedly triggered an error.
+(@xref{Compilation, ,Compilation Errors, emacs, The Gnu Emacs Manual},
+for information on error parsing.)  Some object-oriented language
+compilers display the name of the class and line number with each error
+message but do not include the filename containing the class source
+code.  Emacs then has no way of parsing the error message.  The browser
+class location facilities enable one to perform error parsing across any
+set of classes in a single Environment, given only this type of
+message.  Interactive Software Engineering's Eiffel compiler is an
+example of a compiler that produces this type of error.  The code for
+parsing these Eiffel error messages is included in
+@file{eif-ise-err.el}.@refill
+
+@node Java Specifics, Objective-C Specifics, Eiffel Specifics, Languages
+@section Java Specifics
+
+@cindex Java feature listings
+@cindex abstract method
+@cindex method, abstract
+@cindex deferred function
+Java abstract method declarations, which specify method interfaces
+but no implementation, appear in class feature listings.  The method
+name is preceded by the @code{"> "} string to identify the method as an
+abstract (deferred) method.  Abstract methods may be treated like any
+other methods within the browser.  Since there is no definition
+for such a method within the class in which it is listed, its
+declaration will be shown instead, when requested.
+
+@cindex native method
+@cindex method, native
+Native methods are like abstract methods in that only their interfaces
+are specified in Java.  Unlike abstract methods, their method bodies are
+defined in external languages such as C to allow for machine-specific
+dependencies.  Native methods are listed in the browser prefixed by the
+@code{"/ "} string, indicating that they are divided between Java and
+another language.
+
+@cindex constructor
+@cindex destructor
+Methods associated with creating and destroying objects
+are preceded by the @code{"+ "} string in listing buffers.  All other
+method listing entries are preceded by the @code{"- "} string.
+
+@vindex Java-class-keyword
+@cindex class definition keywords
+Java interface specifications, which specify protocols to which classes
+must conform, are treated just like class definitions in browser
+listings. All the methods of such interfaces are abstract, however.
+
+@node Objective-C Specifics,  , Java Specifics, Languages
+@section Objective-C Specifics
+
+@xref{C Specifics}, for details on C-specific support within Objective-C
+Environments.
+
+The OO-Browser supports browsing Objective-C classes, methods,
+categories and formal protocols.  Earlier sections of this manual explain
+how to browse these entities.  This section documents Objective-C
+language specifics, including variable settings.
+
+Objective-C entities are categorized when shown within OO-Browser listing
+buffers.  Classes are shown by name, without any prefix.  Methods
+are shown by name but are preceded by a special character that indicates
+the kind of method.  The following table describes each prefix.
+
+@table @code
+@item -
+precedes instance methods;
+@item +
+precedes class (factory) methods that affect the factory object for the
+class.
+@end table
+
+@menu
+* Objective-C Categories::
+* Objective-C Protocols::
+* Objective-C Element Selection::  Source Code Element Selection
+* Objective-C Settings::
+@end menu
+
+@node Objective-C Categories, Objective-C Protocols, Objective-C Specifics, Objective-C Specifics
+@subsection Objective-C Categories
+@cindex category
+@cindex Objective-C category
+An @dfn{Objective-C category} is an internal class grouping that
+specifies and implements a set of related class features.  The
+aggregation of all of the categories defined by a class and its
+ancestors represents the complete class definition.
+
+The OO-Browser can list and browse the source for: the categories of a
+class, all class categories in an Environment, and the classes which
+implement a category.  @xref{Browsing Categories}, for details.
+
+@node Objective-C Protocols, Objective-C Element Selection, Objective-C Categories, Objective-C Specifics
+@subsection Objective-C Protocols
+@cindex protocol
+@cindex Objective-C protocol
+An @dfn{Objective-C protocol} is an interface specification to which a
+class may conform.  The protocol includes a set of method signatures
+which any conforming class must implement.  One protocol may inherit
+from a list of other protocols, and thus expand the set of methods which
+a conforming class must implement.  The OO-Browser can list and browse
+the source for: the protocols to which a class conforms, all protocols
+in an Environment, and the implementors of a protocol.  @xref{Browsing
+Protocols}, for details.
+
+@node Objective-C Element Selection, Objective-C Settings, Objective-C Protocols, Objective-C Specifics
+@subsection Source Code Element Selection
+@cindex Objective-C
+One can jump from an Objective-C declaration to its definition by
+clicking the Action Key when within the declaration.  Most importantly,
+once a class header file is displayed, simply click on a method
+declaration to see its corresponding definition.  If the method is
+inherited from another class, a message at the bottom of the frame will
+describe which class the method is defined in once the browser displays
+the method definition.
+
+Parent classes may be browsed in a similar manner by clicking on their
+names in an inheritance or declaration clause.  It is therefore
+important to click on the method name part of a declaration when that is
+the element desired.
+
+@vindex objc-include-dirs
+@cindex #import
+@cindex include files
+Include files may be browsed by selecting their inclusion declarations
+(#import ...) within a source file.  Include files delimited by double
+quotes are searched for in the following places:  first, the directory of
+the current source file, then the directories listed in the variable
+@var{objc-include-dirs}, and then in any directories included in the
+current environment.
+
+@vindex objc-cpp-include-dirs
+Include files delimited by angle brackets are searched for in the
+following places:  first, the directories listed in the variable
+@var{objc-include-dirs}, then the directories listed in the variable
+@var{objc-cpp-include-dirs}, and then in any directories included in the
+current environment.  The variable @var{objc-cpp-include-dirs} should
+hold a list of the standard directories searched by your Objective-C
+pre-processor.  Each directory entry must end with a directory
+separator.  On UNIX systems, this is the '/' character.
+
+@node Objective-C Settings,  , Objective-C Element Selection, Objective-C Specifics
+@subsection Objective-C Settings
+@vindex objc-class-keyword
+@cindex class definition keywords
+By default, the @code{@@interface} keyword indicates a class definition to the
+Objective-C OO-Browser.  If you prefer some other criteria, you will need to
+modify the definition of @var{objc-class-keyword} in @file{br-objc.el}.
+
+@vindex objc-src-file-regexp
+@cindex file suffixes
+If you find that the browser is not scanning some of your Objective-C
+source files, you may be using file suffixes which it does not
+recognize.  Examine the value of @var{objc-src-file-regexp} and add any
+special file suffixes you use to it.@refill
+
+@c   ***************************
+@c          Appendices
+@c   ***************************
+
+
+@node Features, Commands, Languages, Top
+@c  node-name,  next,  previous,  up
+@appendix OO-Browser Features
+
+@itemize @bullet
+
+@item
+Support for Eiffel, C++, Objective-C, Smalltalk, Java and Common Lisp
+and its Object System (CLOS) is included.  Additionally, support for
+browsing large amounts of material in Info format by node name (a
+popular online documentation format with cross references and
+hierarchical structure) is include.  All languages provide class
+browsing via either a textual or a graphical interface.
+
+@item
+Method browsing is supported for C++, Objective-C, Eiffel and CLOS.
+CLOS supports browsing all elements defined with (def* constructs.
+In-source feature browsing is also supported for all of these languages.
+One simply selects a feature name to jump to its corresponding source.
+Method name overloading in C++ and inherited feature renaming in Eiffel
+are fully supported.
+
+@item
+C code browsing is supported for C++, Objective-C and C source code.
+@item
+Objective-C category and formal protocol browsing are supported.
+
+@item
+C++ parameterized template classes and methods are supported.
+
+@item
+Building Environments is fast compared to many other tools and browser
+startup once an Environment has been built is very fast.  Response times
+on workstations are excellent; for example, in one test case, less than
+two real seconds were required to display a set of complex inheritance
+graphs involving over 400 classes.
+
+@item
+Class inheritance networks may be displayed.  Either a single
+inheritance level (parents or children) or the entire inheritance
+network (ancestors or descendants) for a set of classes may be shown.
+
+@cindex multiple inheritance
+@item
+Multiple inheritance support is built-in, where applicable.
+
+@item
+The user need not know the location of class source; the browser will display
+or edit a class source based solely upon its class name.
+
+@item
+Immediate switching among languages is allowed.  One can switch from Eiffel
+browsing to C++ browsing in an instant, if so desired.  Or simply run two
+browsers side by side.
+
+@item
+Class files may be added, replaced or deleted one at a time or as a
+group by specifying a root directory below which all class files are
+found, including those in subdirectories.
+
+@item
+The browser uses class source code only, hence no compiler is necessary for
+proper browser operation.
+
+@item
+Library (stable) and System (in development) classes may be maintained and
+listed separately or together.  Any number of Libraries and Systems may be
+combined for listing in a single Environment.  There are no fixed limits
+on the number of classes per Environment nor on the number of
+Environments that may be browsed.
+
+@item
+The number of listing windows is limited only by the frame width and
+the width setting used for listing windows.
+
+@item
+Statistics on classes and Environments may be displayed.
+
+@item
+Language-specific class information may be shown.  Presently this feature is
+supported only for Eiffel.  A listing of class parents, attributes,
+routines and best guess (highly accurate) list of routine calls may be
+displayed.  Outputs from the Eiffel 'short' and 'flat' commands may also be
+shown.
+
+@item
+Machine-independent mouse support is included along with an extremely
+intuitive point and click interface.  The OO-Browser is pre-configured
+for use with the X window system, NEXTSTEP, Sunview or Apollo's DM
+window system under InfoDock, Emacs V19, XEmacs, Epoch, and Emacs V18.
+
+@item
+Popup and pulldown command menus are available under InfoDock, Emacs V19
+and XEmacs.
+
+@item
+All browser outputs are text which may be edited as desired or saved to
+files.
+
+@item
+A single key provides ASCII ordering of class names, ascending or
+descending, including those from inheritance trees.  Classes may be
+easily located by matching a regular expression or string to the set of
+class names in an Environment, with repeated searches incrementally
+narrowing the selected set.
+
+@item
+Browser functions may be used standalone within the editor without using
+the multi-windowed browser interface.  One useful example is to point to
+a class name such as a parent class in the text of another class and
+have the parent's source appear in an editable fashion.  An alternative
+editor and viewer may be selected to adapt the browser to personal
+taste.
+
+@cindex CLOS
+@item
+The browser is adaptable to any class-based object-oriented language.
+It works best with languages that focus on static class creation such as
+Eiffel and C++.  Those that use dynamic (runtime) class creation such as
+CLOS must be interfaced to the browser so that classes created at runtime
+are added to the browser's Environment.
+
+@cindex GNU Emacs
+@cindex UNIX
+@item
+The OO-Browser is integrated with the powerful GNU Emacs editor; it works on
+any UNIX system display supported by Emacs.  Most browser commands may
+be executed by direct selection, providing a very natural interface.
+
+@cindex source code
+@item
+All source code, over 400 kilobytes, is included and is heavily documented.
+@end itemize
+
+
+@node Commands, Glossary, Features, Top
+@appendix  OO-Browser Command Descriptions
+
+@c Call {M-x doc} to insert documentation in table.
+@c Call (br-cmd-doc t) to remove documentation from table.
+
+@cindex arguments
+@cindex formal arguments
+@cindex programming
+The following documentation is meant for programmers who want to modify
+the OO-Browser but is included here since some users of the OO-Browser
+may find it useful.  All commands that are bound to keys and that are
+specific to the OO-Browser are listed here.  Within each command
+description, identifiers shown in all capitals are the names of the
+command's formal arguments; all formal arguments are presented in the
+order in which they are required by the command.  If a command takes
+optional arguments, the first optional argument is labeled
+@emph{optional}; all following arguments are assumed to be optional.
+
+@cindex command documentation
+@cindex OO-Browser commands
+@table @code
+
+@findex br-add-class-file
+@item br-add-class-file  @{@kbd{C-c ^}@}
+Adds a file of classes to the current Environment.  Interactively or
+when optional CLASS-PATH is nil, defaults to current buffer file as
+CLASS-PATH.  If optional LIB-TABLE-P is non-nil, add to Library
+Environment, otherwise add to System Environment.  If optional SAVE-FILE
+is t, the Environment is then stored to the filename given by
+@var{br-env-file}.  If SAVE-FILE is non-nil and not t, its string value
+is used as the file to which to save the Environment.
+
+@findex br-ancestors
+@item br-ancestors  @{@kbd{a}@}
+Display ancestor tree whose root is the current class.  With optional
+prefix ARG, display all ancestor trees whose roots are visible classes
+at the current level.  ARG = -1 inverts current class ancestry tree.
+That is, it shows branches going down towards the root class, so that
+parents appear above children.  ARG < -1 inverts all ancestry trees.
+
+@findex br-at
+@item br-at  @{@kbd{@@}@}
+Display current class location in the inheritance graph.
+The class is displayed among both its ancestors and descendants.
+With optional prefix ARG, display location for all visible classes at the
+current level.
+
+@findex br-buffer-menu
+@item br-buffer-menu  @{@kbd{b}@}
+Display selection list of buffers with attached files in viewer window.
+
+@findex br-children
+@item br-children  @{@kbd{c}@}
+Display children of current class.  With optional prefix ARG, display
+children of all visible classes at the current level.
+
+@findex br-class-stats
+@item br-class-stats  @{@kbd{M-c}@}
+Display statistics summary for current class.  Optional prefix arg
+PROMPT means prompt for class name.
+
+@findex br-copyright
+@item br-copyright
+@cindex copyright
+Display browser copyright information in viewer window.
+
+@findex br-count
+@item br-count  @{@kbd{#}@}
+Count number of classes visible in current listing buffer.  Print
+text result in minibuffer when called interactively.
+
+@findex br-delete
+@item br-delete  @{@kbd{C-c C-d}@}
+Delete class from current Environment.  Optional prefix arg PROMPT means
+prompt for class name.
+
+@findex br-descendants
+@item br-descendants  @{@kbd{d}@}
+Display descendant tree whose root is the current class.  With optional
+prefix ARG, display all descendant trees whose roots are visible classes
+at the current level.
+
+@findex br-edit-entry
+@item br-edit-entry  @{@kbd{e}@}
+Edits source for any browser listing entry, such as a class or a feature.
+Optional prefix arg PROMPT means prompt for entry name.
+
+@findex br-env-create
+@item br-env-create  @{@kbd{C-c C-c}@}
+Create and save the specification of a new OO-Browser Environment.
+Interactively prompt for the Environment file name or use optional
+ENV-FILE.  Interactively prompt for the Environment language to use or
+use optional LANG-PREFIX as language indicator.  Return the name of the
+Envir spec file created.  Do not build the Environment.  Use
+'br-env-build' to construct an Environment from its specification.
+
+@findex br-env-load
+@item br-env-load  @{@kbd{C-c C-l}@}
+Load browser Environment or spec from optional ENV-FILE or 'br-env-file'.
+Non-nil PROMPT means prompt user before building tables.
+Non-nil NO-BUILD means skip build of Environment entirely.
+Return t if load is successful, else nil.
+
+@findex br-env-rebuild
+@item br-env-rebuild  @{@kbd{C-c C-e}@}
+Rescan System and Library sources associated with the current Environment.
+
+@findex br-env-save
+@item br-env-save  @{@kbd{C-c C-s}@}
+Save changed Environment to file given by optional SAVE-FILE or
+'br-env-file'.
+
+@findex br-env-stats
+@item br-env-stats  @{@kbd{M-e}@}
+Display summary for current Environment in viewer window.
+With optional prefix ARG, display class totals in minibuffer.
+
+@findex br-exit-level
+@item br-exit-level  @{@kbd{x}@}
+Return to prefix ARGth previous inheritance level listing.
+The command is ignored with ARG < 1.
+
+@findex br-find
+@item br-find
+Interactively completes class or feature ELEMENT-NAME and jumps to its definition.
+Returns ELEMENT-NAME or signals an error.
+
+@findex br-feature-signature
+@item br-feature-signature  @{@kbd{F}@}
+Show full feature signature in the view window.
+With optional prefix ARG, display signatures of all features from the
+current buffer.
+
+@findex br-help
+@item br-help  @{@kbd{h}@}
+Display browser operation help information in viewer window.
+
+@findex br-help-ms
+@item br-help-ms  @{@kbd{H}@}
+Display browser mouse usage help information in viewer window.
+
+@findex br-entry-info
+@item br-entry-info  @{@kbd{i}@}
+Display attributes of the current entry in the viewer window.
+
+@findex br-implementors
+@item br-implementors  @{@kbd{I}@}
+Display hierarchy of classes that define current feature.  Ignore
+inherited features.  With optional prefix ARG, display implementors of
+all features at the current level.
+
+@findex br-kill
+@item br-kill  @{@kbd{C-c C-k}@}
+Kill buffer in viewer window and redisplay help text.
+
+@findex br-lib-top-classes
+@item br-lib-top-classes  @{@kbd{l}@}
+Display list of top level Library classes.  With prefix ARG, display all
+Library classes.
+
+@findex br-lib-rebuild
+@item br-lib-rebuild  @{@kbd{L}@}
+Rescan Library components of the current Environment.
+
+@findex br-match
+@item br-match  @{@kbd{m}@}
+Show all class names in current Environment that contain optional EXPR.
+Nil value of EXPR means prompt for a value.  With optional prefix ARG, EXPR
+is treated as a string.  By default, it is treated as a regular expresion.
+AGAIN non-nil shows the number of classes MATCHED from the last search,
+allowing repeated narrowing of the search set.  Empty EXPR when AGAIN is nil
+matches to all classes in the Environment.
+
+@findex br-match-entries
+@item br-match-entries  @{@kbd{M}@}
+Show all entries in current listing that contain optional EXPR.
+Nil value of EXPR means prompt for a value.  With optional prefix ARG, EXPR
+is treated as a string.  By default, it is treated as a regular expresion.
+AGAIN non-nil means show the number of entries MATCHED from last search,
+allowing repeated narrowing of the search set.  Empty EXPR when AGAIN is nil
+matches to all entries in the listing.
+
+@findex br-next-entry
+@item br-next-entry  @{@kbd{C-n}@}
+Move point vertically down prefix ARG number of lines in listing
+buffer.
+
+@findex br-order
+@item br-order  @{@kbd{o}@}
+Order current browser listing window entries.
+With prefix ARG other than 1 (the default), don't remove leading space from
+entry lines before ordering.  Negative ARG means order in descending Ascii
+sequence, otherwise order in ascending sequence.
+
+@findex br-parents
+@item br-parents  @{@kbd{p}@}
+Display parents of current class.  With optional prefix ARG, display
+parents of all visible classes at the current level.
+
+@findex br-prev-entry
+@item br-prev-entry  @{@kbd{C-p}@}
+Move point vertically up prefix ARG number of lines in listing
+buffer.
+
+@findex br-quit
+@item br-quit  @{@kbd{q}@}
+Quit browser.  With optional prefix ARG, delete window configurations
+and listing buffers associated with the browser.
+
+@findex br-refresh
+@item br-refresh  @{@kbd{C-c C-r}@}
+Restore OO-Browser to its state upon startup.
+
+@findex br-resize-narrow
+@item br-resize-narrow  @{@kbd{C-x -}@}
+Resize listing windows so are narrower by 10 characters.
+
+@findex br-resize-widen
+@item br-resize-widen  @{@kbd{C-x +}@}
+Resize listing windows so are wider by 10 characters.
+
+@findex br-features
+@vindex br-inherited-features-flag
+@item br-features  @{@kbd{f}@}
+Display features/elements of the current class (prefix ARG = 1) or of
+the current listing if ARG is other than 0 or 1.
+
+With ARG = 0, the value of the variable, @var{br-inherited-features-flag},
+is toggled and no other action is taken.
+
+If @var{br-inherited-features-flag} is @code{t}, all features of each
+class are shown.  If @code{nil}, only lexically included features are
+shown and if the features of a single class are requested and none are
+defined, the class definition is displayed so that its feature
+declarations may be browsed.
+
+@findex br-sys-rebuild
+@item br-sys-rebuild  @{@kbd{S}@}
+Rescan System components of the current Environment.
+
+@findex br-sys-top-classes
+@item br-sys-top-classes  @{@kbd{s}@}
+Display list of top level System classes.
+With prefix ARG, display all System classes.
+
+@findex br-to-from-viewer
+@item br-to-from-viewer  @{@kbd{C-c C-v}@}
+Move point to viewer window or back to last recorded listing
+window.
+
+@findex br-toggle-keep-viewed
+@vindex br-keep-viewed-classes
+@item br-toggle-keep-viewed
+Toggle the value of the @var{br-keep-viewed-classes} flag.
+
+@findex br-top-classes
+@item br-top-classes  @{@kbd{t}@}
+Display list of top level classes.
+With prefix ARG, display all Environment classes.
+
+@findex br-unique
+@item br-unique  @{@kbd{u}@}
+Eliminate adjacent duplicate entry names from the current listing window.
+If two adjacent entries look the same one is eliminated, even if they refer
+to different class elements.
+
+@findex br-version
+@item br-version  @{@kbd{C-c #}@}
+Display browser version number.
+
+@findex br-view-entry
+@item br-view-entry  @{@kbd{v}@}
+Displays source for any browser listing entry.
+Optional prefix arg PROMPT means prompt for entry name.
+
+@findex br-view-friend
+@item br-view-friend @{@kbd{V}@}
+With point on a friend listing entry, view its source code definition.
+With optional OTHER-WIN non-nil, display in another window.
+With optional SIG-AT-POINT-FLAG non-nil, assume point is within a friend
+signature in a source buffer.
+
+@findex br-view-full-frame
+@item br-view-full-frame  @{@kbd{1}@}
+Use full frame to display contents of viewer window.
+
+@findex br-viewer-scroll-down
+@item br-viewer-scroll-down  @{@kbd{DEL}@}
+Scroll viewer window downward ARG lines or a windowful if no ARG.
+
+@findex br-viewer-scroll-up
+@item br-viewer-scroll-up  @{@kbd{SPC}@}
+Scroll viewer window upward ARG lines or a windowful if no ARG.
+
+@findex br-where
+@item br-where  @{@kbd{w}@}
+Display in minibuffer and return full path of a browser listing entry.
+Optional prefix arg PROMPT means prompt for entry name."
+
+@findex br-write-buffer
+@item br-write-buffer  @{@kbd{C-c C-w}@}
+Write narrowed portion of current browser buffer to a file.
+
+@findex br-tree
+@item br-tree  @{@kbd{M-d}@}
+Start the @file{xbr} application with descendency tree of current class.
+With optional prefix ARG, a descendency tree for each class in current
+buffer.
+
+@findex br-tree-graph
+@item br-tree-graph  @{@kbd{M-g}@}
+Start the appropriate tree application with the tree from current
+listing buffer.
+
+@findex br-tree-kill
+@item br-tree-kill  @{@kbd{M-k}@}
+Prompt user whether to kill all @file{xbr} sub-processes.
+
+@findex br-tree-features-toggle
+@item br-tree-features-toggle  @{@kbd{M-f}@}
+Toggle between showing features and hiding them when @code{br-tree} is
+invoked to display descendants graphically. 
+
+@end table
+
+
+@c   ***************************
+@c       Unnumbered Chapters
+@c   ***************************
+
+@node Glossary, References, Commands, Top
+@unnumbered Glossary
+
+Concepts pertinent to operational usage of the OO-Browser are defined here.
+
+If some GNU Emacs terms are unfamiliar to you, see @cite{[Stallman 87]}.
+
+@table @code
+@item Ancestors
+All classes above a class in the inheritance hierarchy.@refill
+
+@item Category
+Under most languages, a logical grouping of related classes.  The
+OO-Browser does not yet have any support for this kind of category.
+
+Under Objective-C, a partial class definition that implements a related
+set of methods.  The full class definitions is formed from the
+conjunction of all of the class' categories.  The OO-Browser supports
+Objective-C category browsing.@refill
+
+@item Children
+First level of classes below a class in the inheritance hierarchy.  Those
+that directly inherit from a class.@refill
+
+@item Class
+A category from which object instances are created.  The OO-Browser
+can display classes along with their elements, categories and formal
+protocols.
+
+@item Class at Point
+Class name in a listing buffer whose name appears on the same line as
+point.@refill
+
+@item Declaration
+A specification of a programatic entity, for reference by other parts of
+a program.  See also @code{Definition}.  The declaration of a method
+specifies its signature but not its body.@refill
+
+@item Default Class
+A class that the OO-Browser creates to simplify browsing a particular
+category of objects such as class protocols or global functions.
+Default class names begin and end with square bracket delimiters, as in
+@code{[protocol]}.@refill
+
+@item Definition
+Programmatic definition of an entity, e.g@. defining the body of a
+method.
+
+@item Completion
+The act of filling in the non-ambiguous part of a requested item, such
+as a class name or a file name.@refill
+
+@item Decendants
+All classes below a class in the inheritance hierarchy.@refill
+
+@item Element
+A feature or an instance of a class.
+
+@item Environment
+A series of browser lookup tables and control variables that specify the set
+of classes and inter-class relationships with which the browser works.@refill
+
+@item Environment File
+A file used to store browser Environments.@refill
+
+@item Environment Specification
+Unambiguously tells the browser what to include in the construction of
+an Environment.@refill
+
+@item Feature
+An element (method/attribute/component) of a class.
+
+@item Formal Protocol
+See @code{Protocol}.@refill
+
+@item Implementor
+A class in which a particular element is defined.  This does not include
+classes which inherit an element.
+
+@item Initialization File
+See @code{Personal Initialization File}.@refill
+
+@item Instance
+An object which has a particular class as its type.  The class serves as
+a template for instance creation.
+
+@item Library Classes
+Stable, seldomly changed classes that have been released for general
+usage.@refill
+
+@item Listing Window
+One of a number of browser windows used to display lists of classes.
+Inheritance relations are shown by class name indentation and by the class
+level numbers in the listing buffer mode lines.@refill
+
+@item Lookup Table
+A store used to help the browser quickly determine inter-class
+relationships.@refill
+
+@item Member
+See @code{Feature}.
+
+@item Method
+A callable function defined within one or more classes.
+
+@item Minibuffer Window
+The single line window at the bottom of an Emacs frame.  It is used to
+interact with the user by displaying messages and prompting for
+input.@refill
+
+@item Parents
+First level of classes above a class in the inheritance hierarchy.  Those
+from which a class directly inherits.@refill
+
+@vindex file, .br-init.el
+@item Personal Initialization File
+The optional file, @file{~/.br-init.el}, which sets user-specific
+options affecting operation of the OO-Browser, thereby configuring the
+browser for personal use.@refill
+
+@item Point
+The point in the current buffer in front of the character which the Emacs
+cursor is over but after any prior character.@refill
+
+@item Protocol
+An interface specification to which a class conforms.  Some languages
+use abstract classes for this purpose.  Under Objective-C, one may also
+define formal protocols which include a set of method signatures which a
+class must implement if it conforms to the protocol.  Also under
+Objective-C, one protocol may inherit from a list of other protocols,
+and thus expand the set of methods which a conforming class must
+implement.
+
+@item Routine
+See @code{Method}.
+
+@item Signature
+An interface specification for a method.  It includes the method's
+class, type of return value and the types of its formal parameters.
+
+@item Smart System
+The Smart System is another handy program that helps you to work smarter
+and faster.  It consists of two parts, the Smart Key System, a direct
+manipulation keyboard interface that gives you control of most GNU Emacs
+subsystems by using only two keys, and the Smart Menu System.  This
+provides a hierarchy of menus within Emacs that you use instead of
+keyboard commands.  Just point and click on a menu entry.  One of its
+uses is to invoke the OO-Browser on any desired language Environment.
+(The Smart Key System is included with the Smart Menu System.)@refill
+
+@item Smart Menu System
+See @code{Smart System}.
+
+@item System Classes
+Classes still in development whose interfaces are likely to change.
+They are typically part of a specific project and are often not meant to
+be reused elsewhere.@refill
+
+@item Top-Level Classes
+Classes without parents.  Those at the top of the inheritance tree for a
+given Environment.@refill
+
+@item Viewer Window
+The largest, bottom-most window in the browser used for displaying class
+source and help information.@refill
+@end table
+
+
+@node References, Keys, Glossary, Top
+@unnumbered References
+
+@table @b
+@item [Meyer 88]
+Meyer, Bertrand.  Object-oriented Software Construction.  Prentice Hall
+International: UK, 1988.
+
+@item [Meyer 89]
+Meyer, Bertrand.  Eiffel: The Language.  Interactive Software
+Engineering: Santa Barbara, CA, 1989.  (Also being republished by
+Prentice Hall.)
+
+@item [Goldberg 83]
+Goldberg, Adele and David Robson.  @emph{Smalltalk-80: The Language and
+its Implementation}.  Addison-Wesley, 1983.@refill
+
+@item [Stallman 87]
+Stallman, Richard.  @emph{GNU Emacs Manual}.  Free Software Foundation,
+Cambridge: MA, March 1987.@refill
+
+@item [Java 95]
+@emph{The Java Language Specification}.  Sun Microsystems Computer
+Corporation, Mountain View, CA, February 1, 1995.@refill
+@end table
+
+
+@c   ***************************
+@c           Indices
+@c   ***************************
+
+@node Keys, Command Index, References, Top
+@unnumbered Key Binding Index
+
+@printindex ky
+
+@node Command Index, Concepts, Keys, Top
+@unnumbered Command and Variable Index
+
+@printindex fn
+
+@node Concepts,  , Command Index, Top
+@unnumbered Concept Index
+
+@printindex cp
+
+@page
+@page
+@summarycontents
+@contents
+@bye
+
+@c Locl Variables: ;;;
+@c eval: (progn (load "cmd-doc") (defun doc () (interactive) (br-cmd-doc) (save-buffer))) ;;;
+@c End: ;;;
