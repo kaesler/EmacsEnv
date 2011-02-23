@@ -3631,7 +3631,7 @@ Spam or UCE message follows:
 ;;{{{ Scala and yasnippet
 
 (require 'scala-mode-auto)
-(setq scala-interpreter "c:/scala-2.8.0.final/bin/scala.bat")
+(setq scala-interpreter "c:/scala-2.8.1.final/bin/scala.bat")
 (require 'yasnippet)
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
@@ -3647,10 +3647,11 @@ Spam or UCE message follows:
                (kae-extend-scala-menu)
                ))
 
-(defvar esler-scala-book-path "~/library/src/OpenSrc/scala/book/ProgInScala1EdV6.pdf")
+(defvar esler-scala-book-path "~/AmazonArchivedDocuments/Books/ProgInScala2EdPrePrint.pdf")
+(defvar esler-scala-api-path "c:/scala-2.8.1.final/scala-2.8.1.final-devel-docs/api/index.html")
 
-(if (and (file-exists-p esler-scala-book-path)
-         (fboundp 'esler-dired-launch-file))
+(if (or (file-exists-p esler-scala-book-path)
+        (file-exists-p esler-scala-api-path))
     (add-hook 'scala-mode-hook
               '(lambda ()
                  (kae-extend-scala-menu))))
@@ -3659,14 +3660,22 @@ Spam or UCE message follows:
   (let ((menu (lookup-key scala-mode-map [menu-bar scala])))
     (define-key-after menu [browse-book]
       '("Browse Scala book" . kae-browse-scala-book)
+      'browse-api)
+    (define-key-after menu [browse-api]
+      '("Browse Scala API" . kae-browse-scala-api)
       'browse-api)))
-
 
 (defun kae-browse-scala-book ()
   (interactive)
   (w32-shell-execute "open"
                      (esler-w32-canonicalize-path-seps
                       (expand-file-name esler-scala-book-path))))
+
+(defun kae-browse-scala-api ()
+  (interactive)
+  (w32-shell-execute "open"
+                     (esler-w32-canonicalize-path-seps
+                      (expand-file-name esler-scala-api-path))))
 
 ;;}}}
 
