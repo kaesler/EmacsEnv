@@ -3628,7 +3628,7 @@ Spam or UCE message follows:
 ;;}}}
 ;;{{{ Programming language packages
 
-;;{{{ Scala and yasnippet
+;;{{{ Scala, yasnippet, sbt
 
 (require 'scala-mode-auto)
 (setq scala-interpreter "c:/scala-2.8.1.final/bin/scala.bat")
@@ -3677,8 +3677,9 @@ Spam or UCE message follows:
                      (esler-w32-canonicalize-path-seps
                       (expand-file-name esler-scala-api-path))))
 
-;;}}}
+(load-library "sbt")
 
+;;}}}
 ;;{{{ Groovy
 
 (autoload 'groovy-mode "groovy-mode"
