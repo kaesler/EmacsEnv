@@ -2119,6 +2119,12 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
+;;{{{ Auto-complete
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
+(ac-config-default)
+
+;;}}}
 ;;{{{ NXHTML
 
 (defun esler-pretty-print-xml-region (begin end)
@@ -3731,11 +3737,28 @@ Spam or UCE message follows:
 (add-hook 'lisp-interaction-mode-hook 'turn-on-eldoc-mode)
 
 ;;}}}
-;;{{{  Haskell Mode
+;;{{{  Haskell related
 
+
+;; Haskell mode itself
+;;
 (load-library "haskell-site-file")
 (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
 (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+(setq haskell-font-lock-symbols t)
+
+;; ghc-mod
+;;
+(autoload 'ghc-init "ghc" nil t)
+(add-hook 'haskell-mode-hook
+          (lambda ()
+            (ghc-init)
+            (flymake-mode)))
+
+;; auto completion for Haskell
+;;
+(require 'auto-complete-haskell)
+(add-to-list 'ac-modes 'haskell-mode)
 
 ;;}}}
 ;;{{{  Smalltalk Mode
