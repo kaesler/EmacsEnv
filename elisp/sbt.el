@@ -1,4 +1,4 @@
-
+;; Tweaked by Kevin Esler to work on Windows reasonably well.
 (eval-when-compile (require 'cl))
 (require 'tool-bar)
 (require 'compile)
@@ -44,7 +44,7 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
   (interactive)
   (compile (concat "cd " (sbt-find-path-to-project) "; sbt.sh") t)
   (pop-to-buffer (sbt-build-buffer-name nil))
-  (end-of-buffer))
+  (goto-char (point-max)))
 
 (defun sbt-clear ()
   "Clear (erase) the SBT buffer."
@@ -53,9 +53,9 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
     (let ((inhibit-read-only t))
       (erase-buffer))))
 
-(customize-set-variable 'scala-compile-error-regex  
-			'("^\\[error\\] \\([.a-zA-Z0-9/-]+[.]scala\\):\\([0-9]+\\):" 1 2 nil 2 nil))  
-(customize-set-variable 'compilation-buffer-name-function 'sbt-build-buffer-name)  
+(customize-set-variable 'scala-compile-error-regex
+			'("^\\[error\\] \\([:.a-zA-Z0-9/\\-]+[\.]scala\\):\\([0-9]+\\):" 1 2 nil 2 nil))
+(customize-set-variable 'compilation-buffer-name-function 'sbt-build-buffer-name)
 (customize-set-variable 'compilation-error-regexp-alist (list scala-compile-error-regex))
 (customize-set-variable 'compilation-mode-font-lock-keywords
 			'(("^\\[error\\] Error running compile:"
@@ -69,10 +69,10 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
 			   (0 compilation-info-face))))
 
 (customize-set-variable 'comint-prompt-read-only t)
-(customize-set-variable 'compilation-buffer-name-function 
+(customize-set-variable 'compilation-buffer-name-function
 			'sbt-build-buffer-name)
-(customize-set-variable 'compilation-error-regexp-alist 
-			(list scala-compile-error-regex))  
+(customize-set-variable 'compilation-error-regexp-alist
+			(list scala-compile-error-regex))
 (set 'compilation-auto-jump-to-first-error t)
 
 (ansi-color-for-comint-mode-on)
@@ -91,7 +91,7 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
   "The parent path for the given path."
   (file-truename (concat path "/..")))
 
-;; Search up the directory tree until directory with a "project" subdir 
+;; Search up the directory tree until directory with a "project" subdir
 ;; is found with build.properties
 (defun sbt-find-path-to-project ()
   "Move up the directory tree for the current buffer until root or a directory with a project/build.properities is found."

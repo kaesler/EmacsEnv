@@ -3634,7 +3634,7 @@ Spam or UCE message follows:
 ;;}}}
 ;;{{{ Programming language packages
 
-;;{{{ Scala, yasnippet, sbt
+;;{{{ Scala, yasnippet, sbt, ensime
 
 (require 'scala-mode-auto)
 (setq scala-interpreter "c:/scala-2.8.1.final/bin/scala.bat")
@@ -3685,6 +3685,10 @@ Spam or UCE message follows:
 
 (load-library "sbt")
 
+(require 'ensime)
+(setq ensime-default-server-root (file-name-directory (locate-library "ensime")))
+(setq ensime-default-server-cmd (concat ensime-default-server-root "bin/server.bat"))
+(setq ensime-sbt-program-name "sbt.sh")
 ;;}}}
 ;;{{{ Groovy
 
