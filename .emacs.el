@@ -3686,7 +3686,7 @@ Spam or UCE message follows:
 (load-library "sbt")
 
 (require 'ensime)
-(setq ensime-default-server-root (file-name-directory (locate-library "ensime")))
+(setq ensime-default-server-root "~/apps/ensime/install/ensime_2.8.1-0.4.4"
 (setq ensime-default-server-cmd (concat ensime-default-server-root "bin/server.bat"))
 (setq ensime-sbt-program-name "sbt.sh")
 ;;}}}
