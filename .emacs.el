@@ -2119,6 +2119,10 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
+;;{{{ Ascii doc mode
+(add-to-list 'auto-mode-alist '("\\.doc$" . doc-mode))
+;;}}}
+
 ;;{{{ Auto-complete
 (require 'auto-complete-config)
 (add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
@@ -3637,7 +3641,7 @@ Spam or UCE message follows:
 ;;{{{ Scala, yasnippet, sbt, ensime
 
 (require 'scala-mode-auto)
-(setq scala-interpreter "c:/scala-2.8.1.final/bin/scala.bat")
+(setq scala-interpreter "c:/scala-2.9.0.final/bin/scala.bat")
 (require 'yasnippet)
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
@@ -3653,8 +3657,10 @@ Spam or UCE message follows:
                (kae-extend-scala-menu)
                ))
 
-(defvar esler-scala-book-path "~/AmazonArchivedDocuments/Books/ProgInScala2EdPrePrint.pdf")
-(defvar esler-scala-api-path "c:/scala-2.8.1.final/scala-2.8.1.final-devel-docs/api/index.html")
+(defvar esler-scala-book-path "t:/AmazonArchivedDocuments/Books/ProgInScala2Ed.pdf")
+(defvar esler-scala-reference-path "t:/AmazonArchivedDocuments/Books/ScalaReference.pdf")
+(defvar esler-scala-style-guide-path "t:/AmazonArchivedDocuments/Books/ScalaStyleGuide.pdf")
+(defvar esler-scala-api-path "c:/scala-2.9.0.final/scala-2.9.0.final-devel-docs/api/index.html")
 
 (if (or (file-exists-p esler-scala-book-path)
         (file-exists-p esler-scala-api-path))
@@ -3669,13 +3675,31 @@ Spam or UCE message follows:
       'browse-api)
     (define-key-after menu [browse-api]
       '("Browse Scala API" . kae-browse-scala-api)
-      'browse-api)))
+      'browse-api)
+    (define-key-after menu [browse-reference]
+      '("Browse Scala Reference" . kae-browse-scala-reference)
+      'browse-reference)
+    (define-key-after menu [browse-style-guide]
+      '("Browse Scala Style Guide" . kae-browse-scala-style-guide)
+      'browse-style-guide)))
 
 (defun kae-browse-scala-book ()
   (interactive)
   (w32-shell-execute "open"
                      (esler-w32-canonicalize-path-seps
                       (expand-file-name esler-scala-book-path))))
+
+(defun kae-browse-scala-reference ()
+  (interactive)
+  (w32-shell-execute "open"
+                     (esler-w32-canonicalize-path-seps
+                      (expand-file-name esler-scala-reference-path))))
+
+(defun kae-browse-scala-style-guide ()
+  (interactive)
+  (w32-shell-execute "open"
+                     (esler-w32-canonicalize-path-seps
+                      (expand-file-name esler-scala-reference-style-guide))))
 
 (defun kae-browse-scala-api ()
   (interactive)
@@ -3686,9 +3710,10 @@ Spam or UCE message follows:
 (load-library "sbt")
 
 (require 'ensime)
-(setq ensime-default-server-root "~/apps/ensime/install/ensime_2.8.1-0.4.4"
+(setq ensime-default-server-root "~/apps/ensime/install/ensime_2.9.0-1-0.6.0/")
 (setq ensime-default-server-cmd (concat ensime-default-server-root "bin/server.bat"))
 (setq ensime-sbt-program-name "sbt.sh")
+
 ;;}}}
 ;;{{{ Groovy
 
