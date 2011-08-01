@@ -3789,6 +3789,18 @@ Spam or UCE message follows:
 (require 'auto-complete-haskell)
 (add-to-list 'ac-modes 'haskell-mode)
 
+;; Move nested
+(require 'haskell-move-nested)
+(define-key haskell-mode-map (kbd "C-<left>")
+  (lambda ()
+    (interactive)
+    (haskell-move-nested -1)))
+
+(define-key haskell-mode-map (kbd "C-<right>")
+  (lambda ()
+    (interactive)
+    (haskell-move-nested 1)))
+
 ;;}}}
 ;;{{{  Smalltalk Mode
 (setq auto-mode-alist
