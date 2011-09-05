@@ -37,6 +37,8 @@
 
 ;;{{{  Determine what kind of display technology is being used.
 
+(defvar running-as-mac-client (memq window-system '(ns)))
+
 (defvar running-as-x-client (memq window-system '(x x11)))
 (defvar running-as-w32-client (memq window-system '(w32 win32 mswindows)))
 (defvar running-as-terminal-client (null window-system))
@@ -1202,11 +1204,12 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 
 ;; Get a pencil-shaped mouse cursor.
 ;;
-(if (and (not running-as-w32-client)
-         (not running-as-terminal-client))
-    (progn
-      (setq x-sensitive-text-pointer-shape x-pointer-hand1)
-      (setq x-pointer-shape x-pointer-pencil)))
+;; (if (and (not running-as-w32-client)
+;;          (not running-as-terminal-client)
+;;          (not running-as-mac-client))
+;;     (progn
+;;       (setq x-sensitive-text-pointer-shape x-pointer-hand1)
+;;       (setq x-pointer-shape x-pointer-pencil)))
 
 (set-scroll-bar-mode nil)
 
@@ -1241,6 +1244,8 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
              '(left . 85))
 (add-to-list 'default-frame-alist
              '(background-color . "white smoke"))
+(add-to-list 'default-frame-alist
+             '(cursor-type . 'box))
 
 ;;}}}
 
@@ -3790,6 +3795,7 @@ Spam or UCE message follows:
 (add-to-list 'ac-modes 'haskell-mode)
 
 ;; Move nested
+(require 'haskell-mode)
 (require 'haskell-move-nested)
 (define-key haskell-mode-map (kbd "C-<left>")
   (lambda ()
@@ -5997,6 +6003,42 @@ This must be bound to a mouse click."
 ;;}}}
 
 ;;}}}
+
+;;{{{ Mac OS X specifics
+
+;; In Dired Mode: "open" a pointed-at object with the appropriate app.
+;; (If it's a directory, fire up the Windows Explorer.)
+;;
+
+
+(if running-as-mac-client
+    (progn
+      (defun esler-dired-launch-file (&optional arg)
+        (interactive "P")
+        (mapcar
+         (function
+          (lambda (relative-object)
+            (progn
+              (message "Opening %s..." relative-object)
+              (call-process "/usr/bin/open" nil 0 nil
+                            (expand-file-name relative-object))
+              (message "Opening %s...done" relative-object))))
+         (dired-get-marked-files t arg)))
+
+      (eval-after-load
+          "dired"
+        '(define-key dired-mode-map "j" 'esler-dired-launch-file))
+
+      (setq mouse-wheel-scroll-amount '(0.01))
+
+      ;; Start in a sensible place.
+      ;;
+      (cd "~/")
+
+      (setq tab-width 4)))
+
+;;}}}
+
 
 ;;{{{  Win32-specifics
 
