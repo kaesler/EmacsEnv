@@ -2844,14 +2844,6 @@ Spam or UCE message follows:
 (setq vm-summary-show-threads t)
 ;;(setq vm-keep-crash-boxes "~/.vm-crash-boxes")
 
-;; Send URLs to existing Netscape process.
-;;
-(if running-as-w32-client
-    (progn
-      (setq vm-url-browser 'esler-browse-url-with-default-browser)
-      (setq vm-popup-menu-on-mouse-3 nil))
-  (setq vm-url-browser 'vm-mouse-send-url-to-netscape))
-
 (setq vm-url-search-limit 20000)
 
 ;; This helps prevent screwups due to misspelling folder names.
@@ -3184,38 +3176,6 @@ Spam or UCE message follows:
 
 ;;}}}
 ;;{{{  Browse-URL
-
-;; Define some functions so I can use various browsers to display HTML.
-;; (Windows only at this stage.)
-;;
-(if running-as-w32-client
-    (if at-site-work
-        (progn
-          (defvar mozilla-location "C:/Program Files/Mozilla.org/Mozilla/mozilla.exe"))
-      (progn
-        (defvar mozilla-location "C:/Program Files/Mozilla.org/Mozilla/mozilla.exe"))))
-
-(defun esler-browse-url-mozilla (url &rest args)
-  (setq browse-url-generic-program mozilla-location)
-  (let ((browse-url-generic-program mozilla-location)
-        (browse-url-generic-args (list "-P" (user-login-name))))
-    (apply 'browse-url-generic
-           (list url))))
-
-;; Define this function on Windows for invoking the default HTML display tool.
-;;
-(if running-as-w32-client
-    (defun esler-browse-url-with-default-browser (url &rest args)
-      (interactive "sURL: ")
-      (w32-shell-execute "open" url)))
-
-;; Set the default browser.
-;;
-(if running-as-w32-client
-    (setq browse-url-browser-function 'esler-browse-url-with-default-browser)
-  ;; On Unix, use Netscape.
-  ;;
-  (setq browse-url-browser-function 'browse-url-netscape))
 
 ;; Bind the browse-url commands to keys with the `C-c C-z' prefix
 ;; (as used by html-helper-mode).
@@ -6029,6 +5989,13 @@ This must be bound to a mouse click."
           "dired"
         '(define-key dired-mode-map "j" 'esler-dired-launch-file))
 
+      ;; Get the desired cursor shape.
+      (set-default 'cursor-type 'box)
+
+      ;; Allow press and hold in Emas
+      (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
+
+      ;; Improve scrolling
       (setq mouse-wheel-scroll-amount '(0.01))
 
       ;; Start in a sensible place.
