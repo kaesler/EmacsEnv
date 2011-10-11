@@ -35,14 +35,13 @@
 
 ;;}}}
 
-;;{{{  Determine what kind of display technology is being used.
+;;{{{  Determine what kind of OS and display is being used.
 
-(defvar running-as-mac-client (memq window-system '(ns)))
+(defvar running-on-mac (memq window-system '(ns)))
+(defvar running-on-w32 (memq window-system '(w32 win32 mswindows)))
 
 (defvar running-as-x-client (memq window-system '(x x11)))
-(defvar running-as-w32-client (memq window-system '(w32 win32 mswindows)))
 (defvar running-as-terminal-client (null window-system))
-;;(defvar running-as-cygwin-client (eq system-type 'cygwin))
 
 ;; Boolean variable to indicate if we're an ASCII Emacs in an xterm window
 ;; (so we can enable the mouse support for this mode of operation).
@@ -182,26 +181,6 @@
 
 ;;}}}
 
-;;{{{ Find Cygwin and Bash
-
-(defun find-cygwin-root ()
-  (if (running-off-usb-drive)
-      (let ((root (concat usb-drive-letter ":\\cygwin")))
-        (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
-            root))
-    (let ((root (concat "c:\\" "cygwin")))
-      (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
-          root))))
-
-(defvar cygwin-root nil)
-(defvar cygwin-bash-location nil)
-(if running-as-w32-client
-    (progn
-      (setq cygwin-root (find-cygwin-root))
-      (if (not (null cygwin-root))
-          (setq cygwin-bash-location (concat cygwin-root "\\bin\\bash.exe")))))
-
-;;}}}
 ;;{{{  My identity
 
 (setq user-full-name "Kevin Esler")
@@ -322,10 +301,7 @@
 
 ;;{{{  Load .emacs.custom
 
-(if (and running-as-w32-client
-         at-site-work)
-    (setq custom-file "k:/apps/emacs/.emacs.custom")
-  (setq custom-file "~/apps/emacs/.emacs.custom"))
+(setq custom-file "~/apps/emacs/.emacs.custom")
 (if (file-exists-p custom-file)
     (progn
       (load-file custom-file)
@@ -334,6 +310,22 @@
 ;;}}}
 
 ;;{{{  Useful commands and functions.
+
+;; Launch a file based on its file type as in Windows/Mac.
+(defun esler-launch-file (file)
+  (interactive "f")
+  (cond
+   (running-on-mac
+     (progn
+       (message "Opening %s..." file)
+       (call-process "/usr/bin/open" nil 0 nil
+                     (expand-file-name file))
+       (message "Opening %s...done" file)))
+
+   (running-on-w32
+     (w32-shell-execute "open"
+                        (esler-w32-canonicalize-path-seps
+                         (expand-file-name file))))))
 
 (defun directory-sub-dirs (dir)
   (let* ((entries (directory-files dir))
@@ -1182,7 +1174,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
     ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"))
       "Consolas-10"))
 
-(if running-as-w32-client
+(if running-on-w32
     (set-frame-font esler-w32-preferred-font))
 
 ;; The Bitstream fonts were downloaded from: http://c2.com/cgi/wiki?BitstreamVera
@@ -1202,15 +1194,6 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 ;;}}}
 ;;{{{  Customise frame appearance.
 
-;; Get a pencil-shaped mouse cursor.
-;;
-;; (if (and (not running-as-w32-client)
-;;          (not running-as-terminal-client)
-;;          (not running-as-mac-client))
-;;     (progn
-;;       (setq x-sensitive-text-pointer-shape x-pointer-hand1)
-;;       (setq x-pointer-shape x-pointer-pencil)))
-
 (set-scroll-bar-mode nil)
 
 ;; I like the region highlighted.
@@ -1224,7 +1207,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (setq pop-up-frames nil)
 (setq pop-up-windows t)
 
-(if running-as-w32-client
+(if running-on-w32
     (progn
       (add-to-list 'default-frame-alist
                    `(font . ,esler-w32-preferred-font))))
@@ -1410,36 +1393,6 @@ It defaults to the most recent such command."
 
 ;;{{{ Mouse events.
 
-;; Behaviour: Click on pathname.
-;;
-(if (not esler-emacs23)
-    (progn
-      (global-set-key [mouse-3] 'mouse19-global-mouse3-handler)
-      (global-set-key [S-mouse-3] 'mouse19-global-mouse3-handler)
-      (defun mouse19-global-mouse3-handler (click)
-
-        "Find the file whose name the cursor is over.
-This must be bound to a mouse click."
-
-        (interactive "@e")
-        (mouse-set-point click)
-        (sit-for 0)
-        (find-file-at-point (eq 'S-mouse-3 (car click))))
-
-      ;; Behaviour: Resize panes by dragging the dividers.
-
-      ;; Contributed by: philippe@cfmu.eurocontrol.be
-      ;;
-      ;;       (global-set-key [mode-line down-mouse-2]
-      ;;                       'mode-line-resize-dynamically)
-
-      ;;       (global-set-key [vertical-scroll-bar M-down-mouse-2]
-      ;;                       'scroll-bar-resize-dynamically)
-
-      ;;       (global-set-key [vertical-line down-mouse-2]
-      ;;                       'scroll-bar-resize-dynamically)))
-
-      ))
 (defun mode-line-resize-dynamically ()
   "Resize a window by dragging the mode-line.
 This must be bound to a mouse-down event in the mode-line."
@@ -1560,7 +1513,7 @@ and/or the vertical-line."
               "---------------------------------"
               ["~/" esler-project-dired-homedir]
               ["Windows Profile Directory" esler-project-dired-windows-profile
-               running-as-w32-client]
+               running-on-w32]
               "---------------------------------"
               ["Find files" find-lisp-find-dired]
               "---------------------------------"
@@ -1583,11 +1536,11 @@ and/or the vertical-line."
                                             nil
                                             "explorer"
                                             ".,/e")
-               :included running-as-w32-client
+               :included running-on-w32
                ]
               ["Windows Shell"
-               (w32-shell-execute "open" "cmd.exe")
-               :included running-as-w32-client
+               (esler-launch-file "cmd.exe")
+               :included running-on-w32
                ]
               )))
 (add-hook 'menu-bar-final-items 'KAE)
@@ -1679,7 +1632,7 @@ and/or the vertical-line."
          ;;
          (eclipse-program esler-default-eclipse-program)
          (link-path (concat path "/Eclipse.lnk")))
-    (if running-as-w32-client
+    (if running-on-w32
         (if (file-exists-p link-path)
             (setq eclipse-program (ls-lisp-parse-w32-lnk link-path))))
     (start-process "eclipse" nil
@@ -1922,7 +1875,7 @@ otherwise return DIR"
         lisp-subdir
       dir)))
 
-(defun esler-set-loadpath-emacs23 ()
+(defun esler-set-loadpath ()
   (setq load-path (append
 
                    ;; My primary library of Elisp.
@@ -1939,8 +1892,7 @@ otherwise return DIR"
 
                    load-path)))
 
-(if esler-emacs23
-    (esler-set-loadpath-emacs23))
+(esler-set-loadpath)
 
 ;;}}}
 ;;{{{  Colour
@@ -1972,74 +1924,6 @@ otherwise return DIR"
 
 (if (> emacs-minor-version 29)
     (require 'facemenu))
-
-;;}}}
-
-;;{{{ Font-lock
-
-(if (and window-system
-         (not esler-emacs23))
-
-    ;; Gnu Emacs
-    ;;
-    (progn
-      (global-font-lock-mode 1)
-      (if (fboundp 'jit-lock-mode)
-          (jit-lock-mode t)
-        (setq font-lock-support-mode 'lazy-lock-mode))
-
-      (setq font-lock-maximum-decoration t)
-      (set-face-background 'trailing-whitespace "bisque")
-      (cond
-
-       (at-site-work
-        (progn
-          (make-face 'comment)
-          (set-face-foreground 'comment "DarkGreen")
-          (setq font-lock-comment-face 'comment)
-          (make-face 'string)
-          (set-face-foreground 'string "Maroon")
-          (setq font-lock-string-face 'string)
-          (make-face 'type)
-          (set-face-foreground 'type "DarkOliveGreen")
-          (setq font-lock-type-face 'type)
-          (make-face 'function)
-          (set-face-foreground 'function "blue")
-          (setq font-lock-function-name-face 'function)))
-
-       (t nil))))
-
-(if (and window-system
-         (not esler-emacs23))
-    (progn
-      (global-font-lock-mode t)
-      (setq font-lock-support-mode 'lazy-lock-mode)
-      (setq font-lock-maximum-decoration t)
-
-      ;; Get font-lock-controlling menu options beneath the Edit menu.
-      ;;
-
-      ;;  kae: 23.1
-      ;;(require 'font-menus)
-
-      (cond
-
-       (at-site-work
-        (progn
-          (make-face 'comment)
-          (set-face-foreground 'comment "DarkGreen")
-          (setq font-lock-comment-face 'comment)
-          (make-face 'string)
-          (set-face-foreground 'string "Maroon")
-          (setq font-lock-string-face 'string)
-          (make-face 'type)
-          (set-face-foreground 'type "DarkOliveGreen")
-          (setq font-lock-type-face 'type)
-          (make-face 'function)
-          (set-face-foreground 'function "blue")
-          (setq font-lock-function-name-face 'function)))
-
-       (t nil))))
 
 ;;}}}
 
@@ -2090,35 +1974,24 @@ for common operations.
 
 ;;{{{  Portuguese character set
 
-(if (> emacs-major-version 19)
+(cond
+ (running-on-w32
 
-    ;; Version 20.
-    ;;
-    (if running-as-w32-client
-
-        ;; Win32, Emacs-20
-        ;;
-        (defun portuguese ()
-          (interactive)
-          (standard-display-european 1)
-          (iso-accents-mode)
-          (iso-accents-customize "portuguese"))
-
-      ;; Unix, Emacs-20
-      ;;
-      (defun portuguese ()
-        (interactive)
-        (set-language-environment "Latin-1")
-        (set-input-method "latin-1-prefix")))
-
-  ;; Version 19.
+  ;; Win32, Emacs-20
   ;;
   (defun portuguese ()
     (interactive)
     (standard-display-european 1)
-    (load-library "iso-syntax")
     (iso-accents-mode)
     (iso-accents-customize "portuguese")))
+
+ (t
+  ;; Unix, Emacs-20
+  ;;
+  (defun portuguese ()
+    (interactive)
+    (set-language-environment "Latin-1")
+    (set-input-method "latin-1-prefix"))))
 
 ;;}}}
 
@@ -2129,6 +2002,7 @@ for common operations.
 ;;}}}
 
 ;;{{{ Auto-complete
+
 (require 'auto-complete-config)
 (add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
 (ac-config-default)
@@ -2146,7 +2020,7 @@ by using nxml's indentation rules."
   (save-excursion
       (nxml-mode)
       (goto-char begin)
-      (while (search-forward-regexp "\>[ \\t]*\<" nil t) 
+      (while (search-forward-regexp "\>[ \\t]*\<" nil t)
         (backward-char) (insert "\n"))
       (indent-region begin end))
     (message "Ah, much better!"))
@@ -2238,16 +2112,6 @@ by using nxml's indentation rules."
 (require 'git-emacs)
 
 ;;}}}
-;;{{{  Perforce
-
-(if at-site-work
-    (progn
-      (load-library "p4")
-      (p4-set-p4-executable "c:/Program Files/Perforce/p4.exe")
-
-      (require 'vc-p4)))
-
-;;}}}
 
 ;;{{{  Ishl (highlight interactive searches)
 
@@ -2260,29 +2124,6 @@ by using nxml's indentation rules."
 ;;{{{  ELL
 
 (autoload 'ell-packages "ell" "Browse list of Emacs Lisp packages" t)
-
-;;}}}
-
-;;{{{  VC
-
-;; Make a VC menu-bar entry visible.
-;;
-                                        ; ; (require 'vc-hooks)
-                                        ; ; (define-key global-map [menu-bar vc]
-                                        ; ;   (cons "VC" vc-menu-map))
-                                        ; ; (or (memq
-                                        ; ;      'vc menu-bar-final-items)
-                                        ; ;     (setq menu-bar-final-items
-                                        ; ;           (cons
-                                        ; ;            'vc menu-bar-final-items)))
-
-;;}}}
-
-;;{{{  Power-macros
-
-;;Obsolete?
-;; (require 'power-macros)
-;; ;;(power-macros-mode)
 
 ;;}}}
 
@@ -2331,7 +2172,7 @@ by using nxml's indentation rules."
 
 ;;{{{  SMTP packages
 
-(if running-as-w32-client
+(if running-on-w32
     (cond
 
      ;; Use bog-ordinary SMTP.
@@ -2687,11 +2528,11 @@ Spam or UCE message follows:
       (cond
        ;; At work: keep folders on Unix for backup purposes, even if we're reading on NT.
        ;;
-       ((and at-site-work running-as-w32-client) "k:/mail/folders/saved/")
+       ((and at-site-work running-on-w32) "k:/mail/folders/saved/")
 
        ;; At home:
        ;;
-       ((and at-site-home running-as-w32-client) "~/mail/folders/saved/")
+       ((and at-site-home running-on-w32) "~/mail/folders/saved/")
 
        (t "~/mail/folders/saved/")))
 
@@ -2699,11 +2540,11 @@ Spam or UCE message follows:
       (cond
        ;; At work: keep folders on Unix for backup purposes, even if we're reading on NT.
        ;;
-       ((and at-site-work running-as-w32-client) "k:/mail/folders/incoming/inbox")
+       ((and at-site-work running-on-w32) "k:/mail/folders/incoming/inbox")
 
        ;; At home:
        ;;
-       ((and at-site-home running-as-w32-client) "~/mail/folders/incoming/inbox")
+       ((and at-site-home running-on-w32) "~/mail/folders/incoming/inbox")
 
        (t "~/mail/folders/incoming/inbox")))
 
@@ -3046,41 +2887,42 @@ Spam or UCE message follows:
 ;;}}}
 ;;{{{  Mailcrypt.
 
-(if running-as-w32-client
-    (progn
-      (load-library "mailcrypt")
-      (mc-setversion "gpg")))
+(cond
+ (running-on-w32
+  (progn
+    (load-library "mailcrypt")
+    (mc-setversion "gpg")))
 
-(if (not running-as-w32-client)
-    (progn
-      (autoload 'mc-install-write-mode "mailcrypt" nil t)
-      (autoload 'mc-install-read-mode "mailcrypt" nil t)
+ (t
+  (progn
+    (autoload 'mc-install-write-mode "mailcrypt" nil t)
+    (autoload 'mc-install-read-mode "mailcrypt" nil t)
 
-      ;;(setq mc-default-scheme mc-scheme-pgp)
-      (setq mc-passwd-timeout 240)
-      (setq mc-ripem-user-id (or (getenv "RIPEM_USER_NAME")
-                                 (user-full-name)))
-      (setq mc-pgp-always-sign t)
+    ;;(setq mc-default-scheme mc-scheme-pgp)
+    (setq mc-passwd-timeout 240)
+    (setq mc-ripem-user-id (or (getenv "RIPEM_USER_NAME")
+                               (user-full-name)))
+    (setq mc-pgp-always-sign t)
 
-      (setq mc-always-replace nil)
-      (setq mc-use-default-recipients nil)
-      (setq mc-encrypt-for-me nil)
+    (setq mc-always-replace nil)
+    (setq mc-use-default-recipients nil)
+    (setq mc-encrypt-for-me nil)
 
-      (setq mc-pre-encryption-hook nil)
-      (setq mc-post-encryption-hook nil)
-      (setq mc-pre-decryption-hook nil)
-      (setq mc-post-decryption-hook nil)
+    (setq mc-pre-encryption-hook nil)
+    (setq mc-post-encryption-hook nil)
+    (setq mc-pre-decryption-hook nil)
+    (setq mc-post-decryption-hook nil)
 
-      ;; For sending messages:
-      ;;
-      (add-hook 'mail-mode-hook 'mc-install-write-mode)
-      ;;(add-hook 'vm-mail-mode-hook 'mc-install-write-mode)
-      (add-hook 'gnus-mail-forward-hook 'mc-install-write-mode)
+    ;; For sending messages:
+    ;;
+    (add-hook 'mail-mode-hook 'mc-install-write-mode)
+    ;;(add-hook 'vm-mail-mode-hook 'mc-install-write-mode)
+    (add-hook 'gnus-mail-forward-hook 'mc-install-write-mode)
 
-      ;; For reading messages:
-      ;;
-      (add-hook 'vm-summary-mode-hook 'mc-install-read-mode)
-      (add-hook 'vm-mode-hook 'mc-install-read-mode)))
+    ;; For reading messages:
+    ;;
+    (add-hook 'vm-summary-mode-hook 'mc-install-read-mode)
+    (add-hook 'vm-mode-hook 'mc-install-read-mode))))
 
 ;;}}}
 ;;{{{  MIME and associates.
@@ -3133,11 +2975,11 @@ Spam or UCE message follows:
 (setq gnus-article-save-directory
       (cond
        ;; Keep this on a backup-up Unix-resident disk for now.
-       ((and at-site-work running-as-w32-client) "k:/mail/folders/saved")
+       ((and at-site-work running-on-w32) "k:/mail/folders/saved")
 
        ;; At home:
        ;;
-       ((and at-site-home running-as-w32-client) "~/mail/folders/saved")
+       ((and at-site-home running-on-w32) "~/mail/folders/saved")
 
        (t "~/mail/folders/saved")))
 
@@ -3155,7 +2997,7 @@ Spam or UCE message follows:
 (setq message-directory "~/Message")
 
 ;; This ensures that Gnus can forward mail correctly.
-(if running-as-w32-client
+(if running-on-w32
     (progn
       (require 'esmtpmail)
       (setq message-send-mail-function 'esmtpmail-send-it)))
@@ -3603,10 +3445,42 @@ Spam or UCE message follows:
 ;;}}}
 ;;{{{ Programming language packages
 
-;;{{{ Scala, yasnippet, sbt, ensime
+;;{{{  Erlang
+
+(defvar esler-erlang-root
+  (cond
+   (running-on-mac "/usr/local/lib/erlang")
+   ;; TODO: fix this
+   (running-on-w32 "/usr/local/lib/erlang")
+   (t "/usr/local/lib/erlang")))
+
+(setq erlang-root-dir esler-erlang-root)
+(setq exec-path (cons (concat esler-erlang-root "/bin") exec-path))
+
+(require 'erlang-start)
+(require 'erlang-flymake)
+;;}}}
+;;{{{  Scala, yasnippet, sbt, ensime
+
+(defvar esler-amazon-root "~/AmazonArchivedDocuments/")
+(defvar esler-scala-book-path (concat esler-amazon-root "Books/ProgInScala2Ed.pdf"))
+(defvar esler-scala-reference-path (concat esler-amazon-root "Books/ScalaReference.pdf"))
+(defvar esler-scala-style-guide-path (concat esler-amazon-root "Books/ScalaStyleGuide.pdf"))
+
+(defvar esler-typesafe-root
+  (cond
+   (running-on-mac "/Applications/typesafe-stack/")
+   ;; TODO: fix this
+   (running-on-windows "c:/scala-2.9.1.final/")))
 
 (require 'scala-mode-auto)
-(setq scala-interpreter "c:/scala-2.9.0.final/bin/scala.bat")
+
+(setq scala-interpreter
+      (cond
+       (running-on-mac (concat esler-typesafe-root "bin/scala"))
+       (running-on-w32 (concat esler-typesafe-root "bin/scala.bat"))
+       (t (concat esler-typesafe-root "bin/scala"))))
+
 (require 'yasnippet)
 (setq yas/my-directory "~/apps/emacs/snippets")
 (yas/initialize)
@@ -3622,10 +3496,11 @@ Spam or UCE message follows:
                (kae-extend-scala-menu)
                ))
 
-(defvar esler-scala-book-path "t:/AmazonArchivedDocuments/Books/ProgInScala2Ed.pdf")
-(defvar esler-scala-reference-path "t:/AmazonArchivedDocuments/Books/ScalaReference.pdf")
-(defvar esler-scala-style-guide-path "t:/AmazonArchivedDocuments/Books/ScalaStyleGuide.pdf")
-(defvar esler-scala-api-path "c:/scala-2.9.0.final/scala-2.9.0.final-devel-docs/api/index.html")
+(defvar esler-scala-api-path
+  (cond
+   (running-on-mac (concat esler-typesafe-root "doc/scala-devel-docs/api/index.html"))
+   (running-on-w32 "c:/scala-2.9.0.final/scala-2.9.0.final-devel-docs/api/index.html")
+   (t (concat esler-typesafe-root "doc/scala-devel-docs/api/index.html"))))
 
 (if (or (file-exists-p esler-scala-book-path)
         (file-exists-p esler-scala-api-path))
@@ -3650,37 +3525,33 @@ Spam or UCE message follows:
 
 (defun kae-browse-scala-book ()
   (interactive)
-  (w32-shell-execute "open"
-                     (esler-w32-canonicalize-path-seps
-                      (expand-file-name esler-scala-book-path))))
+  (esler-launch-file esler-scala-book-path))
 
 (defun kae-browse-scala-reference ()
   (interactive)
-  (w32-shell-execute "open"
-                     (esler-w32-canonicalize-path-seps
-                      (expand-file-name esler-scala-reference-path))))
+  (esler-launch-file esler-scala-reference-path))
 
 (defun kae-browse-scala-style-guide ()
   (interactive)
-  (w32-shell-execute "open"
-                     (esler-w32-canonicalize-path-seps
-                      (expand-file-name esler-scala-reference-style-guide))))
+  (esler-launch-file esler-scala-reference-style-guide))
 
 (defun kae-browse-scala-api ()
   (interactive)
-  (w32-shell-execute "open"
-                     (esler-w32-canonicalize-path-seps
-                      (expand-file-name esler-scala-api-path))))
+  (esler-launch-file esler-scala-api-path))
 
 (load-library "sbt")
 
 (require 'ensime)
 (setq ensime-default-server-root "~/apps/ensime/install/ensime_2.9.0-1-0.6.0/")
-(setq ensime-default-server-cmd (concat ensime-default-server-root "bin/server.bat"))
-(setq ensime-sbt-program-name "sbt.sh")
+(setq ensime-default-server-cmd
+      (concat ensime-default-server-root
+              (cond
+               (running-on-mac "bin/server")
+               (running-on-w32 "bin/server.bat"))))
+(setq ensime-sbt-program-name "sbt")
 
 ;;}}}
-;;{{{ Groovy
+;;{{{  Groovy
 
 (autoload 'groovy-mode "groovy-mode"
   "Mode for editing groovy source files" t)
@@ -3698,7 +3569,7 @@ Spam or UCE message follows:
              ))
 
 ;;}}}
-;;{{{ ECB
+;;{{{  ECB
 
 ;; Didn't work in 23.2
 ;; (if (and
@@ -3985,7 +3856,7 @@ Spam or UCE message follows:
       (if (and file-name
                (string-match "^/vobs/.*" file-name))
           (setq result "atria"))
-      (if (and at-site-work running-as-w32-client
+      (if (and at-site-work running-on-w32
                file-name)
           (setq result "vmware")))
     result))
@@ -4001,7 +3872,7 @@ Spam or UCE message follows:
 ;; Try to turn on C++ mode for .h files in Windows when appropriate.
 ;;
 (defun esler-c-mode-hook ()
-  (if (and at-site-work running-as-w32-client)
+  (if (and at-site-work running-on-w32)
       (if (and (buffer-file-name)
                (string-match "\\.h$" (buffer-file-name))
                (esler-file-seems-to-be-MFC))
@@ -4057,7 +3928,7 @@ Spam or UCE message follows:
   ;; needs tab-width of 8.
   ;;
   (setq tab-width 8)
-  (if running-as-w32-client
+  (if running-on-w32
       (if (eq 'c++mode major-mode)
           (setq tab-width 4)))
 
@@ -4075,7 +3946,7 @@ Spam or UCE message follows:
 ;;
 ;; Also set up colouring of Atria types.
 ;;
-(if running-as-w32-client
+(if running-on-w32
     (progn
       ;; Add colouring for MFC's special syntax additions
       ;;
@@ -4318,14 +4189,14 @@ uses CMU comint code"
                         "Run an inferior Scheme"
                         t)))
 
-(setq scheme-program-name (if running-as-w32-client
-                              "c:/cygwin/usr/local/bin/scsh"
-                            "scsh"))
+(setq scheme-program-name (cond
+                           (running-on-w32 "c:/cygwin/usr/local/bin/scsh")
+                           (t "scsh")))
 (defun run-scsh ()
   (interactive)
-  (let ((scheme-program-name (if running-as-w32-client
-                                 "c:/cygwin/usr/local/bin/scsh"
-                               "scsh")))
+  (let ((scheme-program-name (cond
+                              (running-on-w32 "c:/cygwin/usr/local/bin/scsh")
+                              (t "scsh"))))
     (run-scheme scheme-program-name)))
 
 
@@ -4456,7 +4327,7 @@ uses CMU comint code"
 (setq auto-mode-alist (cons '("[Mm]akefile\\..*$" . makefile-mode) auto-mode-alist))
 (setq auto-mode-alist (cons '("[Mm]akefile_.*$" . makefile-mode) auto-mode-alist))
 
-(if running-as-w32-client
+(if running-on-w32
     (progn
       (setq auto-mode-alist (cons '("\\.[Mm][Aa][Kk]$" . makefile-mode) auto-mode-alist))
 
@@ -4922,7 +4793,7 @@ when I invoked it, if that makes sense."
 
 ;; Display a "universalised" true pathname of directory at the top.
 ;;
-;; (if (not running-as-w32-client)
+;; (if (not running-on-w32)
 ;;     (progn
 
 ;;       (add-hook 'dired-after-readin-hook
@@ -5964,25 +5835,22 @@ This must be bound to a mouse click."
 
 ;;}}}
 
-;;{{{ Mac OS X specifics
+;;{{{  Mac OS X specifics
 
 ;; In Dired Mode: "open" a pointed-at object with the appropriate app.
 ;; (If it's a directory, fire up the Windows Explorer.)
 ;;
 
 
-(if running-as-mac-client
+(if running-on-mac
     (progn
+
       (defun esler-dired-launch-file (&optional arg)
         (interactive "P")
         (mapcar
          (function
           (lambda (relative-object)
-            (progn
-              (message "Opening %s..." relative-object)
-              (call-process "/usr/bin/open" nil 0 nil
-                            (expand-file-name relative-object))
-              (message "Opening %s...done" relative-object))))
+            (esler-launch-file relative-object)))
          (dired-get-marked-files t arg)))
 
       (eval-after-load
@@ -6008,6 +5876,28 @@ This must be bound to a mouse click."
 
 
 ;;{{{  Win32-specifics
+
+;;{{{ Find Cygwin and Bash
+
+(if running-on-w32
+    (progn
+      (defun find-cygwin-root ()
+        (if (running-off-usb-drive)
+            (let ((root (concat usb-drive-letter ":\\cygwin")))
+              (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
+                  root))
+          (let ((root (concat "c:\\" "cygwin")))
+            (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
+                root))))
+
+      (defvar cygwin-root nil)
+      (defvar cygwin-bash-location nil)
+
+      (setq cygwin-root (find-cygwin-root))
+      (if (not (null cygwin-root))
+          (setq cygwin-bash-location (concat cygwin-root "\\bin\\bash.exe")))))
+
+;;}}}
 
 ;;{{{ Some Bash support
 
@@ -6124,7 +6014,7 @@ using cygpath"
 
 ;;}}}
 
-(if running-as-w32-client
+(if running-on-w32
     (progn
 
       ;; Load the registry interface and mode.
