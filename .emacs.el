@@ -3471,7 +3471,7 @@ Spam or UCE message follows:
   (cond
    (running-on-mac "/Applications/typesafe-stack/")
    ;; TODO: fix this
-   (running-on-windows "c:/scala-2.9.1.final/")))
+   (running-on-w32 "c:/scala-2.9.1.final/")))
 
 (require 'scala-mode-auto)
 
