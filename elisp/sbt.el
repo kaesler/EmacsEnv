@@ -42,7 +42,10 @@ see the file `COPYING'.  If not, write to the Free Software Foundation, Inc.,
 (defun sbt-shell ()
   "Launch the sbt shell."
   (interactive)
-  (compile (concat "cd " (sbt-find-path-to-project) "; sbt.sh") t)
+  (compile (concat "cd "
+                   (sbt-find-path-to-project)
+                   "; sbt.sh")
+           t)
   (pop-to-buffer (sbt-build-buffer-name nil))
   (goto-char (point-max)))
 

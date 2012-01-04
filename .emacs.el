@@ -1192,6 +1192,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 ;; Also look here: http://c2.com/cgi/wiki?GoodProgrammerTypeface
 
 ;;}}}
+
 ;;{{{  Customise frame appearance.
 
 (set-scroll-bar-mode nil)
@@ -1895,6 +1896,7 @@ otherwise return DIR"
 (esler-set-loadpath)
 
 ;;}}}
+
 ;;{{{  Colour
 
 ;; Possible strategy: use font-lock or face-lock for source code.
@@ -1926,6 +1928,16 @@ otherwise return DIR"
     (require 'facemenu))
 
 ;;}}}
+
+;;}}}
+
+;;{{{ Colour themes
+
+ (if (< emacs-major-version 24)
+     (progn
+       (require 'color-theme)
+       (require 'color-theme-solarized)
+       (color-theme-solarized-light)))
 
 ;;}}}
 
@@ -1996,6 +2008,19 @@ for common operations.
 ;;}}}
 
 ;;{{{  Configure MODES and packages.
+
+;;{{{ Confluence wiki editing mode
+
+(require 'confluence)
+(setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
+
+(global-set-key "\C-xwf" 'confluence-get-page)
+
+(add-hook 'confluence-mode-hook
+  (local-set-key "\C-xw" confluence-prefix-map)
+  (local-set-key "\M-j" 'confluence-newline-and-indent)
+  (local-set-key "\M-;" 'confluence-list-indent-dwim))
+;;}}}
 
 ;;{{{ Ascii doc mode
 (add-to-list 'auto-mode-alist '("\\.doc$" . doc-mode))
