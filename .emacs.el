@@ -1229,7 +1229,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (add-to-list 'default-frame-alist
              '(background-color . "white smoke"))
 (add-to-list 'default-frame-alist
-             '(cursor-type . 'box))
+             '(cursor-type . box))
 
 ;;}}}
 
