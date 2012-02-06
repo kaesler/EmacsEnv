@@ -2009,6 +2009,9 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
+;;{{{ Magit
+(require 'magit)
+;;}}}
 ;;{{{ Confluence wiki editing mode
 
 (require 'confluence)
