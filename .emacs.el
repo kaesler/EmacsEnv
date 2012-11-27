@@ -1933,11 +1933,15 @@ otherwise return DIR"
 
 ;;{{{ Colour themes
 
+(require 'color-theme-solarized)
  (if (< emacs-major-version 24)
      (progn
        (require 'color-theme)
-       (require 'color-theme-solarized)
-       (color-theme-solarized-light)))
+       (color-theme-solarized-light))
+   (progn
+     (load-library "solarized-light-theme")
+     (load-library "solarized-dark-theme")
+     (enable-theme 'solarized-dark)))
 
 ;;}}}
 
