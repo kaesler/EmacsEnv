@@ -1941,7 +1941,7 @@ otherwise return DIR"
    (progn
      (load-library "solarized-light-theme")
      (load-library "solarized-dark-theme")
-     (enable-theme 'solarized-dark)))
+     (enable-theme 'solarized-light)))
 
 ;;}}}
 
@@ -3505,7 +3505,53 @@ Spam or UCE message follows:
    ;; TODO: fix this
    (running-on-w32 "c:/scala-2.9.1.final/")))
 
-(require 'scala-mode-auto)
+(require 'scala-mode)
+
+(setq scala-indent:default-run-on-strategy scala-indent:eager-strategy)
+(setq scala-indent:indent-value-expression t)
+(setq scala-indent:align-parameters t)
+(setq scala-indent:align-forms t)
+(setq scala-indent:use-javadoc-style t)
+
+(add-hook 'scala-mode-hook '(lambda ()
+
+  ;; Bind the 'newline-and-indent' command to RET (aka 'enter'). This
+  ;; is normally also available as C-j. The 'newline-and-indent'
+  ;; command has the following functionality: 1) it removes trailing
+  ;; whitespace from the current line, 2) it create a new line, and 3)
+  ;; indents it.  An alternative is the
+  ;; 'reindent-then-newline-and-indent' command.
+  (local-set-key (kbd "RET") 'newline-and-indent)
+
+  ;; Bind the 'join-line' command to C-M-j. This command is normally
+  ;; bound to M-^ which is hard to access, especially on some European
+  ;; keyboards. The 'join-line' command has the effect or joining the
+  ;; current line with the previous while fixing whitespace at the
+  ;; joint.
+  (local-set-key (kbd "C-M-j") 'join-line)
+
+  ;; Bind the backtab (shift tab) to
+  ;; 'scala-indent:indent-with-reluctant-strategy command. This is usefull
+  ;; when using the 'eager' mode by default and you want to "outdent" a
+  ;; code line as a new statement.
+  (local-set-key (kbd "<backtab>") 'scala-indent:indent-with-reluctant-strategy)
+
+  ;; and other bindings here
+))
+
+(add-hook 'scala-mode-hook '(lambda ()
+  (require 'whitespace)
+
+  ;; clean-up whitespace at save
+  (make-local-variable 'before-save-hook)
+  (add-hook 'before-save-hook 'whitespace-cleanup)
+
+  ;; turn on highlight. To configure what is highlighted, customize
+  ;; the *whitespace-style* variable. A sane set of things to
+  ;; highlight is: face, tabs, trailing
+  (setq whitespace-style '(face tabs trailing))
+  (whitespace-mode)
+))
 
 (setq scala-interpreter
       (cond
@@ -3513,74 +3559,74 @@ Spam or UCE message follows:
        (running-on-w32 (concat esler-typesafe-root "bin/scala.bat"))
        (t (concat esler-typesafe-root "bin/scala"))))
 
-(require 'yasnippet)
-(setq yas/my-directory "~/apps/emacs/snippets")
-(yas/initialize)
-(yas/load-directory yas/my-directory)
+;; (require 'yasnippet)
+;; (setq yas/my-directory "~/apps/emacs/snippets")
+;; (yas/initialize)
+;; (yas/load-directory yas/my-directory)
 
-(add-hook 'scala-mode-hook
-            '(lambda ()
-               (setq show-trailing-whitespace t)
-               (setq scala-mode-indent:step 2)
-               (setq tab-width 4)
-               (yas/minor-mode-on)
-               (scala-electric-mode t)
-               (kae-extend-scala-menu)
-               ))
+;; (add-hook 'scala-mode-hook
+;;             '(lambda ()
+;;                (setq show-trailing-whitespace t)
+;;                (setq scala-mode-indent:step 2)
+;;                (setq tab-width 4)
+;;                (yas/minor-mode-on)
+;;                (scala-electric-mode t)
+;;                (kae-extend-scala-menu)
+;;                ))
 
-(defvar esler-scala-api-path
-  (cond
-   (running-on-mac (concat esler-typesafe-root "doc/scala-devel-docs/api/index.html"))
-   (running-on-w32 "c:/scala-2.9.0.final/scala-2.9.0.final-devel-docs/api/index.html")
-   (t (concat esler-typesafe-root "doc/scala-devel-docs/api/index.html"))))
+;; (defvar esler-scala-api-path
+;;   (cond
+;;    (running-on-mac (concat esler-typesafe-root "doc/scala-devel-docs/api/index.html"))
+;;    (running-on-w32 "c:/scala-2.9.0.final/scala-2.9.0.final-devel-docs/api/index.html")
+;;    (t (concat esler-typesafe-root "doc/scala-devel-docs/api/index.html"))))
 
-(if (or (file-exists-p esler-scala-book-path)
-        (file-exists-p esler-scala-api-path))
-    (add-hook 'scala-mode-hook
-              '(lambda ()
-                 (kae-extend-scala-menu))))
+;; (if (or (file-exists-p esler-scala-book-path)
+;;         (file-exists-p esler-scala-api-path))
+;;     (add-hook 'scala-mode-hook
+;;               '(lambda ()
+;;                  (kae-extend-scala-menu))))
 
-(defun kae-extend-scala-menu ()
-  (let ((menu (lookup-key scala-mode-map [menu-bar scala])))
-    (define-key-after menu [browse-book]
-      '("Browse Scala book" . kae-browse-scala-book)
-      'browse-api)
-    (define-key-after menu [browse-api]
-      '("Browse Scala API" . kae-browse-scala-api)
-      'browse-api)
-    (define-key-after menu [browse-reference]
-      '("Browse Scala Reference" . kae-browse-scala-reference)
-      'browse-reference)
-    (define-key-after menu [browse-style-guide]
-      '("Browse Scala Style Guide" . kae-browse-scala-style-guide)
-      'browse-style-guide)))
+;; (defun kae-extend-scala-menu ()
+;;   (let ((menu (lookup-key scala-mode-map [menu-bar scala])))
+;;     (define-key-after menu [browse-book]
+;;       '("Browse Scala book" . kae-browse-scala-book)
+;;       'browse-api)
+;;     (define-key-after menu [browse-api]
+;;       '("Browse Scala API" . kae-browse-scala-api)
+;;       'browse-api)
+;;     (define-key-after menu [browse-reference]
+;;       '("Browse Scala Reference" . kae-browse-scala-reference)
+;;       'browse-reference)
+;;     (define-key-after menu [browse-style-guide]
+;;       '("Browse Scala Style Guide" . kae-browse-scala-style-guide)
+;;       'browse-style-guide)))
 
-(defun kae-browse-scala-book ()
-  (interactive)
-  (esler-launch-file esler-scala-book-path))
+;; (defun kae-browse-scala-book ()
+;;   (interactive)
+;;   (esler-launch-file esler-scala-book-path))
 
-(defun kae-browse-scala-reference ()
-  (interactive)
-  (esler-launch-file esler-scala-reference-path))
+;; (defun kae-browse-scala-reference ()
+;;   (interactive)
+;;   (esler-launch-file esler-scala-reference-path))
 
-(defun kae-browse-scala-style-guide ()
-  (interactive)
-  (esler-launch-file esler-scala-reference-style-guide))
+;; (defun kae-browse-scala-style-guide ()
+;;   (interactive)
+;;   (esler-launch-file esler-scala-reference-style-guide))
 
-(defun kae-browse-scala-api ()
-  (interactive)
-  (esler-launch-file esler-scala-api-path))
+;; (defun kae-browse-scala-api ()
+;;   (interactive)
+;;   (esler-launch-file esler-scala-api-path))
 
-(load-library "sbt")
+;; (load-library "sbt")
 
-(require 'ensime)
-(setq ensime-default-server-root "~/apps/ensime/install/ensime_2.9.0-1-0.6.0/")
-(setq ensime-default-server-cmd
-      (concat ensime-default-server-root
-              (cond
-               (running-on-mac "bin/server")
-               (running-on-w32 "bin/server.bat"))))
-(setq ensime-sbt-program-name "sbt")
+;; (require 'ensime)
+;; (setq ensime-default-server-root "~/apps/ensime/install/ensime_2.9.0-1-0.6.0/")
+;; (setq ensime-default-server-cmd
+;;       (concat ensime-default-server-root
+;;               (cond
+;;                (running-on-mac "bin/server")
+;;                (running-on-w32 "bin/server.bat"))))
+;; (setq ensime-sbt-program-name "sbt")
 
 ;;}}}
 ;;{{{  Groovy
