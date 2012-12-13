@@ -5741,8 +5741,8 @@ This must be bound to a mouse click."
 ;;}}}
 ;;{{{  Scroll-in-place
 
-(require 'scroll-in-place)
-(setq scroll-allow-blank-lines-past-eob t)
+;; (require 'scroll-in-place)
+;; (setq scroll-allow-blank-lines-past-eob t)
 
 ;;}}}
 ;;{{{  Follow Mode
