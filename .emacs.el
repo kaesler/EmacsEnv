@@ -6,7 +6,8 @@
 
 ;;{{{  Set some global variables.
 
-(defvar esler-elisp-directory "~/apps/emacs/elisp")
+(setq user-emacs-directory "~/apps/emacs/")
+(defvar esler-elisp-directory (concat user-emacs-directory "elisp"))
 
 
 ;;{{{  Determine what kind of OS and display is being used.
@@ -1386,6 +1387,18 @@ and/or the vertical-line."
                ]
               )))
 (add-hook 'menu-bar-final-items 'KAE)
+(defun esler-project-dired-homedir ()
+  (interactive)
+  (dired "~/"))
+
+(defun esler-project-dired-my-elisp ()
+  (interactive)
+  (dired esler-elisp-directory))
+
+(defun esler-project-dired-emacs-elisp ()
+  (interactive)
+  ;;(dired (concat exec-directory "/../lisp")))
+  (dired (concat exec-directory "/../../Resources/lisp")))
 
 ;;}}}
 
@@ -1602,6 +1615,13 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
+;;{{{ Package
+(require 'package)
+(add-to-list 'package-archives
+  '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(package-initialize)
+
+;;}}}
 ;;{{{ Magit
 
 (require 'magit)
@@ -1966,39 +1986,38 @@ by using nxml's indentation rules."
 
 ;;{{{  Haskell related
 
+;; ;; Haskell mode itself
+;; ;;
+;; (load-library "haskell-site-file")
+;; (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+;; (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+;; (setq haskell-font-lock-symbols t)
 
-;; Haskell mode itself
-;;
-(load-library "haskell-site-file")
-(add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-(setq haskell-font-lock-symbols t)
+;; ;; ghc-mod
+;; ;;
+;; (autoload 'ghc-init "ghc" nil t)
+;; (add-hook 'haskell-mode-hook
+;;           (lambda ()
+;;             (ghc-init)
+;;             (flymake-mode)))
 
-;; ghc-mod
-;;
-(autoload 'ghc-init "ghc" nil t)
-(add-hook 'haskell-mode-hook
-          (lambda ()
-            (ghc-init)
-            (flymake-mode)))
+;; ;; auto completion for Haskell
+;; ;;
+;; (require 'auto-complete-haskell)
+;; (add-to-list 'ac-modes 'haskell-mode)
 
-;; auto completion for Haskell
-;;
-(require 'auto-complete-haskell)
-(add-to-list 'ac-modes 'haskell-mode)
+;; ;; Move nested
+;; (require 'haskell-mode)
+;; (require 'haskell-move-nested)
+;; (define-key haskell-mode-map (kbd "C-<left>")
+;;   (lambda ()
+;;     (interactive)
+;;     (haskell-move-nested -1)))
 
-;; Move nested
-(require 'haskell-mode)
-(require 'haskell-move-nested)
-(define-key haskell-mode-map (kbd "C-<left>")
-  (lambda ()
-    (interactive)
-    (haskell-move-nested -1)))
-
-(define-key haskell-mode-map (kbd "C-<right>")
-  (lambda ()
-    (interactive)
-    (haskell-move-nested 1)))
+;; (define-key haskell-mode-map (kbd "C-<right>")
+;;   (lambda ()
+;;     (interactive)
+;;     (haskell-move-nested 1)))
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
