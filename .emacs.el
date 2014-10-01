@@ -12,10 +12,13 @@
 (defvar esler-elisp-directory (concat user-emacs-directory "elisp"))
 
 ;;{{{ Package
-(require 'package)
-(add-to-list 'package-archives
-  '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(package-initialize)
+
+(if (> emacs-major-version 23)
+    (progn
+      (require 'package)
+      (add-to-list 'package-archives
+                   '("melpa" . "http://melpa.milkbox.net/packages/") t)
+      (package-initialize)))
 
 ;;}}}
 
@@ -1038,7 +1041,8 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 
 ;;{{{  Customise frame appearance.
 
-(set-scroll-bar-mode nil)
+(if (not running-as-terminal-client)
+    (set-scroll-bar-mode nil))
 
 ;; I like the region highlighted.
 ;;
@@ -1529,7 +1533,8 @@ otherwise return DIR"
 
 ;;{{{ Colour themes
 
-(require 'solarized-theme)
+(if (not running-as-terminal-client)
+    (require 'solarized-theme))
 
 ;;}}}
 
@@ -1580,20 +1585,23 @@ for common operations.
 
 ;;{{{ Magit
 
-(require 'magit)
+(if (> emacs-major-version 23)
+    (require 'magit))
 
 ;;}}}
 ;;{{{ Confluence wiki editing mode
 
-(require 'confluence)
-(setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
-
-(global-set-key "\C-xwf" 'confluence-get-page)
-
-(add-hook 'confluence-mode-hook
-  (local-set-key "\C-xw" confluence-prefix-map)
-  (local-set-key "\M-j" 'confluence-newline-and-indent)
-  (local-set-key "\M-;" 'confluence-list-indent-dwim))
+(if (> emacs-major-version 23)
+    (progn
+      (require 'confluence)
+      (setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
+      
+      (global-set-key "\C-xwf" 'confluence-get-page)
+      
+      (add-hook 'confluence-mode-hook
+                (local-set-key "\C-xw" confluence-prefix-map)
+                (local-set-key "\M-j" 'confluence-newline-and-indent)
+                (local-set-key "\M-;" 'confluence-list-indent-dwim))))
 
 ;;}}}
 
@@ -1605,9 +1613,11 @@ for common operations.
 
 ;;{{{ Auto-complete
 
-(require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
-(ac-config-default)
+(if (> emacs-major-version 23)
+    (progn
+      (require 'auto-complete-config)
+      (add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
+      (ac-config-default)))
 
 ;;}}}
 ;;{{{ NXHTML
