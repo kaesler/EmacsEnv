@@ -1,8 +1,0 @@
-(defun make-many-files (file-count)
-  (interactive "N")
-  (let ((i 0))
-    (while (< i file-count)
-      (let ((name (format "file_%d" i)))
-        (if (not (file-exists-p name))
-            (write-region "stuff\n" nil (format "file_%d" i))))
-      (setq i (1+ i)))))

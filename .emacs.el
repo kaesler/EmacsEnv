@@ -4,11 +4,20 @@
 
 (message "Start of .emacs...")
 
+(cd "~/")
+
 ;;{{{  Set some global variables.
 
 (setq user-emacs-directory "~/apps/emacs/")
 (defvar esler-elisp-directory (concat user-emacs-directory "elisp"))
 
+;;{{{ Package
+(require 'package)
+(add-to-list 'package-archives
+  '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(package-initialize)
+
+;;}}}
 
 ;;{{{  Determine what kind of OS and display is being used.
 
@@ -416,21 +425,6 @@ then only one line is copied."
 (defun now ()
   (interactive)
   (message (current-time-string)))
-
-;;}}}
-
-;;{{{  Command to set the mouse cursor shape.
-
-;;TODO
-;; (defun set-mouse-shape (form)
-;;   "Sets the mouse shape to FORM.
-;;     The names for the shapes are defined in x-win.el."
-;;   (interactive
-;;    (let (formato)
-;;      (setq formato (completing-read "Shape: " obarray 'boundp t "x-pointer-"))
-;;      (list (intern formato))))
-;;   (setq x-pointer-shape (symbol-value form))
-;;   (set-mouse-color (cdr (assq  'mouse-color (frame-parameters)))))
 
 ;;}}}
 
@@ -1500,14 +1494,6 @@ otherwise return DIR"
                    ;;
                    (list (expand-file-name esler-elisp-directory))
 
-                   ;; The lisp-containing directory for each package stored
-                   ;; beneath a designated subdirectory of my primary
-                   ;; library.
-                   ;;
-                   (mapcar 'esler-find-lisp-in-package
-                           (esler-directory-subdirectories
-                            (concat esler-elisp-directory "/Installed-packages")))
-
                    load-path)))
 
 (esler-set-loadpath)
@@ -1515,13 +1501,6 @@ otherwise return DIR"
 ;;}}}
 
 ;;{{{  Colour
-
-;; Possible strategy: use font-lock or face-lock for source code.
-;;
-;; TODO:
-;;  be able to adjust colours interactively, and on the fly.
-;;  be able to do it on a per-mode-basis
-;;
 
 (defun face-describe (face)
   ;; It would be nice if this had completion
@@ -1550,23 +1529,7 @@ otherwise return DIR"
 
 ;;{{{ Colour themes
 
-(require 'color-theme-solarized)
- (if (< emacs-major-version 24)
-     (progn
-       (require 'color-theme)
-       (color-theme-solarized-light))
-   (progn
-     (load-library "solarized-light-theme")
-     (load-library "solarized-dark-theme")
-     (enable-theme 'solarized-light)))
-
-;; Make sure new frames get the theme.
- (setq after-make-frame-functions
-             (list
-              (function select-frame)
-              (function
-               (lambda (frame)
-                (enable-theme 'solarized-light)))))
+(require 'solarized-theme)
 
 ;;}}}
 
@@ -1615,13 +1578,6 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
-;;{{{ Package
-(require 'package)
-(add-to-list 'package-archives
-  '("melpa" . "http://melpa.milkbox.net/packages/") t)
-(package-initialize)
-
-;;}}}
 ;;{{{ Magit
 
 (require 'magit)
@@ -1650,7 +1606,7 @@ for common operations.
 ;;{{{ Auto-complete
 
 (require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/.emacs.d/ac-dict")
+(add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
 (ac-config-default)
 
 ;;}}}
@@ -1658,7 +1614,7 @@ for common operations.
 
 (defun esler-pretty-print-xml-region (begin end)
   "Pretty format XML markup in region. You need to have nxml-mode
-http://www.emacswiki.org/cgi-bin/wiki/NxmlMode installed to do
+http://www.emacswiki.org/cgi-bin/wiki/NxmlMode installedto do
 this.  The function inserts linebreaks to separate tags that have
 nothing but whitespace between them.  It then indents the markup
 by using nxml's indentation rules."
@@ -1690,128 +1646,6 @@ by using nxml's indentation rules."
 
 ;;}}}
 
-;;{{{  Git-Emacs
-
-(require 'git-emacs)
-
-;;}}}
-
-;;{{{  HTML packages
-
-;;{{{  Html-helper-mode
-
-(autoload 'html-helper-mode "html-helper-mode" "Yay HTML" t)
-
-;; Kludges found necessary to get Version 3.0 to work:
-;;
-(defvar visual-basic-mode-hook nil)
-(defvar html-helper-mode-uses-visual-basic nil)
-
-;;}}}
-
-;; HTML Helper Mode seems to work better than Psgml for now for HTML.
-;;
-(defvar esler-use-html-helper-mode-for-html nil)
-
-(if esler-use-html-helper-mode-for-html
-    (progn
-      (setq auto-mode-alist (cons '("\\.html$" . html-helper-mode) auto-mode-alist))
-      (setq auto-mode-alist (cons '("\\.htm$"  . html-helper-mode) auto-mode-alist)))
-  (progn
-    (setq auto-mode-alist (cons '("\\.html$" . sgml-mode) auto-mode-alist))
-    (setq auto-mode-alist (cons '("\\.htm$"  . sgml-mode) auto-mode-alist))))
-
-(defun esler-html-comment ()
-  (interactive)
-  (if (not mark-active)
-      (save-excursion
-        (insert "<!-- \n-->\n"))
-    (let ((start (min (point) (mark)))
-          (end (max (point) (mark))))
-      (save-excursion
-        (goto-char end)
-        (if (looking-at "\n")
-            (forward-line 1))
-        (insert "-->\n")
-        (goto-char start)
-        (beginning-of-line)
-        (insert "<!-- \n")))))
-
-(defun esler-html-script-narrow-to-script ()
-  "Narrows to a script"
-  (interactive)
-  (save-excursion
-    (let ((case-fold-search t))
-      (search-backward-regexp "<script.*>")
-      (goto-char (match-end 0))
-      (if (looking-at "\n")
-          (forward-line 1))
-      (let ((beg (point)))
-        (search-forward "</script>" nil t)
-        (goto-char (match-beginning 0))
-        (narrow-to-region beg (point))))))
-
-(defun esler-html-edit-javascript ()
-  "Edit the script where the cursor is, in an indirect buffer using C Mode."
-
-  (interactive)
-  (if (not (eq major-mode 'html-helper-mode))
-      (error "Wrong major mode"))
-
-  ;; Make name for an indirect buffer
-  ;;
-  (let* ((indirect-buffer-name (concat (buffer-name) "-script-edit"))
-         ;; Make the indirect buffer
-         ;;
-         (indirect-buffer (make-indirect-buffer (current-buffer) indirect-buffer-name)))
-
-    (with-current-buffer indirect-buffer-name
-      ;; Narrow to script
-      ;;
-      (esler-html-script-narrow-to-script)
-      ;; Turn on Java mode
-      ;;
-      (java-mode))
-
-    ;; Make the buffer current.
-    ;;
-    (pop-to-buffer indirect-buffer t)))
-
-(defun esler-html-send-buffer-to-netscape4 ()
-  (interactive)
-  (let ((browse-url-browser-function 'esler-browse-url-netscape4))
-    ;; browse-url-of-file doesn't work for Netscape4 on Windows.
-    ;; It produces "file:z:/foo/bar/x.html" whcih NN4 can't parse.
-    ;; This seems to work.
-    ;;
-    (browse-url (buffer-file-name))))
-
-(defun esler-html-send-buffer-to-netscape6 ()
-  (interactive)
-  (let ((browse-url-browser-function 'esler-browse-url-netscape6))
-    (browse-url-of-file)))
-
-(defun esler-html-send-buffer-to-mozilla ()
-  (interactive)
-  (let ((browse-url-browser-function 'esler-browse-url-mozilla))
-    (browse-url-of-file)))
-
-(defun esler-html-send-buffer-to-ie5 ()
-  (interactive)
-  (let ((browse-url-browser-function 'esler-browse-url-with-default-browser))
-    (browse-url-of-file)))
-
-(setq html-helper-user-menu
-      '(
-        ["Comment" esler-html-comment t]
-        ["Edit Javascript" esler-html-edit-javascript t]
-        ["Send to IE5"  esler-html-send-buffer-to-ie5 t]
-        ["Send to Netscape6"  esler-html-send-buffer-to-netscape6 t]
-        ["Send to Mozilla"  esler-html-send-buffer-to-mozilla t]
-        ["Send to Netscape4"  esler-html-send-buffer-to-netscape4 t]
-        ))
-
-;;}}}
 ;;{{{  Command-line interactive packages
 
 ;;{{{  Comint Mode(s).
@@ -3891,7 +3725,7 @@ using cygpath"
 
 ;;{{{  Start the Emacs server
 
-;; TODO: If you get a "directory is unsafe" message from this
+;; Note: If you get a "directory is unsafe" message from this
 ;; take ownership of the directory mentioned.
 ;;
 (server-start)
