@@ -11,9 +11,11 @@
 (setq user-emacs-directory "~/apps/emacs/")
 (defvar esler-elisp-directory (concat user-emacs-directory "elisp"))
 
+(defvar esler-modern-emacs (> emacs-major-version 23))
+
 ;;{{{ Package
 
-(if (> emacs-major-version 23)
+(if esler-modern-emacs
     (progn
       (require 'package)
       (add-to-list 'package-archives
@@ -1167,7 +1169,7 @@ With numeric arg, redraw around that line."
            (setq this-command 'recenter-first)
            (recenter nil)))))
 
-(if (> emacs-major-version 19)
+(if esler-modern-emacs
     (global-set-key "\e=" 'count-lines-region)
   (global-set-key "\e=" 'count-region))
 
@@ -1524,7 +1526,7 @@ otherwise return DIR"
 
 ;;{{{ facemenu.el
 
-(if (> emacs-minor-version 29)
+(if esler-modern-emacs
     (require 'facemenu))
 
 ;;}}}
@@ -1585,13 +1587,13 @@ for common operations.
 
 ;;{{{ Magit
 
-(if (> emacs-major-version 23)
+(if esler-modern-emacs
     (require 'magit))
 
 ;;}}}
 ;;{{{ Confluence wiki editing mode
 
-(if (> emacs-major-version 23)
+(if esler-modern-emacs
     (progn
       (require 'confluence)
       (setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
@@ -1613,7 +1615,7 @@ for common operations.
 
 ;;{{{ Auto-complete
 
-(if (> emacs-major-version 23)
+(if esler-modern-emacs
     (progn
       (require 'auto-complete-config)
       (add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
@@ -1830,38 +1832,64 @@ by using nxml's indentation rules."
 
 ;;{{{  Haskell related
 
-;; ;; Haskell mode itself
-;; ;;
-;; (load-library "haskell-site-file")
-;; (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-;; (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-;; (setq haskell-font-lock-symbols t)
+(if esler-modern-emacs
+    (progn
+      ;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
 
-;; ;; ghc-mod
-;; ;;
-;; (autoload 'ghc-init "ghc" nil t)
-;; (add-hook 'haskell-mode-hook
-;;           (lambda ()
-;;             (ghc-init)
-;;             (flymake-mode)))
+      ;;(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+      (add-hook 'haskell-mode-hook 'structured-haskell-mode)
+      (add-hook 'haskell-mode-hook 'turn-on-hi2)
+      (eval-after-load 'haskell-mode
+        '(define-key haskell-mode-map [f8] 'haskell-navigate-imports))
 
-;; ;; auto completion for Haskell
-;; ;;
-;; (require 'auto-complete-haskell)
-;; (add-to-list 'ac-modes 'haskell-mode)
+      (setenv "PATH" (concat "~/.cabal/bin:" (getenv "PATH")))
+      (add-to-list 'exec-path "~/.cabal/bin")
+      (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
+      (add-to-list 'exec-path "~/Library/Haskell/bin")
+      (custom-set-variables '(haskell-tags-on-save t))
 
-;; ;; Move nested
-;; (require 'haskell-mode)
-;; (require 'haskell-move-nested)
-;; (define-key haskell-mode-map (kbd "C-<left>")
-;;   (lambda ()
-;;     (interactive)
-;;     (haskell-move-nested -1)))
+      (custom-set-variables
+       '(haskell-process-suggest-remove-import-lines t)
+       '(haskell-process-auto-import-loaded-modules t)
+       '(haskell-process-log t))
+      (eval-after-load 'haskell-mode
+        '(progn
+           (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
+           (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+           (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
+           (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
+           (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
+           (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)
+           (define-key haskell-mode-map (kbd "SPC") 'haskell-mode-contextual-space)))
+      (eval-after-load 'haskell-cabal
+        '(progn
+           (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+           (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
+           (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
+           (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
 
-;; (define-key haskell-mode-map (kbd "C-<right>")
-;;   (lambda ()
-;;     (interactive)
-;;     (haskell-move-nested 1)))
+      (custom-set-variables '(haskell-process-type 'cabal-repl))
+
+
+      (eval-after-load 'haskell-mode
+        '(define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile))
+      (eval-after-load 'haskell-cabal
+        '(define-key haskell-cabal-mode-map (kbd "C-c C-o") 'haskell-compile))
+
+      (autoload 'ghc-init "ghc" nil t)
+      (autoload 'ghc-debug "ghc" nil t)
+      (add-hook 'haskell-mode-hook (lambda () (ghc-init)))
+
+      (require 'company)
+      (add-hook 'after-init-hook 'global-company-mode)
+
+      (add-to-list 'company-backends 'company-ghc)
+      (custom-set-variables '(company-ghc-show-info t))
+
+      (require 'rainbow-delimiters)
+      (add-hook 'haskell-mode-hook 'rainbow-delimiters-mode)
+
+      ))
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
