@@ -3656,11 +3656,6 @@ using cygpath"
 (if running-on-w32
     (progn
 
-      ;; Load the registry interface and mode.
-      ;;
-      (require 'w32-reg-int)
-      (require 'w32-registry)
-
       (defun esler-w32-canonicalize-path-seps (path)
         (subst-char-in-string ?/ ?\\ path t))
 
