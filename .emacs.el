@@ -289,7 +289,7 @@
   "Copies line, preserving cursor column, and increments any numbers found.
 Copies a block of optional NUM-LINES lines.  If no optional argument is given,
 then only one line is copied."
-  (interactive "p")
+ (interactive "p")
   (if (not num-lines) (setq num-lines 0) (setq num-lines (1- num-lines)))
   (let* ((col (current-column))
          (bol (save-excursion (forward-line (- num-lines))
@@ -1382,7 +1382,7 @@ and/or the vertical-line."
                :included running-on-w32
                ]
               ["Windows Shell"
-               (esler-launch-file "cmd.exe")
+               (esler-launch-file (executable-find "cmd.exe"))
                :included running-on-w32
                ]
               )))
