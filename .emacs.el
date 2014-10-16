@@ -1840,7 +1840,8 @@ by using nxml's indentation rules."
       (add-hook 'haskell-mode-hook 'structured-haskell-mode)
       (add-hook 'haskell-mode-hook 'turn-on-hi2)
       (eval-after-load 'haskell-mode
-        '(define-key haskell-mode-map [f8] 'haskell-navigate-imports))
+        '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
+        )
 
       (setenv "PATH" (concat "~/.cabal/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/.cabal/bin")
