@@ -1585,6 +1585,17 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
+;;{{{ Buffer-Menu
+(eval-after-load
+    "buff-menu"
+  '(progn
+     (define-key Buffer-menu-mode-map " "
+       (function (lambda ()
+                   (interactive)
+                   (let ((buf (current-buffer)))
+                     (Buffer-menu-this-window)
+                     (bury-buffer buf)))))))
+;;}}}
 ;;{{{ Magit
 
 (if esler-modern-emacs
@@ -3452,6 +3463,8 @@ This must be bound to a mouse click."
 (if running-on-mac
     (progn
 
+      (add-to-list 'exec-path "~/Library/bin")
+      
       (defun esler-dired-launch-file (&optional arg)
         (interactive "P")
         (mapcar
