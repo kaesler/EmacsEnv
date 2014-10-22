@@ -2001,9 +2001,6 @@ by using nxml's indentation rules."
 ;;
 (defun esler-c-mode-bindings ()
 
-  ;; Get a back button.
-  ;;
-  (define-key c-mode-map [mouse-3]  'msb)
 
   ;; Turn off electric semi-colon.
   ;;
@@ -2292,19 +2289,6 @@ file modes."
 
 ;;}}}
 
-;;{{{  MSB -- Improved mouse-select-buffer
-
-(autoload 'msb "msb" "Select buffer from menus." t)
-(autoload 'mouse-select-buffer "msb"
-  "Mouse buffer menu with multiple menus." nil)
-(substitute-key-definition 'mouse-buffer-menu 'msb (current-global-map))
-
-(require 'msb)
-(setq msb-menu-cond msb--many-menus)
-;;(define-key java-mode-map [mouse-3]  'msb) ; get a back button
-
-;;}}}
-
 ;;{{{  Text Mode.
 
 ;;
@@ -2466,7 +2450,7 @@ paragraph."
 
 ;; Menu for sorting Dired buffers.
 ;;
-(eval-after-load "dired" (require 'dired-sort-menu))
+;;(eval-after-load "dired" (require 'dired-sort-menu))
 
 ;; Enable recursive deletes and copies.
 ;;
@@ -3038,28 +3022,6 @@ when I invoked it, if that makes sense."
 (setq view-diary-entries-initially t)
 (display-time)
 (add-hook 'diary-hook 'appt-make-list)
-
-;;}}}
-;;{{{  Buffer Menu Mode.
-
-(define-key Buffer-menu-mode-map [mouse-3]
-  '(lambda (click)
-     (interactive "@e")
-     (mouse-set-point click)
-     (sit-for 0)
-     (Buffer-menu-select)))
-
-;; I don't want buffer-menu to create any windows.
-;;
-(eval-after-load
-    "buff-menu"
-  (progn
-    (define-key Buffer-menu-mode-map " "
-      (function (lambda ()
-                  (interactive)
-                  (let ((buf (current-buffer)))
-                    (Buffer-menu-this-window)
-                    (bury-buffer buf)))))))
 
 ;;}}}
 ;;{{{  Tar Mode
