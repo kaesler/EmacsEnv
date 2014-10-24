@@ -1847,9 +1847,9 @@ by using nxml's indentation rules."
     (progn
       ;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
 
-      ;;(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-      (add-hook 'haskell-mode-hook 'structured-haskell-mode)
-      (add-hook 'haskell-mode-hook 'turn-on-hi2)
+      (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+      ;;(add-hook 'haskell-mode-hook 'structured-haskell-mode)
+      ;;(add-hook 'haskell-mode-hook 'turn-on-hi2)
       (eval-after-load 'haskell-mode
         '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
         )
