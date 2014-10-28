@@ -1536,7 +1536,13 @@ otherwise return DIR"
 ;;{{{ Colour themes
 
 (if (not running-as-terminal-client)
-    (require 'solarized-theme))
+    (progn
+      (require 'solarized-theme)
+      (load-theme 'solarized-light)
+      (enable-theme 'solarized-light)
+      (add-hook 'after-make-frame-functions
+                (lambda (frame) (enable-theme 'solarized-light)))))
+
 
 ;;}}}
 
