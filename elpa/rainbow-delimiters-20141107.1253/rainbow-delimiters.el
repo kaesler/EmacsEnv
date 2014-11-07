@@ -7,8 +7,8 @@
 ;;         Fanael Linithien <fanael4@gmail.com>
 ;; Maintainer: Fanael Linithien <fanael4@gmail.com>
 ;; Created: 2010-09-02
-;; Version: 20141105.1341
-;; X-Original-Version: 2.0
+;; Version: 20141107.1253
+;; X-Original-Version: 2.0.1
 ;; Keywords: faces, convenience, lisp, tools
 ;; Homepage: https://github.com/Fanael/rainbow-delimiters
 
@@ -72,8 +72,6 @@
 
 ;;; Code:
 
-;;; Customize interface:
-
 (defgroup rainbow-delimiters nil
   "Highlight nested parentheses, brackets, and braces according to their depth."
   :prefix "rainbow-delimiters-"
@@ -98,16 +96,12 @@ Delimiters in this list are not highlighted."
   :type '(repeat character)
   :group 'rainbow-delimiters)
 
-;;; Faces:
-
-;; Unmatched delimiter face:
 (defface rainbow-delimiters-unmatched-face
   '((((background light)) (:foreground "#88090B"))
     (((background dark)) (:foreground "#88090B")))
   "Face to highlight unmatched closing delimiters in."
   :group 'rainbow-delimiters-faces)
 
-;; Mismatched delimiter face:
 (defface rainbow-delimiters-mismatched-face
   '((t :inherit rainbow-delimiters-unmatched-face))
   "Face to highlight mismatched closing delimiters in."
@@ -256,17 +250,18 @@ Used by font-lock for dynamic highlighting."
   (when rainbow-delimiters-mode
     (font-lock-add-keywords nil rainbow-delimiters--font-lock-keywords 'append)
     (set (make-local-variable 'jit-lock-contextually) t)
+    (when (or syntax-begin-function
+              (bound-and-true-p font-lock-beginning-of-syntax-function))
+      ;; We're going to modify `syntax-begin-function', so flush the cache to
+      ;; avoid getting cached values that used the old value.
+      (syntax-ppss-flush-cache 0))
     ;; `syntax-begin-function' may break the assumption we rely on that
     ;; `syntax-ppss' is exactly equivalent to `parse-partial-sexp' from
     ;; `point-min'. Just don't use it, the performance hit should be negligible.
     (set (make-local-variable 'syntax-begin-function) nil)
     ;; Obsolete equivalent of `syntax-begin-function'.
     (when (boundp 'font-lock-beginning-of-syntax-function)
-      (with-no-warnings
-        (set (make-local-variable 'font-lock-beginning-of-syntax-function) nil)))
-    ;; We modified `syntax-begin-function', so flush the cache to avoid getting
-    ;; cached values that used the old value.
-    (syntax-ppss-flush-cache 0))
+      (set (make-local-variable 'font-lock-beginning-of-syntax-function) nil)))
   (when font-lock-mode
     (if (fboundp 'font-lock-flush)
         (font-lock-flush)
