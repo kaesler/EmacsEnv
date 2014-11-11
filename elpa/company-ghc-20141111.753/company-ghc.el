@@ -4,7 +4,7 @@
 
 ;; Author:    Iku Iwasa <iku.iwasa@gmail.com>
 ;; URL:       https://github.com/iquiw/company-ghc
-;; Version: 20141030.704
+;; Version: 20141111.753
 ;; X-Original-Version:   0.1.8
 ;; Package-Requires: ((cl-lib "0.5") (company "0.8.0") (ghc "4.1.1") (emacs "24"))
 ;; Keywords:  haskell, completion
@@ -72,10 +72,10 @@ If `haskell-hoogle-command' is non-nil, the value is used as default."
   "Specify limit of hoogle search results."
   :type 'number)
 
-(defconst company-ghc-pragma-regexp "{-#[[:space:]]+\\([[:upper:]]+\\>\\|\\)")
+(defconst company-ghc-pragma-regexp "{-#[[:space:]]*\\([[:upper:]]+\\>\\|\\)")
 
 (defconst company-ghc-langopt-regexp
-  (concat "{-#[[:space:]\n]+\\(LANGUAGE\\|OPTIONS_GHC\\)[[:space:]\n]+"
+  (concat "{-#[[:space:]\n]*\\(LANGUAGE\\|OPTIONS_GHC\\)[[:space:]\n]+"
           "\\(?:[^[:space:]]+,[[:space:]\n]*\\)*"
           "\\([^[:space:]]+\\_>\\|\\)"))
 
@@ -133,6 +133,10 @@ If `haskell-hoogle-command' is non-nil, the value is used as default."
   (let ((ppss (syntax-ppss)))
     (cond
      ((nth 3 ppss) 'stop)
+     ((nth 4 ppss)
+      (if (looking-back company-ghc-pragma-regexp)
+          (match-string-no-properties 1)
+        (company-grab "[[:space:]]\\([^[:space:]]*\\)" 1)))
      ((looking-back "^[^[:space:]]*") nil)
      ((let ((case-fold-search nil))
         (and (save-excursion
@@ -161,18 +165,19 @@ If `haskell-hoogle-command' is non-nil, the value is used as default."
 
 (defun company-ghc-meta (candidate)
   "Show type info for the given CANDIDATE."
-  (let* ((mod (company-ghc--get-module candidate))
-         (pair (and mod (assoc-string mod company-ghc--imported-modules)))
-         (qualifier (or (and pair (cdr pair)) mod)))
-    (when qualifier
-      (let ((info (ghc-get-info (concat qualifier "." candidate))))
-        (pcase company-ghc-show-info
-          (`t info)
-          (`oneline (replace-regexp-in-string "\n" "" info))
-          (`nomodule
-           (when (string-match "\\(?:[^[:space:]]+\\.\\)?\\([^\t]+\\)\t" info)
-             (replace-regexp-in-string
-              "\n" "" (match-string-no-properties 1 info)))))))))
+  (when company-ghc-show-info
+    (let* ((mod (company-ghc--get-module candidate))
+           (pair (and mod (assoc-string mod company-ghc--imported-modules)))
+           (qualifier (or (cdr pair) mod)))
+      (when qualifier
+        (let ((info (ghc-get-info (concat qualifier "." candidate))))
+          (pcase company-ghc-show-info
+            (`t info)
+            (`oneline (replace-regexp-in-string "\n" "" info))
+            (`nomodule
+             (when (string-match "\\(?:[^[:space:]]+\\.\\)?\\([^\t]+\\)\t" info)
+               (replace-regexp-in-string
+                "\n" "" (match-string-no-properties 1 info))))))))))
 
 (defun company-ghc-doc-buffer (candidate)
   "Display documentation in the docbuffer for the given CANDIDATE."
@@ -478,9 +483,8 @@ When called interactively, QUERY is specified in minibuffer."
   "Parse hoogle search results in the current buffer."
   (let (result)
     (goto-char (point-min))
-    (if (or (looking-at-p "^No results found$")
-            (looking-at-p "^Could not find some databases:"))
-        '()
+    (unless (or (looking-at-p "^No results found$")
+                (looking-at-p "^Could not find some databases:"))
       (while (re-search-forward
               "^\\([^[:space:]]+\\) \\([^[:space:]\n]+\\)\\(.*\\)$" nil t)
         (let* ((mod (match-string 1))
