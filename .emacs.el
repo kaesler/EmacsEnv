@@ -1591,6 +1591,9 @@ for common operations.
 
 ;;{{{  Configure MODES and packages.
 
+;;{{{ Pivotal
+(setq pivotal-api-token "1f9e5ac7febbd04161af414b58024f2c")
+;;}}}
 ;;{{{ Buffer-Menu
 (eval-after-load
     "buff-menu"

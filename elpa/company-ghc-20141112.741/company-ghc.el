@@ -4,7 +4,7 @@
 
 ;; Author:    Iku Iwasa <iku.iwasa@gmail.com>
 ;; URL:       https://github.com/iquiw/company-ghc
-;; Version: 20141111.753
+;; Version: 20141112.741
 ;; X-Original-Version:   0.1.8
 ;; Package-Requires: ((cl-lib "0.5") (company "0.8.0") (ghc "4.1.1") (emacs "24"))
 ;; Keywords:  haskell, completion
@@ -136,7 +136,7 @@ If `haskell-hoogle-command' is non-nil, the value is used as default."
      ((nth 4 ppss)
       (if (looking-back company-ghc-pragma-regexp)
           (match-string-no-properties 1)
-        (company-grab "[[:space:]]\\([^[:space:]]*\\)" 1)))
+        (company-grab "[[:space:],]\\([^[:space:]]*\\)" 1)))
      ((looking-back "^[^[:space:]]*") nil)
      ((let ((case-fold-search nil))
         (and (save-excursion
@@ -144,6 +144,8 @@ If `haskell-hoogle-command' is non-nil, the value is used as default."
                (not (looking-at-p "^import\\>")))
              (looking-back company-ghc-qualified-keyword-regexp)))
       (cons (match-string-no-properties 2) t))
+     ((looking-back "[[:word:].]*" nil t)
+      (match-string-no-properties 0))
      (t (company-grab-symbol)))))
 
 (defun company-ghc-candidates (prefix)
@@ -164,20 +166,28 @@ If `haskell-hoogle-command' is non-nil, the value is used as default."
           (mapcar 'car company-ghc--imported-modules))))))
 
 (defun company-ghc-meta (candidate)
-  "Show type info for the given CANDIDATE."
-  (when company-ghc-show-info
-    (let* ((mod (company-ghc--get-module candidate))
-           (pair (and mod (assoc-string mod company-ghc--imported-modules)))
-           (qualifier (or (cdr pair) mod)))
-      (when qualifier
-        (let ((info (ghc-get-info (concat qualifier "." candidate))))
-          (pcase company-ghc-show-info
-            (`t info)
-            (`oneline (replace-regexp-in-string "\n" "" info))
-            (`nomodule
-             (when (string-match "\\(?:[^[:space:]]+\\.\\)?\\([^\t]+\\)\t" info)
-               (replace-regexp-in-string
-                "\n" "" (match-string-no-properties 1 info))))))))))
+  "Show type info for the given CANDIDATE. Use cached info if any."
+  (or (company-ghc--get-type candidate)
+      (when company-ghc-show-info
+        (let ((typ (company-ghc--info candidate)))
+          (when typ
+            (put-text-property 0 1 :type typ candidate))
+          typ))))
+
+(defun company-ghc--info (candidate)
+  "Show type info for the given CANDIDATE by `ghc-show-info'."
+  (let* ((mod (company-ghc--get-module candidate))
+         (pair (and mod (assoc-string mod company-ghc--imported-modules)))
+         (qualifier (or (cdr pair) mod)))
+    (when qualifier
+      (let ((info (ghc-get-info (concat qualifier "." candidate))))
+        (pcase company-ghc-show-info
+          (`t info)
+          (`oneline (replace-regexp-in-string "\n" "" info))
+          (`nomodule
+           (when (string-match "\\(?:[^[:space:]]+\\.\\)?\\([^\t]+\\)\t" info)
+             (replace-regexp-in-string
+              "\n" "" (match-string-no-properties 1 info)))))))))
 
 (defun company-ghc-doc-buffer (candidate)
   "Display documentation in the docbuffer for the given CANDIDATE."
