@@ -1170,7 +1170,7 @@ With numeric arg, redraw around that line."
            (recenter nil)))))
 
 (if esler-modern-emacs
-    (global-set-key "\e=" 'count-lines-region)
+    (global-set-key "\e=" 'count-words-region)
   (global-set-key "\e=" 'count-region))
 
 (global-set-key "\C-x=" 'what-cursor-position-and-line)
