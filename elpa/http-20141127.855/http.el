@@ -5,7 +5,7 @@
 ;; Author: Mario Rodas <marsam@users.noreply.github.com>
 ;; URL: https://github.com/emacs-pe/http.el
 ;; Keywords: convenience
-;; Version: 20141117.1919
+;; Version: 20141127.855
 ;; X-Original-Version: 0.0.1
 ;; Package-Requires: ((emacs "24") (cl-lib "0.5") (s "1.9.0") (request "0.2.0"))
 
@@ -142,7 +142,7 @@
     (or (and (re-search-forward (concat "^#\\|" http-keywords-regexp) nil t) (point-at-bol))
         (point-max))))
 
-(defun* http-callback (&key data response error-thrown &allow-other-keys)
+(cl-defun http-callback (&key data response error-thrown &allow-other-keys)
   (with-current-buffer (get-buffer-create http-buffer-response-name)
     (erase-buffer)
     (when error-thrown
