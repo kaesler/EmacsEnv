@@ -1533,7 +1533,7 @@ otherwise return DIR"
 
 ;;}}}
 
-;;{{{ Colour themes
+;;{{{  Colour themes
 
 (if (not running-as-terminal-client)
     (progn
@@ -1590,6 +1590,8 @@ for common operations.
 ;;}}}
 
 ;;{{{  Configure MODES and packages.
+
+(require 'use-package)
 
 ;;{{{ Pivotal
 (setq pivotal-api-token "1f9e5ac7febbd04161af414b58024f2c")
@@ -2455,6 +2457,9 @@ paragraph."
 
 ;;}}}
 ;;{{{  Dired Mode.
+
+(add-hook 'dired-load-hook
+          (lambda () (require 'dired-sort-menu)))
 
 ;; Regexp matching "trivial" files at the start of a buffer:
 ;;  .
