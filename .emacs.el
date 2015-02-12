@@ -1593,6 +1593,15 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Tramp
+(require 'tramp)
+(setq tramp-debug-buffer t)
+(setq tramp-verbose 9)
+;;(setq tramp-default-method "ssh")
+;;(setq tramp-password-prompt-regexp ".*[Pp]assword: *$")
+;;(setq tramp-shell-prompt-pattern "^[^;$#>]*[;$#>] *")
+(setq password-cache-expiry nil)
+;;}}}
 ;;{{{ Pivotal
 (setq pivotal-api-token "1f9e5ac7febbd04161af414b58024f2c")
 ;;}}}
