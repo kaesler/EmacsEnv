@@ -1619,7 +1619,9 @@ for common operations.
 ;;{{{ Magit
 
 (if esler-modern-emacs
-    (require 'magit))
+    (progn
+      (setq magit-last-seen-setup-instructions "1.4.0")
+      (require 'magit)))
 
 ;;}}}
 ;;{{{ Confluence wiki editing mode
