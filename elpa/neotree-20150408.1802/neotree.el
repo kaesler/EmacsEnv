@@ -427,7 +427,7 @@ The car of the pair will store fullpath, and cdr will store line number.")
   (setq indent-tabs-mode nil            ; only spaces
         buffer-read-only t              ; read only
         truncate-lines -1
-        neo-buffer--show-hidden-file-p neo-show-hidden-files)
+q        neo-buffer--show-hidden-file-p neo-show-hidden-files)
   (pcase neo-mode-line-type
     (`neotree
      (setq-local mode-line-format neo-mode-line-format)
