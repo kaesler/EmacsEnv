@@ -1,4 +1,8 @@
-((("Dependencies" .
+((("akkaStream" .
+   [2 0 0 0 0 0 0 0 0 0])
+  ("akka" .
+   [2 0 0 0])
+  ("Dependencies" .
    [3 0 0 0 0 0 0 0 0 0 0 0])
   ("Settings" .
    [2 0 0 0 0 0 0 0])
