@@ -1023,7 +1023,10 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
       "Consolas-10"))
 
 (if running-on-w32
-    (set-frame-font esler-w32-preferred-font))
+    (set-frame-font esler-w32-preferred-font)
+  (set-frame-font "Source Code Pro-14" nil t))
+
+(set-frame-font "Source Code Pro-14" nil t)
 
 ;; The Bitstream fonts were downloaded from: http://c2.com/cgi/wiki?BitstreamVera
 ;;
