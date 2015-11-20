@@ -1893,6 +1893,8 @@ by using nxml's indentation rules."
       (add-to-list 'exec-path "~/.cabal/bin")
       (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/Library/Haskell/bin")
+      (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
+      (add-to-list 'exec-path "/usr/local/bin")
       (custom-set-variables '(haskell-tags-on-save t))
 
       (custom-set-variables
