@@ -1598,6 +1598,13 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Docker
+(setenv "DOCKER_TLS_VERIFY" "1")
+(setenv "DOCKER_HOST" "tcp://192.168.99.100:2376")
+(setenv "DOCKER_CERT_PATH" "/Users/kesler/.docker/machine/machines/ng")
+(setenv "DOCKER_MACHINE_NAME" "ng")
+
+;;}}}
 ;;{{{ Ensime and Scala
 (require 'ensime)
 (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
