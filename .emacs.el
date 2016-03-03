@@ -1598,6 +1598,10 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Bash completion
+(require 'bash-completion)
+(bash-completion-setup)
+;;}}}
 ;;{{{ Docker
 (setenv "DOCKER_TLS_VERIFY" "1")
 (setenv "DOCKER_HOST" "tcp://192.168.99.100:2376")
