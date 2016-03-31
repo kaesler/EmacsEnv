@@ -1,9 +1,4 @@
 (1
- (remember-themes .
-		  [(20160318 1351)
-		   ((emacs
-		     (24 1)))
-		   "Remembers the last theme in use and re-loads for the next session." single])
  (zone-nyan .
 	    [(0 2 2)
 	     ((esxml
@@ -1138,6 +1133,11 @@
  (repository-root .
 		  [(1 0 4)
 		   nil "deduce the repository root directory for a given file" single])
+ (remember-themes .
+		  [(20160318 1351)
+		   ((emacs
+		     (24 1)))
+		   "Remembers the last theme in use and re-loads for the next session." single])
  (remember-theme .
 		 [(20140122 1500)
 		  nil "Remembers the last theme in use and re-loads for the next session." single])
@@ -2756,7 +2756,7 @@
 	       (1 0)))
 	     "Major mode for editing Haml files" single])
  (hackernews .
-	     [(0 2 1)
+	     [(0 3 1)
 	      ((json
 		(1 2)))
 	      "Access the hackernews aggregator from Emacs" tar])
