@@ -1,0 +1,1 @@
+(define-package "kaesar-mode" "20160128.208" "Encrypt/Decrypt buffer by AES with password." '((kaesar "0.1.4") (cl-lib "0.3")) :url "https://github.com/mhayashi1120/Emacs-kaesar" :keywords '("data" "convenience"))
