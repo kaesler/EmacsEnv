@@ -1598,6 +1598,11 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Kaesar
+
+(require 'kaesar-file)
+
+;;}}}
 ;;{{{ Bash completion
 (require 'bash-completion)
 (bash-completion-setup)
