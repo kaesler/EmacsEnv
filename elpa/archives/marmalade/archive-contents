@@ -1,4 +1,7 @@
 (1
+ (gotests .
+	  [(0 0 2)
+	   nil "Emacs package for https://github.com/cweill/gotests" single])
  (zone-nyan .
 	    [(0 2 2)
 	     ((esxml
@@ -460,7 +463,7 @@
 	     [(12)
 	      nil "A theme loosely based on Tron: Legacy colors" single])
  (transmission .
-	       [(0 7)
+	       [(0 9)
 		((emacs
 		  (24 4))
 		 (let-alist

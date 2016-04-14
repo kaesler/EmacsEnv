@@ -63,7 +63,7 @@
 	((:url . "http://elpa.gnu.org/packages/ampc.html")
 	 (:keywords "ampc" "mpc" "mpd"))])
  (arbitools .
-	    [(0 53)
+	    [(0 55)
 	     ((cl-lib
 	       (0 5)))
 	     "Package for chess tournaments administration" single
@@ -211,9 +211,9 @@
 		((:url . "http://elpa.gnu.org/packages/dbus-codegen.html")
 		 (:keywords "comm" "dbus" "convenience"))])
  (debbugs .
-	  [(0 9 1)
-	   ((async
-	     (1 6)))
+	  [(0 9 2)
+	   ((soap-client
+	     (3 1 1)))
 	   "SOAP library to access debbugs servers" tar
 	   ((:keywords "comm" "hypermedia")
 	    (:url . "http://elpa.gnu.org/packages/debbugs.html"))])
@@ -586,7 +586,7 @@
 	     ((:url . "https://github.com/michael-heerdegen/on-screen.el")
 	      (:keywords "convenience"))])
  (org .
-      [(20160404)
+      [(20160411)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
@@ -889,7 +889,9 @@
 	(:url . "http://www.gnuvola.org/software/xpm/"))])
  (yasnippet .
 	    [(0 9 1)
-	     nil "Yet another snippet extension for Emacs." tar
+	     ((cl-lib
+	       (0 5)))
+	     "Yet another snippet extension for Emacs." tar
 	     ((:keywords "convenience" "emulation")
 	      (:url . "http://github.com/capitaomorte/yasnippet"))])
  (ztree .
