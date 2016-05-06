@@ -1615,11 +1615,11 @@ for common operations.
 
 ;;}}}
 ;;{{{ Ensime and Scala
-(require 'ensime)
-(add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
-(setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
-(add-to-list 'exec-path "~/Library/bin")
-(setq ensime-sbt-command "sbt")
+;; (require 'ensime)
+;; (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
+;; (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
+;; (add-to-list 'exec-path "~/Library/bin")
+;; (setq ensime-sbt-command "sbt")
 ;;}}}
 
 ;;{{{ Tramp
