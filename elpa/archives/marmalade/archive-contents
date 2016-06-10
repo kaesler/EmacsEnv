@@ -574,6 +574,9 @@
  (systemtap-mode .
 		 [(0 2)
 		  nil "A mode for SystemTap" single])
+ (systemd .
+	  [(1 4 1)
+	   nil "Major mode for editing systemd units" tar])
  (syslog-mode .
 	      [(2 2)
 	       ((hide-lines
@@ -1004,6 +1007,9 @@
  (scala-mode .
 	     [(0 0 2)
 	      nil "Scala major mode" tar])
+ (say-what-im-doing .
+		    [(0 2)
+		     nil "dictate what you're doing with text to speech" single])
  (sawfish .
 	  [(1 32)
 	   nil "Sawfish mode." single])
@@ -1609,7 +1615,7 @@
 	      (1 6 8)))
 	    "Blog from Org mode to wordpress" tar])
  (org-trello .
-	     [(0 7 8)
+	     [(0 7 9)
 	      ((request-deferred
 		(0 2 0))
 	       (deferred
@@ -2588,7 +2594,7 @@
 		[(1 1 2)
 		 nil "hungry delete minor mode" single])
  (hugo .
-       [(0 1 1)
+       [(0 1 2)
 	nil "Helper functions for Hugo" single])
  (httpd .
 	[(1 0 1)
