@@ -540,6 +540,13 @@
 	nil "Authoring and publishing tool for Emacs" tar
 	((:keywords "hypermedia")
 	 (:url . "http://mwolson.org/projects/EmacsMuse.html"))])
+ (myers .
+	[(0 1)
+	 ((emacs
+	   (25)))
+	 "Random-access singly-linked lists" single
+	 ((:url . "http://elpa.gnu.org/packages/myers.html")
+	  (:keywords "list" "containers"))])
  (nameless .
 	   [(1 0 1)
 	    ((emacs
@@ -598,7 +605,7 @@
 	     ((:url . "https://github.com/michael-heerdegen/on-screen.el")
 	      (:keywords "convenience"))])
  (org .
-      [(20160606)
+      [(20160613)
        nil "Outline-based notes management and organizer" tar nil])
  (osc .
       [(0 1)
@@ -684,7 +691,7 @@
 	    ((:url . "http://elpa.gnu.org/packages/sed-mode.html")
 	     (:keywords))])
  (seq .
-      [(2 15)
+      [(2 16)
        nil "Sequence manipulation functions" tar
        ((:keywords "sequences")
 	(:url . "http://elpa.gnu.org/packages/seq.html"))])
@@ -909,7 +916,7 @@
        ((:keywords "multimedia" "xpm")
 	(:url . "http://www.gnuvola.org/software/xpm/"))])
  (yasnippet .
-	    [(0 9 1)
+	    [(0 10 0)
 	     ((cl-lib
 	       (0 5)))
 	     "Yet another snippet extension for Emacs." tar
