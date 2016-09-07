@@ -1,50 +1,52 @@
-((("resolve" .
+((("cryptoService" .
+   [1 0 0 0 0 0 0 0 0 0 0 0 0])
+  ("dependsOn" .
+   [2 0 0 0 0 0 0 0 0])
+  ("akkaSse" .
    [1 0 0 0 0 0 0])
-  ("ensureSequenceInInstanceTblDef" .
-   [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
-  ("~/git-completion.bash" .
-   [0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
-  ("releases" .
+  ("akkaClusterTools" .
+   [3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+  ("fib" .
+   [3 0 0])
+  ("settings" .
+   [3 0 0 0 0 0 0 0])
+  ("assemblySettings" .
+   [3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+  ("scope" .
+   [3 0 0 0 0])
+  ("modulesFor" .
+   [8 0 0 0 0 0 0 0 0 0])
+  ("compile" .
+   [2 0 0 0 0 0 0])
+  ("p" .
+   [1])
+  ("test" .
+   [1 0 0 0])
+  ("runtime" .
+   [1 0 0 0 0 0 0])
+  ("container" .
+   [1 0 0 0 0 0 0 0 0])
+  ("our" .
+   [1 0 0])
+  ("Settings" .
+   [2 0 0 0 0 0 0 0])
+  ("Dependencies" .
+   [3 0 0 0 0 0 0 0 0 0 0 0])
+  ("akka" .
+   [2 0 0 0])
+  ("akkaStream" .
+   [3 0 0 0 0 0 0 0 0 0])
+  ("Resolver" .
    [1 0 0 0 0 0 0 0])
   ("websudos" .
    [1 0 0 0 0 0 0 0])
-  ("Resolver" .
+  ("releases" .
    [1 0 0 0 0 0 0 0])
-  ("akkaStream" .
-   [3 0 0 0 0 0 0 0 0 0])
-  ("akka" .
-   [2 0 0 0])
-  ("Dependencies" .
-   [3 0 0 0 0 0 0 0 0 0 0 0])
-  ("Settings" .
-   [2 0 0 0 0 0 0 0])
-  ("our" .
-   [1 0 0])
-  ("container" .
-   [1 0 0 0 0 0 0 0 0])
-  ("runtime" .
+  ("~/git-completion.bash" .
+   [0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+  ("ensureSequenceInInstanceTblDef" .
+   [1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
+  ("resolve" .
    [1 0 0 0 0 0 0])
-  ("test" .
-   [1 0 0 0])
-  ("p" .
-   [1])
-  ("compile" .
-   [2 0 0 0 0 0 0])
-  ("modulesFor" .
-   [8 0 0 0 0 0 0 0 0 0])
-  ("scope" .
-   [3 0 0 0 0])
-  ("assemblySettings" .
-   [3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
-  ("settings" .
-   [3 0 0 0 0 0 0 0])
-  ("fib" .
-   [3 0 0])
-  ("akkaClusterTools" .
-   [3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0])
-  ("akkaSse" .
-   [1 0 0 0 0 0 0])
-  ("dependsOn" .
-   [2 0 0 0 0 0 0 0 0])
-  ("cryptoService" .
-   [1 0 0 0 0 0 0 0 0 0 0 0 0])))
+  ("EMACS" .
+   [0 0 0 0 1])))

@@ -1608,6 +1608,7 @@ for common operations.
 (bash-completion-setup)
 ;;}}}
 ;;{{{ Docker
+
 (setenv "DOCKER_TLS_VERIFY" "1")
 (setenv "DOCKER_HOST" "tcp://192.168.99.100:2376")
 (setenv "DOCKER_CERT_PATH" "/Users/kesler/.docker/machine/machines/ng")
@@ -1615,11 +1616,13 @@ for common operations.
 
 ;;}}}
 ;;{{{ Ensime and Scala
+
 ;; (require 'ensime)
 ;; (add-hook 'scala-mode-hook 'ensime-scala-mode-hook)
 ;; (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
 ;; (add-to-list 'exec-path "~/Library/bin")
 ;; (setq ensime-sbt-command "sbt")
+
 ;;}}}
 
 ;;{{{ Tramp
@@ -1909,8 +1912,6 @@ by using nxml's indentation rules."
       (add-to-list 'exec-path "~/.cabal/bin")
       (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/Library/Haskell/bin")
-      (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
-      (add-to-list 'exec-path "/usr/local/bin")
       (custom-set-variables '(haskell-tags-on-save t))
 
       (custom-set-variables
@@ -3519,8 +3520,12 @@ This must be bound to a mouse click."
 (if running-on-mac
     (progn
 
+      (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
+      (add-to-list 'exec-path "/usr/local/bin")
+
+      (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/Library/bin")
-      
+
       (defun esler-dired-launch-file (&optional arg)
         (interactive "P")
         (mapcar
