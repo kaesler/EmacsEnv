@@ -1609,10 +1609,10 @@ for common operations.
 ;;}}}
 ;;{{{ Docker
 
-(setenv "DOCKER_TLS_VERIFY" "1")
-(setenv "DOCKER_HOST" "tcp://192.168.99.100:2376")
-(setenv "DOCKER_CERT_PATH" "/Users/kesler/.docker/machine/machines/ng")
-(setenv "DOCKER_MACHINE_NAME" "ng")
+;; (setenv "DOCKER_TLS_VERIFY" "1")
+;; (setenv "DOCKER_HOST" "tcp://192.168.99.100:2376")
+;; (setenv "DOCKER_CERT_PATH" "/Users/kesler/.docker/machine/machines/ng")
+;; (setenv "DOCKER_MACHINE_NAME" "ng")
 
 ;;}}}
 ;;{{{ Ensime and Scala
@@ -3526,6 +3526,8 @@ This must be bound to a mouse click."
       (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/Library/bin")
 
+      (setenv "EDITOR" "emacsclient")
+      
       (defun esler-dired-launch-file (&optional arg)
         (interactive "P")
         (mapcar
@@ -3541,7 +3543,7 @@ This must be bound to a mouse click."
       ;; Get the desired cursor shape.
       (set-default 'cursor-type 'box)
 
-      ;; Allow press and hold in Emas
+      ;; Allow press and hold in Emacs
       (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
 
       ;; Improve scrolling

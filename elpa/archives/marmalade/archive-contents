@@ -1639,8 +1639,10 @@
 		    [(0 2)
 		     nil "Org table comment modes." single])
  (org-static-blog .
-		  [(1 0 1)
-		   nil "a simple org-mode based static blog generator" single])
+		  [(1 0 3)
+		   ((emacs
+		     (24 3)))
+		   "a simple org-mode based static blog generator" single])
  (org-readme .
 	     [(20130322 926)
 	      ((http-post-simple
@@ -1681,7 +1683,7 @@
 	       (6 1)))
 	     "basic support for magit links" single])
  (org-journal .
-	      [(1 12 0)
+	      [(1 12 1)
 	       nil "a simple org-mode based journaling mode" single])
  (org-gnome .
 	    [(0 1)
@@ -4510,7 +4512,7 @@
 		 (24 1)))
 	       "Ansible documentation Minor Mode" single])
  (annotate .
-	   [(0 4 6)
+	   [(0 4 7)
 	    nil "annotate files without changing them" single])
  (angular-snippets .
 		   [(0 2 3)
