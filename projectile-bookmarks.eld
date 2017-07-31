@@ -1,1 +1,0 @@
-("~/apps/EmacsEnv/" "~/apps/github/repos/banno/mobile-data-services/")
