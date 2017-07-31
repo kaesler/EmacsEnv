@@ -3526,7 +3526,7 @@ This must be bound to a mouse click."
       (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/Library/bin")
 
-      (setenv "EDITOR" "emacsclient")
+      (setenv "EDITOR" "~/Library/bin/ec")
       
       (defun esler-dired-launch-file (&optional arg)
         (interactive "P")

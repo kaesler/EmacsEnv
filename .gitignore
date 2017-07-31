@@ -6,7 +6,5 @@ TAGS
 New
 Old
 .emacs.custom
-
-
-
-
+ac-comphist.dat
+ensime/
