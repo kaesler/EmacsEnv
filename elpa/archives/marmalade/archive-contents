@@ -460,11 +460,11 @@
 	     [(12)
 	      nil "A theme loosely based on Tron: Legacy colors" single])
  (transmission .
-	       [(0 10)
+	       [(0 11)
 		((emacs
 		  (24 4))
 		 (let-alist
-		  (1 0 3)))
+		  (1 0 5)))
 		"Interface to a Transmission session" single])
  (tracking .
 	   [(1 6)
@@ -1408,7 +1408,7 @@
 	   [(0 0 1)
 	    nil "get stuff from pinboard" single])
  (picpocket .
-	    [(30)
+	    [(31)
 	     ((emacs
 	       (24 4)))
 	     "Image viewer" single])
