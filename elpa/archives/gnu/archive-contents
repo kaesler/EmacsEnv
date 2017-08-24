@@ -336,7 +336,7 @@
 	((:keywords "convenience" "mail")
 	 (:url . "https://github.com/girzel/ebdb"))])
  (ebdb-gnorb .
-	     [(1 0 1)
+	     [(1 0 2)
 	      ((gnorb
 		(1 1 0))
 	       (ebdb
@@ -753,7 +753,7 @@
 	     ((:url . "https://github.com/michael-heerdegen/on-screen.el")
 	      (:keywords "convenience"))])
  (org .
-      [(20170814)
+      [(20170821)
        nil "Outline-based notes management and organizer" tar nil])
  (org-edna .
 	   [(1 0 -3 1)
@@ -837,7 +837,7 @@
 	       ((:url . "http://elpa.gnu.org/packages/rcirc-color.html")
 		(:keywords "comm"))])
  (rcirc-menu .
-	     [(1 0)
+	     [(1 1)
 	      nil "A menu of all your rcirc connections" single
 	      ((:url . "http://elpa.gnu.org/packages/rcirc-menu.html")
 	       (:keywords "comm"))])
