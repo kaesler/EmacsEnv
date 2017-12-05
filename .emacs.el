@@ -1248,6 +1248,8 @@ It defaults to the most recent such command."
 
 ;;{{{ Mouse events.
 
+(setq save-interprogram-paste-before-kill t)
+
 (defun mode-line-resize-dynamically ()
   "Resize a window by dragging the mode-line.
 This must be bound to a mouse-down event in the mode-line."
