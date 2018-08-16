@@ -1,7 +1,7 @@
 ;;; ps-ccrypt.el --- reading/writing/loading encrypted files
 
 ;; Copyright (C) 1993, 1994, 1995, 1997  Free Software Foundation, Inc.
-;; Copyright (C) 2001, 2003, 2006, 2008 Peter Selinger
+;; Copyright (C) 2001-2018 Peter Selinger
 
 ;; Author: jka@ece.cmu.edu (Jay K. Adams) (jka-compr.el)
 ;; Changes: selinger@users.sourceforge.net (Peter Selinger) (ps-ccrypt.el)
@@ -20,8 +20,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this software; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
-;; Boston, MA 02111-1307, USA.
+;; Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+;; Boston, MA 02110-1301, USA.
 
 ;;; Commentary: 
 
@@ -75,17 +75,53 @@
 
 ;; CHANGES:
 ;;
-;; 2001/10/27: PS1 - pass keyword to ccrypt in environment variable,
-;; not on command line. Renamed package as jka-compr-ccrypt.
+
+;; 2018/07/25: PS1 - Emacs 26 compatibility: fixed a bug caused by an
+;; incompatible change in write-region.
 ;;
-;; 2003/08/13: JR1 - provide jka-compr existence functions in
-;; jka-compr-ccrypt.el, to keep info.el happy.
+;; 2017/03/05: PS1 - handle variable rename
+;; (inhibit-first-line-modes-suffixes -> inhibit-local-variables-suffixes)
+;; in a backward compatible way.
 ;;
-;; 2003/08/25: PS1 - bugfix
+;; 2017/02/22: PS1 - fixed warnings: inhibit-first-line-modes-suffixes
+;; -> inhibit-local-variables-suffixes, fix buffer-file-type warning.
+;;
+;; 2016/11/13: PS1 - delete KEY earlier (even on password mismatch).
+;;
+;; 2016/11/13: PS1 - move (setenv "KEY") into the unwind-protect.
+;; Note: this still leaks the password if the user mistyped it.
+;;
+;; 2016/11/13: PS1 - delete password from environment after each use.
+;;
+;; 2010/12/28: PS1 - only display "Password does not match" message if
+;; password was just entered by the user; if the non-matching password
+;; is stored, just prompt for it without error.
+;;
+;; 2010/12/28: PS1 - moved "encrypting xx" and "decrypting xx"
+;; messages inside ps-ccrypt-call-process; this ensures the message
+;; will appear even after a mismatched password prompt.
+;;
+;; 2010/12/28: PS1 - when inserting a file in a buffer, use filename,
+;; not buffer name, in password prompt.
+;;
+;; 2010/12/28: PS1 - use existing buffer password when re-reading a
+;; file.
+;;
+;; 2010/11/10: PS1 - fix mapcar compiler warnings.
+;;
+;; 2008/02/04: PS1 - better error message if ccrypt command not found.
 ;;
 ;; 2006/08/11: PS1 - removed compression functionality, renamed
 ;; package as ps-ccrypt. This can now coexist peacefully with
 ;; jka-compr.
+;;
+;; 2003/08/25: PS1 - bugfix
+;;
+;; 2003/08/13: JR1 - provide jka-compr existence functions in
+;; jka-compr-ccrypt.el, to keep info.el happy.
+;;
+;; 2001/10/27: PS1 - pass keyword to ccrypt in environment variable,
+;; not on command line. Renamed package as jka-compr-ccrypt.
 
 ;; INSTRUCTIONS:
 ;;
@@ -114,7 +150,7 @@
 ;; anything until the next time the buffer is saved.
 
 ;; ACKNOWLEDGMENTS
-;; 
+;;
 ;; ps-ccrypt is an adaptation of jka-compr, which is part of GNU Emacs.
 ;;
 ;; jka-compr is a V19 adaptation of jka-compr for V18 of Emacs.  Many people
@@ -139,6 +175,15 @@
 
 
 ;;; Code:
+
+;; disable compiler warning about use of a "free variable"
+(defvar buffer-file-type)
+
+;; inhibit-first-line-modes-suffixes was renamed to
+;; inhibit-local-variables-suffixes in Emacs 24.1. Ensure backward
+;; compatibility with older versions.
+(if (not (boundp 'inhibit-local-variables-suffixes))
+    (defvaralias 'inhibit-local-variables-suffixes 'inhibit-first-line-modes-suffixes))
 
 (defgroup encryption nil
   "Data encryption utilities"
@@ -261,7 +306,7 @@ The determination as to which encryption scheme, if any, to use is
 based on the filename itself and `ps-ccrypt-encryption-info-list'."
   (catch 'encryption-info
     (let ((case-fold-search nil))
-      (mapcar
+      (mapc
        (function (lambda (x)
 		   (and (string-match (ps-ccrypt-info-regexp x) filename)
 			(throw 'encryption-info x))))
@@ -282,8 +327,8 @@ based on the filename itself and `ps-ccrypt-encryption-info-list'."
 (make-variable-buffer-local 'ps-ccrypt-buffer-password)
 (put 'ps-ccrypt-buffer-password 'permanent-local t)
 
-(defun ps-ccrypt-read-passwd (&optional confirm default)
-  (read-passwd (format "Password for %s: " (buffer-name)) confirm default))
+(defun ps-ccrypt-read-passwd (&optional confirm filename)
+  (read-passwd (format "Password for %s: " (or filename (buffer-name))) confirm nil))
 
 (defun ps-ccrypt-get-buffer-password (&optional buffer)
   "Get encryption password for BUFFER (default: current buffer). 
@@ -379,17 +424,20 @@ command line arguments."
     (apply 'call-process (car command) infile buffer display (cdr command)))
   )
 
-(defun ps-ccrypt-call-process (command shell message infile output retvals &optional password)
+;; pw-fresh is non-nil if the password was recently supplied by the user.
+(defun ps-ccrypt-call-process (command shell message infile output retvals &optional password pw-fresh)
 
-  (let ((err-file (ps-ccrypt-make-temp-name))
+  (let ((filename (expand-file-name infile))
+        (err-file (ps-ccrypt-make-temp-name))
 	(coding-system-for-read (or coding-system-for-read 'undecided))
 	(coding-system-for-write 'no-conversion)
 	(buffer output)
 	done)
     
     (unwind-protect
-	
-	(while (not done)
+
+        (while (not done)
+	  (message (format "%s..." message))
 	  (if password
 	      (setenv "KEY" password))
 	  (let*
@@ -407,18 +455,24 @@ command line arguments."
 		       ;; pass on other errors (e.g. input file not found)
 		       (signal (car err) (cdr err))))))))
 
+            ;; do not leave the password in the enviroment.
+            (setenv "KEY")
 	    (cond ((and password (eq status 4))
-		   (message "Bad password; please try again")
-		   (sit-for 1)
-		   (setq password (ps-ccrypt-read-passwd)))
+		   (cond (pw-fresh
+			  (message "Password does not match; please try again")
+			  (sit-for 1)))
+		   (setq password (ps-ccrypt-read-passwd nil filename))
+		   (setq pw-fresh t))
 		  ((not (memq status retvals))
 		   (ps-ccrypt-error command
 				    infile message err-file))
 		  (t
-		   (setq done t)))))
+		   (setq done t)
+		   (message (format "%s...done" message))))))
 	  
-      (ps-ccrypt-delete-temp-file err-file))
-    
+      (ps-ccrypt-delete-temp-file err-file)
+      (setenv "KEY"))
+
     password))
  
 
@@ -477,9 +531,10 @@ There should be no more than seven characters after the final `/'."
     (error nil)))
 
 
-(defun ps-ccrypt-write-region (start end file &optional append visit)
+(defun ps-ccrypt-write-region (start end file &optional append visit lockname mustbenew)
   (let* ((filename (expand-file-name file))
 	 (visit-file (if (stringp visit) (expand-file-name visit) filename))
+	 (lock-file (if (stringp lockname) (expand-file-name lockname) nil))
 	 (info (ps-ccrypt-get-encryption-info visit-file)))
       
       (if info
@@ -489,7 +544,7 @@ There should be no more than seven characters after the final `/'."
 		(encrypt-command (ps-ccrypt-info-encrypt-command info))
 		(password (if (ps-ccrypt-info-password-flag info) 
 			      (or (ps-ccrypt-get-buffer-password) 
-				  (ps-ccrypt-read-passwd t))
+				  (ps-ccrypt-read-passwd t filename))
 			    nil))
 		(retvals (ps-ccrypt-info-retval-list info))
 		(base-name (file-name-nondirectory visit-file))
@@ -514,10 +569,6 @@ There should be no more than seven characters after the final `/'."
 
 	      (setq temp-file (ps-ccrypt-make-temp-name)))
 
-	    (and 
-	     encrypt-message
-	     (message "%s %s..." encrypt-message base-name))
-	    
 	    (ps-ccrypt-run-real-handler 'write-region
 					(list start end temp-file t 'dont))
 	    ;; save value used by the real write-region
@@ -543,14 +594,10 @@ There should be no more than seven characters after the final `/'."
                 (ps-ccrypt-run-real-handler 'write-region
                                             (list (point-min) (point-max)
                                                   filename
-                                                  (and append can-append) 'dont))
+                                                  (and append can-append) 'dont lock-file mustbenew))
                 (erase-buffer)) )
 
 	    (ps-ccrypt-delete-temp-file temp-file)
-
-	    (and
-	     encrypt-message
-	     (message "%s %s...done" encrypt-message base-name))
 
 	    (cond
 	     ((eq visit t)
@@ -574,7 +621,7 @@ There should be no more than seven characters after the final `/'."
 	    nil)
 	      
 	(ps-ccrypt-run-real-handler 'write-region
-				    (list start end filename append visit)))))
+				    (list start end filename append visit lock-file mustbenew)))))
 
 
 (defun ps-ccrypt-insert-file-contents (file &optional visit beg end replace)
@@ -589,33 +636,37 @@ There should be no more than seven characters after the final `/'."
 
     (if info
 
-	(let ((decrypt-message (ps-ccrypt-info-decrypt-message info))
-	      (decrypt-command (ps-ccrypt-info-decrypt-command info))
-	      (password (if (ps-ccrypt-info-password-flag info) 
-			    (ps-ccrypt-read-passwd) nil))
-	      (retvals (ps-ccrypt-info-retval-list info))
-	      (base-name (file-name-nondirectory filename))
-	      (notfound nil)
-	      (local-copy
-	       (ps-ccrypt-run-real-handler 'file-local-copy (list filename)))
-	      local-file
-	      size start
-              (coding-system-for-read
-	       (or coding-system-for-read
-		   ;; If multibyte characters are disabled,
-		   ;; don't do that conversion.
-		   (and (null enable-multibyte-characters)
-			(or (auto-coding-alist-lookup
-			     (ps-ccrypt-byte-compiler-base-file-name file))
-			    'raw-text))
-		   (let ((coding (find-operation-coding-system
-				  'insert-file-contents
-				  (ps-ccrypt-byte-compiler-base-file-name file))))
-		     (and (consp coding) (car coding)))
-		   'undecided)) )
-
+	(let* ((pw-fresh nil)
+	       (decrypt-message (ps-ccrypt-info-decrypt-message info))
+	       (decrypt-command (ps-ccrypt-info-decrypt-command info))
+	       (password (if (ps-ccrypt-info-password-flag info) 
+			     (or (ps-ccrypt-get-buffer-password) 
+				 (progn (setq pw-fresh t) 
+					(ps-ccrypt-read-passwd nil filename))) 
+			   nil))
+	       (retvals (ps-ccrypt-info-retval-list info))
+	       (base-name (file-name-nondirectory filename))
+	       (notfound nil)
+	       (local-copy
+		(ps-ccrypt-run-real-handler 'file-local-copy (list filename)))
+	       local-file
+	       size start
+	       (coding-system-for-read
+		(or coding-system-for-read
+		    ;; If multibyte characters are disabled,
+		    ;; don't do that conversion.
+		    (and (null enable-multibyte-characters)
+			 (or (auto-coding-alist-lookup
+			      (ps-ccrypt-byte-compiler-base-file-name file))
+			     'raw-text))
+		    (let ((coding (find-operation-coding-system
+				   'insert-file-contents
+				   (ps-ccrypt-byte-compiler-base-file-name file))))
+		      (and (consp coding) (car coding)))
+		    'undecided)) )
+	  
 	  (setq local-file (or local-copy filename))
-
+	  
 	  (if visit
 	      (setq buffer-file-name filename))
 
@@ -623,10 +674,6 @@ There should be no more than seven characters after the final `/'."
 
 	      (progn
 		  
-		(and
-		 decrypt-message
-		 (message "%s %s..." decrypt-message base-name))
-
 		(condition-case error-code
 
 		    (progn
@@ -659,7 +706,8 @@ There should be no more than seven characters after the final `/'."
 				 local-file
 				 t
 				 retvals
-				 password))))
+				 password
+				 pw-fresh))))
 		      (setq size (- (point) start))
 		      (if replace
 			  (let* ((del-beg (point))
@@ -692,10 +740,6 @@ There should be no more than seven characters after the final `/'."
 	  (and visit
 	     (ps-ccrypt-set-buffer-password password))
 	    
-	  (and
-	   decrypt-message
-	   (message "%s %s...done" decrypt-message base-name))
-
 	  (and
 	   visit
 	   notfound
@@ -731,28 +775,28 @@ There should be no more than seven characters after the final `/'."
 
     (if info
 
-	(let* ((decrypt-message (ps-ccrypt-info-decrypt-message info))
-	      (decrypt-command (ps-ccrypt-info-decrypt-command info))
-	      (password (if (ps-ccrypt-info-password-flag info) 
-			    (ps-ccrypt-read-passwd) nil))
-	      (retvals (ps-ccrypt-info-retval-list info))
-	      (base-name (file-name-nondirectory filename))
-	      (local-copy
-	       (ps-ccrypt-run-real-handler 'file-local-copy (list filename)))
-	      (temp-file (ps-ccrypt-make-temp-name t))
-	      (temp-buffer (get-buffer-create " *ps-ccrypt-flc-temp*"))
-	      (notfound nil)
-	      local-file)
-
+	(let* ((pw-fresh nil)
+	       (decrypt-message (ps-ccrypt-info-decrypt-message info))
+	       (decrypt-command (ps-ccrypt-info-decrypt-command info))
+	       (password (if (ps-ccrypt-info-password-flag info) 
+			     (or (ps-ccrypt-get-buffer-password) 
+				 (progn (setq pw-fresh t)
+					(ps-ccrypt-read-passwd nil filename)))
+			   nil))
+	       (retvals (ps-ccrypt-info-retval-list info))
+	       (base-name (file-name-nondirectory filename))
+	       (local-copy
+		(ps-ccrypt-run-real-handler 'file-local-copy (list filename)))
+	       (temp-file (ps-ccrypt-make-temp-name t))
+	       (temp-buffer (get-buffer-create " *ps-ccrypt-flc-temp*"))
+	       (notfound nil)
+	       local-file)
+	  
 	  (setq local-file (or local-copy filename))
 
 	  (unwind-protect
 
 	      (with-current-buffer temp-buffer
-		  
-		(and
-		 decrypt-message
-		 (message "%s %s..." decrypt-message base-name))
 		  
 		;; Here we must read the output of decrypt program
 		;; and write it to TEMP-FILE without any code
@@ -770,11 +814,8 @@ There should be no more than seven characters after the final `/'."
 		   local-file
 		   t
 		   retvals
-		   password)
-
-		  (and
-		   decrypt-message
-		   (message "%s %s...done" decrypt-message base-name))
+		   password
+		   pw-fresh)
 
 		  (write-region
 		   (point-min) (point-max) temp-file nil 'dont)))
@@ -910,7 +951,7 @@ saying whether the mode is now on or off."
 (defun ps-ccrypt-install ()
   "Install ps-ccrypt.
 This adds entries to `file-name-handler-alist' and `auto-mode-alist'
-and `inhibit-first-line-modes-suffixes'."
+and `inhibit-local-variables-suffixes'."
 
   (setq ps-ccrypt-file-name-handler-entry
 	(cons (ps-ccrypt-build-file-regexp) 'ps-ccrypt-handler))
@@ -920,7 +961,7 @@ and `inhibit-first-line-modes-suffixes'."
 
   (setq ps-ccrypt-added-to-file-coding-system-alist nil)
 
-  (mapcar
+  (mapc
    (function (lambda (x)
 	       ;; Don't do multibyte encoding on the encrypted files.
 	       (let ((elt (cons (ps-ccrypt-info-regexp x)
@@ -939,12 +980,12 @@ and `inhibit-first-line-modes-suffixes'."
 				      nil 'ps-ccrypt)
 				auto-mode-alist))
 		    ;; Also add these regexps to
-		    ;; inhibit-first-line-modes-suffixes, so that a
+		    ;; inhibit-local-variables-suffixes, so that a
 		    ;; -*- line in the first file of a encrypted tar
 		    ;; file doesn't override tar-mode.
-		    (setq inhibit-first-line-modes-suffixes
+		    (setq inhibit-local-variables-suffixes
 			  (cons (ps-ccrypt-info-regexp x)
-				inhibit-first-line-modes-suffixes)))))
+				inhibit-local-variables-suffixes)))))
    ps-ccrypt-encryption-info-list)
   (setq auto-mode-alist
 	(append auto-mode-alist ps-ccrypt-mode-alist-additions)))
@@ -953,16 +994,16 @@ and `inhibit-first-line-modes-suffixes'."
 (defun ps-ccrypt-uninstall ()
   "Uninstall ps-ccrypt.
 This removes the entries in `file-name-handler-alist' and `auto-mode-alist'
-and `inhibit-first-line-modes-suffixes' that were added
+and `inhibit-local-variables-suffixes' that were added
 by `ps-ccrypt-installed'."
-  ;; Delete from inhibit-first-line-modes-suffixes
+  ;; Delete from inhibit-local-variables-suffixes
   ;; what ps-ccrypt-install added.
-  (mapcar
+  (mapc
      (function (lambda (x)
 		 (and (ps-ccrypt-info-strip-extension x)
-		      (setq inhibit-first-line-modes-suffixes
+		      (setq inhibit-local-variables-suffixes
 			    (delete (ps-ccrypt-info-regexp x)
-				    inhibit-first-line-modes-suffixes)))))
+				    inhibit-local-variables-suffixes)))))
      ps-ccrypt-encryption-info-list)
 
   (let* ((fnha (cons nil file-name-handler-alist))
