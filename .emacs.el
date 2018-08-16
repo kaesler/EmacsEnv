@@ -1600,6 +1600,10 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Helm
+(require 'helm-config)
+(helm-mode 1)
+;;}}}
 ;;{{{ Kaesar
 
 (require 'kaesar-file)
@@ -1628,6 +1632,7 @@ for common operations.
 ;;}}}
 
 ;;{{{ Tramp
+
 (require 'tramp)
 (setq tramp-debug-buffer t)
 (setq tramp-verbose 9)
@@ -1635,6 +1640,7 @@ for common operations.
 ;;(setq tramp-password-prompt-regexp ".*[Pp]assword: *$")
 ;;(setq tramp-shell-prompt-pattern "^[^;$#>]*[;$#>] *")
 (setq password-cache-expiry nil)
+
 ;;}}}
 ;;{{{ Pivotal
 (setq pivotal-api-token "1f9e5ac7febbd04161af414b58024f2c")

@@ -1,0 +1,1 @@
+("~/apps/github/repos/banno/mobile-data-services/" "~/apps/github/repos/banno/netteller-bsl-configs/" "~/apps/github/repos/banno/transfer-configs-institution/" "~/apps/github/repos/banno/netteller-bsl-service/" "~/apps/github/repos/banno/oob2fa/" "~/apps/github/repos/banno/task-events-persistence/" "~/apps/github/repos/banno/consumer-enrollment/" "~/apps/EmacsEnv/")
