@@ -1600,10 +1600,6 @@ for common operations.
 
 (require 'use-package)
 
-;;{{{ Helm
-(require 'helm-config)
-(helm-mode 1)
-;;}}}
 ;;{{{ Kaesar
 
 (require 'kaesar-file)
