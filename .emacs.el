@@ -1363,6 +1363,11 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
+              ["DSS Lore" (find-file "~/dss/Lore.org")]
+              ["DSS Repos" (find-file "~/apps/github/repos/dss")]
+              ["DSS directory" (find-file "~/dss")]
+              ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")]
+              "---------------------------------"
               ["Emacs' ELisp" esler-project-dired-emacs-elisp]
               "---------------------------------"
               ["Find files" find-lisp-find-dired]
