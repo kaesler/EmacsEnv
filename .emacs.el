@@ -1368,6 +1368,10 @@ and/or the vertical-line."
               ["DSS directory" (find-file "~/dss")]
               ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")]
               "---------------------------------"
+              ["~/tmp" (find-file "~/tmp/")]
+              ["~/Downloads" (find-file "~/Downloads/")]
+              ["~/Dropbox" (find-file "~/Dropbox/")]
+              "---------------------------------"
               ["Emacs' ELisp" esler-project-dired-emacs-elisp]
               "---------------------------------"
               ["Find files" find-lisp-find-dired]
