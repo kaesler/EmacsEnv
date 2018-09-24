@@ -1368,6 +1368,8 @@ and/or the vertical-line."
               ["DSS directory" (find-file "~/dss")]
               ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")]
               "---------------------------------"
+              ["AWS Lore" (find-file "~/dss/AwsLore.org")]
+              "---------------------------------"
               ["~/tmp" (find-file "~/tmp/")]
               ["~/Downloads" (find-file "~/Downloads/")]
               ["~/Dropbox" (find-file "~/Dropbox/")]
