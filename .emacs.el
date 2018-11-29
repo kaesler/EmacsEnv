@@ -1339,11 +1339,11 @@ and/or the vertical-line."
 ;;
 (set-default 'mode-line-buffer-identification
              (let* ((system-name (system-name))
-                    (index (string-match "\\." system-name)))
+                    (index (string-match "\\." (system-name))))
                (if (not (numberp index))
-                   (setq index (length system-name)))
+                   (setq index (length (system-name))))
                (list (concat "Emacs" "@"
-                             (substring system-name 0 index)
+                             (substring (system-name) 0 index)
                              ": %17b"))))
 
 ;; Get line number display in the mode line,
@@ -1363,6 +1363,7 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
+              ["DSS Domain" (find-file "~/dss/DssDomain.org")]
               ["DSS Lore" (find-file "~/dss/Lore.org")]
               ["DSS Repos" (find-file "~/apps/github/repos/dss")]
               ["DSS directory" (find-file "~/dss")]
