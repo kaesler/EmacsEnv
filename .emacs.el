@@ -1364,6 +1364,7 @@ and/or the vertical-line."
         "Shortcuts menu"
         (list "KAE"
               ["DSS Domain" (find-file "~/dss/DssDomain.org")]
+              ["DSS Devops" (find-file "~/dss/DssDevops.org")]
               ["DSS Lore" (find-file "~/dss/Lore.org")]
               ["DSS Repos" (find-file "~/apps/github/repos/dss")]
               ["DSS directory" (find-file "~/dss")]
