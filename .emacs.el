@@ -1615,14 +1615,12 @@ for common operations.
 (require 'use-package)
 
 ;;{{{ Javascript
-;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
-;; (require 'js-comint)
-
-;; (add-hook 'js2-mode-hook
-;;           (lambda ()
-;;             (local-set-key (kbd "C-x C-e") 'js-send-last-sexp)
-;;             (local-set-key (kbd "C-c b") 'js-send-buffer)))
+(add-hook 'js2-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-x C-e") 'js-send-last-sexp)
+            (local-set-key (kbd "C-c b") 'js-send-buffer)))
 ;;}}}
 ;;{{{ Kaesar
 
