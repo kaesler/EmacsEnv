@@ -207,7 +207,7 @@
 		      ((:url . "https://github.com/cpitclaudel/compact-docstrings")
 		       (:keywords "convenience" "faces" "lisp" "maint" "c"))])
  (company .
-	  [(0 9 9)
+	  [(0 9 10)
 	   ((emacs
 	     (24 3)))
 	   "Modular text completion framework" tar
@@ -409,6 +409,13 @@
 	     nil "Emacs Does Interactive Prolog" single
 	     ((:url . "http://elpa.gnu.org/packages/ediprolog.html")
 	      (:keywords "languages" "processes"))])
+ (eev .
+      [(20190401)
+       ((emacs
+	 (24 3)))
+       "Support for e-scripts (eepitch blocks, elisp hyperlinks, etc)" tar
+       ((:keywords "lisp" "e-scripts")
+	(:url . "http://angg.twu.net/#eev"))])
  (eglot .
 	[(1 4)
 	 ((emacs
@@ -595,7 +602,7 @@
 	 ((:keywords "games" "processes")
 	  (:url . "http://www.gnuvola.org/software/gnugo/"))])
  (gnus-mock .
-	    [(0 4 0)
+	    [(0 4 1)
 	     nil "Mock Gnus installation for testing" tar
 	     ((:url . "http://elpa.gnu.org/packages/gnus-mock.html"))])
  (gpastel .
@@ -618,7 +625,7 @@
 		    (0 5))
 		   (emacs
 		    (24))
-		   (advice
+		   (nadvice
 		    (0 1)))
 		  "Robust automatic language detection" single
 		  ((:url . "https://github.com/tmalsburg/guess-language.el")
@@ -1089,9 +1096,9 @@
 		 ((:url . "http://elpa.gnu.org/packages/register-list.html")
 		  (:keywords "register"))])
  (relint .
-	 [(1 6)
+	 [(1 7)
 	  ((xr
-	    (1 10)))
+	    (1 11)))
 	  "Elisp regexp mistake finder" single
 	  ((:url . "https://github.com/mattiase/relint")
 	   (:keywords "lisp" "maint" "regexps"))])
@@ -1135,6 +1142,11 @@
        nil "Sequence manipulation functions" tar
        ((:keywords "sequences")
 	(:url . "http://elpa.gnu.org/packages/seq.html"))])
+ (shelisp .
+	  [(0 9 1)
+	   nil "execute elisp in shell" single
+	   ((:url . "http://elpa.gnu.org/packages/shelisp.html")
+	    (:keywords "terminals" "lisp" "processes"))])
  (shen-mode .
 	    [(0 1)
 	     nil "A major mode for editing shen source code" tar
@@ -1145,6 +1157,10 @@
 	     nil "Major mode for SiSU markup text" single
 	     ((:url . "http://www.sisudoc.org/")
 	      (:keywords "text" "syntax" "processes" "tools"))])
+ (smalltalk-mode .
+		 [(3 2 92)
+		  nil "Major mode for the GNU Smalltalk programming language" tar
+		  ((:url . "http://elpa.gnu.org/packages/smalltalk-mode.html"))])
  (smart-yank .
 	     [(0 1 1)
 	      ((emacs
@@ -1438,7 +1454,7 @@
        ((:keywords "multimedia" "xpm")
 	(:url . "http://www.gnuvola.org/software/xpm/"))])
  (xr .
-     [(1 10)
+     [(1 11)
       nil "Convert string regexp to rx notation" tar
       ((:keywords "lisp" "maint" "regexps")
        (:url . "https://github.com/mattiase/xr"))])
@@ -1457,7 +1473,7 @@
 			      ((:keywords "snippets")
 			       (:url . "http://elpa.gnu.org/packages/yasnippet-classic-snippets.html"))])
  (zones .
-	[(2018 12 28)
+	[(2019 4 7)
 	 nil "Zones of text - like multiple regions" single
 	 ((:url . "https://elpa.gnu.org/packages/zones.html")
 	  (:keywords "narrow" "restriction" "widen" "region" "zone"))])
