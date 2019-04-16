@@ -9,13 +9,13 @@
 ;;{{{  Set some global variables.
 
 (setq user-emacs-directory "~/apps/emacs/")
-(defvar esler-elisp-directory (concat user-emacs-directory "elisp"))
+(defvar kae/elisp-directory (concat user-emacs-directory "elisp"))
 
-(defvar esler-modern-emacs (> emacs-major-version 23))
+(defvar kae/modern-emacs (> emacs-major-version 23))
 
 ;;{{{ Package
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (progn
       (require 'package)
       (add-to-list 'package-archives
@@ -48,7 +48,7 @@
 (defvar at-site-work nil)
 (defvar at-site-home nil)
 
-(defun esler-command-output-first-line-as-string (command)
+(defun kae/command-output-first-line-as-string (command)
 
   "Capture the first line of a command's output as a string."
 
@@ -66,7 +66,7 @@
 
 (let ((host-name (system-name))
       (domain-name ""))
-  ;;      (domain-name (esler-command-output-first-line-as-string "domainname")))
+  ;;      (domain-name (kae/command-output-first-line-as-string "domainname")))
   (cond
    ;; Heuristically decide where we're running.
    ;;
@@ -80,11 +80,11 @@
      )
     (setq at-site-home t))))
 
-(defvar esler-small-screen (< (display-pixel-width) 1600))
+(defvar kae/small-screen (< (display-pixel-width) 1600))
 (add-hook 'before-make-frame-hook
           (function
            (lambda()
-             (setq esler-small-screen (< (display-pixel-width) 1600)))))
+             (setq kae/small-screen (< (display-pixel-width) 1600)))))
 
 ;;}}}
 
@@ -156,14 +156,14 @@
 
 ;;{{{  Functions to register which emacs processes I have running
 
-(defun esler-register-emacs-process ()
+(defun kae/register-emacs-process ()
   (interactive)
   (let* ((emacs-proc-dir "~/apps/emacs/.emacs_processes")
          (pid-string (int-to-string (emacs-pid)))
          (system-subdir (concat emacs-proc-dir "/" (system-name)))
          (pid-file (concat system-subdir "/" (ignt-to-string (emacs-pid)))))
 
-    (esler-cleanup-emacs-process-registry)
+    (kae/cleanup-emacs-process-registry)
 
     (if (file-directory-p emacs-proc-dir)
         (progn
@@ -182,14 +182,14 @@
             (insert "\n")
             (write-file pid-file))))))
 
-(defun esler-unregister-emacs-process ()
+(defun kae/unregister-emacs-process ()
   (interactive)
   (condition-case err
       (let* ((emacs-proc-dir "~/apps/emacs/.emacs_processes")
              (pid-string (int-to-string (emacs-pid)))
              (system-subdir (concat emacs-proc-dir "/" (system-name)))
              (pid-file (concat system-subdir "/" (int-to-string (emacs-pid)))))
-        (esler-cleanup-emacs-process-registry)
+        (kae/cleanup-emacs-process-registry)
         (if (file-exists-p pid-file)
             (delete-file pid-file))
         (if (file-directory-p system-subdir)
@@ -197,7 +197,7 @@
                 (delete-directory system-subdir))))
     (error nil)))
 
-(defun esler-process-exists (pid-string)
+(defun kae/process-exists (pid-string)
   (zerop
    (call-process
     "kill"
@@ -207,7 +207,7 @@
     "-0"
     pid-string)))
 
-(defun esler-cleanup-emacs-process-registry ()
+(defun kae/cleanup-emacs-process-registry ()
   (interactive)
   (let* ((emacs-proc-dir "~/.emacs_processes")
          (system-subdir (concat emacs-proc-dir "/" (system-name))))
@@ -217,7 +217,7 @@
                                          "[0-9]+")))
           (mapcar (function
                    (lambda (pid-string)
-                     (if (not (esler-process-exists pid-string))
+                     (if (not (kae/process-exists pid-string))
                          (delete-file (concat system-subdir
                                               "/"
                                               pid-string)))))
@@ -228,10 +228,10 @@
 ;; Ignore errors
 ;;
 (condition-case err
-    (esler-register-emacs-process)
+    (kae/register-emacs-process)
   (error nil))
 
-(add-hook 'kill-emacs-hook 'esler-unregister-emacs-process)
+(add-hook 'kill-emacs-hook 'kae/unregister-emacs-process)
 
 ;;}}}
 
@@ -248,7 +248,7 @@
 ;;{{{  Useful commands and functions.
 
 ;; Launch a file based on its file type as in Windows/Mac.
-(defun esler-launch-file (file)
+(defun kae/launch-file (file)
   (interactive "f")
   (cond
    (running-on-mac
@@ -260,7 +260,7 @@
 
    (running-on-w32
      (w32-shell-execute "open"
-                        (esler-w32-canonicalize-path-seps
+                        (kae/w32-canonicalize-path-seps
                          (expand-file-name file))))))
 
 (defun directory-sub-dirs (dir)
@@ -283,11 +283,11 @@
       (setq cursor (cdr cursor)))
     result))
 
-(defun esler-insert-iso-date ()
+(defun kae/insert-iso-date ()
   (interactive)
   (insert (format-time-string "%Y-%b-%d")))
 
-(defun esler-another-line (num-lines)
+(defun kae/another-line (num-lines)
   "Copies line, preserving cursor column, and increments any numbers found.
 Copies a block of optional NUM-LINES lines.  If no optional argument is given,
 then only one line is copied."
@@ -311,7 +311,7 @@ then only one line is copied."
 
 ;;{{{ Change frame colour
 
-(defun esler-set-frame-colour (colour)
+(defun kae/set-frame-colour (colour)
   (interactive "sColour: ")
   (modify-frame-parameters (selected-frame)
                            (list (cons 'background-color colour))))
@@ -403,7 +403,7 @@ then only one line is copied."
             ":"
             hex hex)))
 
-(defun esler-oid-at-point ()
+(defun kae/oid-at-point ()
   (interactive)
   (save-excursion
     (let ((oid nil))
@@ -414,9 +414,9 @@ then only one line is copied."
           (backward-char 1)))
       oid)))
 
-(defun esler-oid-at-cursor-to-date ()
+(defun kae/oid-at-cursor-to-date ()
   (interactive)
-  (let ((oid (esler-oid-at-point)))
+  (let ((oid (kae/oid-at-point)))
     (if oid
         (message "%s"
                  (substring
@@ -491,7 +491,7 @@ Ignores trailing '*' or '@' as in 'ls -F' output."
 
 ;;{{{  Command for saving a link to an objects.
 
-(defconst esler-links-repository "~/links"
+(defconst kae/links-repository "~/links"
   "A place where I stash away links to various interesting files.")
 (defun save-link-to-current-file (link-path)
 
@@ -504,7 +504,7 @@ Ignores trailing '*' or '@' as in 'ls -F' output."
                           'read-file-name-internal
                           default-directory
                           nil
-                          (file-name-as-directory esler-links-repository)
+                          (file-name-as-directory kae/links-repository)
                           'file-name-history)))
 
   (let ((target (buffer-file-name)))
@@ -523,7 +523,7 @@ Ignores trailing '*' or '@' as in 'ls -F' output."
 
 ;;{{{  Command to emulate the Apollo keyboard "Again" key.
 
-(defun esler-emulate-apollo-again-key ()
+(defun kae/emulate-apollo-again-key ()
   "Copy the remainder of the current line to the end of the buffer."
   (interactive)
   (set-mark-command nil)
@@ -668,27 +668,27 @@ as a C or Lisp comment."
 
 ;;{{{  Commands to maintain a stack of window configurations.
 
-(defvar esler-window-config-stack nil)
+(defvar kae/window-config-stack nil)
 
 (defun push-window-config ()
   (interactive)
-  (setq esler-window-config-stack
-        (cons (current-window-configuration) esler-window-config-stack)))
+  (setq kae/window-config-stack
+        (cons (current-window-configuration) kae/window-config-stack)))
 
 (defun pop-window-config ()
   (interactive)
-  (if esler-window-config-stack
-      (if (car esler-window-config-stack)
+  (if kae/window-config-stack
+      (if (car kae/window-config-stack)
           (progn
-            (set-window-configuration (car esler-window-config-stack))
-            (setq esler-window-config-stack
-                  (cdr esler-window-config-stack))))))
+            (set-window-configuration (car kae/window-config-stack))
+            (setq kae/window-config-stack
+                  (cdr kae/window-config-stack))))))
 
 ;;}}}
 
-;;{{{  esler-sort-du-output -- sort the output of du(1) sensibly.
+;;{{{  kae/sort-du-output -- sort the output of du(1) sensibly.
 
-(defun esler-sort-du-output ()
+(defun kae/sort-du-output ()
 
   "Sort the output of du(1) sensibly."
 
@@ -716,11 +716,11 @@ as a C or Lisp comment."
 
 ;;{{{  uptime -- displays when this Emacs process started.
 
-(setq esler-emacs-start-time (current-time-string))
+(setq kae/emacs-start-time (current-time-string))
 
 (defun uptime ()
   (interactive)
-  (message "This Emacs started at %s" esler-emacs-start-time))
+  (message "This Emacs started at %s" kae/emacs-start-time))
 
 ;;}}}
 
@@ -793,16 +793,16 @@ displays the documentation string for VARIABLE."
 (defun region-width (begin end)
   "Find the width of the longest line in the region."
   (interactive "r")
-  (let ((esler-maximum-line-length 0))
+  (let ((kae/maximum-line-length 0))
     (iterate-over-lines-in-region begin end
                                   '(lambda ()
                                      (if (looking-at "^\\(.*\\)$")
                                          (let ((line-length (- (match-end 1) (match-beginning 1))))
-                                           (if (> line-length esler-maximum-line-length)
-                                               (setq esler-maximum-line-length line-length))))))
+                                           (if (> line-length kae/maximum-line-length)
+                                               (setq kae/maximum-line-length line-length))))))
     (if (called-interactively-p 'interactive)
-        (message (int-to-string esler-maximum-line-length)))
-    esler-maximum-line-length))
+        (message (int-to-string kae/maximum-line-length)))
+    kae/maximum-line-length))
 
 (defun buffer-width (begin end)
   "Find the width of the longest line in the buffer."
@@ -878,7 +878,7 @@ execute the function THUNK."
 
 (require 'sort)
 
-(defun esler-sort-subr (reverse nextrecfun endrecfun &optional startkeyfun endkeyfun lessp-predicate)
+(defun kae/sort-subr (reverse nextrecfun endrecfun &optional startkeyfun endkeyfun lessp-predicate)
   "General text sorting routine to divide buffer into records and sort them.
 Arguments are REVERSE NEXTRECFUN ENDRECFUN &optional STARTKEYFUN ENDKEYFUN LESSP-PREDICATE.
 
@@ -950,7 +950,7 @@ LESSP-PREDICATE is a function which compares two objects."
 
 ;; This is to test the above:
 ;;
-(defun esler-sort-lines (reverse beg end)
+(defun kae/sort-lines (reverse beg end)
   "Sort lines in region alphabetically; argument means descending order.
 Called from a program, there are three arguments:
 REVERSE (non-nil means reverse order), BEG and END (region to sort)."
@@ -958,7 +958,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (save-restriction
     (narrow-to-region beg end)
     (goto-char (point-min))
-    (esler-sort-subr reverse 'forward-line 'end-of-line nil nil '(lambda (a b)
+    (kae/sort-subr reverse 'forward-line 'end-of-line nil nil '(lambda (a b)
                                                                    (not (string< a b))))))
 
 ;;}}}
@@ -1014,9 +1014,9 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 
 ;; Configure a readable fixed-width font.
 ;;
-(defvar esler-w32-preferred-font
+(defvar kae/w32-preferred-font
   (if (or at-site-work
-          esler-small-screen)
+          kae/small-screen)
       ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-12-90-96-96-c-*-iso8859-1"
       "Consolas-12"
     ;; This looks better on my laptop
@@ -1025,7 +1025,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
       "Consolas-10"))
 
 (if running-on-w32
-    (set-frame-font esler-w32-preferred-font)
+    (set-frame-font kae/w32-preferred-font)
   (set-frame-font "Source Code Pro-14" nil t))
 
 (set-frame-font "Source Code Pro-14" nil t)
@@ -1065,9 +1065,9 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (if running-on-w32
     (progn
       (add-to-list 'default-frame-alist
-                   `(font . ,esler-w32-preferred-font))))
+                   `(font . ,kae/w32-preferred-font))))
 
-(if esler-small-screen
+(if kae/small-screen
     (add-to-list 'default-frame-alist
                  '(height . 45))
   (add-to-list 'default-frame-alist
@@ -1093,7 +1093,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 
 (global-set-key "\C-x\C-b" 'ibuffer)
 
-(global-set-key "\M-o" 'esler-another-line)
+(global-set-key "\M-o" 'kae/another-line)
 
 ;; Can't seem to get used to the new and approved bindings for
 ;; folding and unfolding a whole file
@@ -1174,7 +1174,7 @@ With numeric arg, redraw around that line."
            (setq this-command 'recenter-first)
            (recenter nil)))))
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (global-set-key "\e=" 'count-words-region)
   (global-set-key "\e=" 'count-region))
 
@@ -1189,22 +1189,22 @@ With numeric arg, redraw around that line."
 ;; I'd like shell-command-on-region to use the most recently used command
 ;; as the default.
 ;;
-(global-set-key "\e|" 'esler-shell-command-on-region)
-(defvar esler-last-command-on-region nil)
-(defun esler-shell-command-on-region ()
+(global-set-key "\e|" 'kae/shell-command-on-region)
+(defvar kae/last-command-on-region nil)
+(defun kae/shell-command-on-region ()
 
   "Execute string COMMAND in inferior shell with region as input.
 It defaults to the most recent such command."
 
   (interactive)
   (let ((command (read-from-minibuffer "Shell command on region: "
-                                       (if esler-last-command-on-region
-                                           esler-last-command-on-region
+                                       (if kae/last-command-on-region
+                                           kae/last-command-on-region
                                          nil)
                                        nil
                                        nil)))
     (shell-command-on-region (region-beginning) (region-end) command)
-    (setq esler-last-command-on-region command)))
+    (setq kae/last-command-on-region command)))
 
 (global-set-key "\C-x\C-b" 'buffer-menu)
 
@@ -1238,7 +1238,7 @@ It defaults to the most recent such command."
   (interactive nil)
   (scroll-down 1))
 
-(global-set-key [f9] 'esler-emulate-apollo-again-key)
+(global-set-key [f9] 'kae/emulate-apollo-again-key)
 
 ;; I hate accidentally toggling into overwrite mode.
 ;;
@@ -1377,7 +1377,7 @@ and/or the vertical-line."
               ["~/Downloads" (find-file "~/Downloads/")]
               ["~/Dropbox" (find-file "~/Dropbox/")]
               "---------------------------------"
-              ["Emacs' ELisp" esler-project-dired-emacs-elisp]
+              ["Emacs' ELisp" kae/project-dired-emacs-elisp]
               "---------------------------------"
               ["Find files" find-lisp-find-dired]
               "---------------------------------"
@@ -1393,7 +1393,7 @@ and/or the vertical-line."
                :active mark-active]
               ["Delete trailing whitespace in buffer" delete-trailing-whitespace]
               "---------------------------------"
-              ["Insert ISO date" esler-insert-iso-date t]
+              ["Insert ISO date" kae/insert-iso-date t]
               "---------------------------------"
               ["Windows Explorer"
                (start-process-shell-command "Windows Explorer"
@@ -1403,20 +1403,20 @@ and/or the vertical-line."
                :included running-on-w32
                ]
               ["Windows Shell"
-               (esler-launch-file (executable-find "cmd.exe"))
+               (kae/launch-file (executable-find "cmd.exe"))
                :included running-on-w32
                ]
               )))
 (add-hook 'menu-bar-final-items 'KAE)
-(defun esler-project-dired-homedir ()
+(defun kae/project-dired-homedir ()
   (interactive)
   (dired "~/"))
 
-(defun esler-project-dired-my-elisp ()
+(defun kae/project-dired-my-elisp ()
   (interactive)
-  (dired esler-elisp-directory))
+  (dired kae/elisp-directory))
 
-(defun esler-project-dired-emacs-elisp ()
+(defun kae/project-dired-emacs-elisp ()
   (interactive)
   ;;(dired (concat exec-directory "/../lisp")))
   (dired (concat exec-directory "/../../Resources/lisp")))
@@ -1429,9 +1429,9 @@ and/or the vertical-line."
 ;;
 (define-key global-map
   [menu-bar files kill-buffer-and-frame]
-  '("Kill buffer & frame" . esler-kill-buffer-and-frame))
+  '("Kill buffer & frame" . kae/kill-buffer-and-frame))
 
-(defun esler-kill-buffer-and-frame ()
+(defun kae/kill-buffer-and-frame ()
   (interactive)
   (kill-buffer (current-buffer))
   (delete-frame))
@@ -1441,13 +1441,13 @@ and/or the vertical-line."
 ;;
 (define-key global-map
   [menu-bar files peel-frame]
-  '("Peel-off-frame" . esler-peel-off-selected-window))
+  '("Peel-off-frame" . kae/peel-off-selected-window))
 
-(defun esler-peel-off-selected-window ()
+(defun kae/peel-off-selected-window ()
   (interactive)
-  (esler-peel-off-window (selected-window)))
+  (kae/peel-off-window (selected-window)))
 
-(defun esler-peel-off-window (window)
+(defun kae/peel-off-window (window)
 
   (let* ((buf (window-buffer window))
          (frame (make-frame)))
@@ -1485,7 +1485,7 @@ and/or the vertical-line."
 ;; Set up search path for my own library of Lisp code,
 ;; to be searched after the default ones.
 
-(defun esler-directory-subdirectories (dir)
+(defun kae/directory-subdirectories (dir)
   "Compute a list of the subdirectories of DIR, excluding . and .."
   (let* ((entries (directory-files dir))
          (dir-as-dir (file-name-as-directory dir))
@@ -1500,30 +1500,30 @@ and/or the vertical-line."
           entries)
     result))
 
-(defun esler-directory-contains-elisp (dir)
+(defun kae/directory-contains-elisp (dir)
   "Returns true of DIR contains any ELisp files"
   (or (directory-files dir nil "\\.el$" t)
       (directory-files dir nil "\\.elc$" t)))
 
-(defun esler-find-lisp-in-package (dir)
+(defun kae/find-lisp-in-package (dir)
   "Given DIR, return DIR/lisp if it exists and contains Elisp files
 otherwise return DIR"
   (let ((lisp-subdir (concat (file-name-as-directory dir) "lisp")))
     (if (and (file-directory-p lisp-subdir)
-             (esler-directory-contains-elisp lisp-subdir))
+             (kae/directory-contains-elisp lisp-subdir))
         lisp-subdir
       dir)))
 
-(defun esler-set-loadpath ()
+(defun kae/set-loadpath ()
   (setq load-path (append
 
                    ;; My primary library of Elisp.
                    ;;
-                   (list (expand-file-name esler-elisp-directory))
+                   (list (expand-file-name kae/elisp-directory))
 
                    load-path)))
 
-(esler-set-loadpath)
+(kae/set-loadpath)
 
 ;;}}}
 
@@ -1547,7 +1547,7 @@ otherwise return DIR"
 
 ;;{{{ facemenu.el
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (require 'facemenu))
 
 ;;}}}
@@ -1569,7 +1569,7 @@ otherwise return DIR"
 
 ;;{{{  Standardise keybindings for "readonly" modes.
 
-(defun esler-standard-readonly-buffer-key-bindings-in-keymap (keymap)
+(defun kae/standard-readonly-buffer-key-bindings-in-keymap (keymap)
 
   "This function is intended to be called from the mode hook
 for any mode in which the buffer is kept readonly.  In these buffers
@@ -1604,9 +1604,9 @@ for common operations.
   (define-key keymap "=" 'what-line)
   (define-key keymap "g" 'goto-line))
 
-(defun esler-standard-readonly-buffer-key-bindings ()
+(defun kae/standard-readonly-buffer-key-bindings ()
   (interactive)
-  (esler-standard-readonly-buffer-key-bindings-in-keymap (current-local-map)))
+  (kae/standard-readonly-buffer-key-bindings-in-keymap (current-local-map)))
 
 ;;}}}
 
@@ -1614,6 +1614,598 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Dired Mode.
+
+;; {{{ dired-sidebar
+(use-package dired-sidebar
+  :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
+  :ensure t
+  :commands (dired-sidebar-toggle-sidebar)
+  :init
+  (add-hook 'dired-sidebar-mode-hook
+            (lambda ()
+              (kae/dired-sidebar-mode-bindings)
+              (unless (file-remote-p default-directory)
+                (auto-revert-mode))))
+  :config
+  (push 'toggle-window-split dired-sidebar-toggle-hidden-commands)
+  (push 'rotate-windows dired-sidebar-toggle-hidden-commands)
+
+  (setq dired-sidebar-subtree-line-prefix "__")
+  (setq dired-sidebar-theme 'nerd)
+  (setq dired-sidebar-use-term-integration t)
+  (setq dired-sidebar-use-custom-font t))
+
+(defun sidebar-toggle ()
+  "Toggle both `dired-sidebar' and `ibuffer-sidebar'."
+  (interactive)
+  (dired-sidebar-toggle-sidebar)
+  (ibuffer-sidebar-toggle-sidebar))
+
+(defun kae/dired-sidebar-mode-bindings ()
+  (define-key dired-sidebar-mode-map "]" 'kae/dired-sidebar-down)
+  (define-key dired-sidebar-mode-map "[" 'dired-sidebar-up-directory))
+
+;;}}}
+
+(use-package dired
+  :ensure nil
+  :config (progn
+            (setq insert-directory-program "/usr/local/opt/coreutils/libexec/gnubin/ls")
+            (setq dired-listing-switches "-lXGh --almost-all --group-directories-first")
+            (setq dired-omit-files nil)
+            (setq dired-omit-extensions nil)
+            ;;(add-hook 'dired-mode-hook 'dired-omit-mode)
+            ;;(add-hook 'dired-mode-hook 'dired-hide-details-mode)
+            ))
+
+ (add-hook 'dired-load-hook
+          (lambda () (require 'dired-sort-menu)))
+
+;; Regexp matching "trivial" files at the start of a buffer:
+;;  .
+;;  ..
+;;  .,
+;;  #---
+;;
+(setq dired-trivial-filenames
+      "^\\.\\.?$\\|^\\.,\\|^#")
+
+(setq dired-dwim-target t)
+
+;; Menu for sorting Dired buffers.
+;;
+;;(eval-after-load "dired" (require 'dired-sort-menu))
+
+;; Enable recursive deletes and copies.
+;;
+(setq dired-recursive-deletes 'top)
+(setq dired-recursive-copies 'top)
+
+;; Which operations I don't want confirmed:
+;;
+(setq dired-no-confirm '(byte-compile
+                         chgrp
+                         chmod
+                         chown
+                         compress
+                         copy
+                         load
+                         move
+                         print
+                         shell
+                         symlink
+                         uncompress
+                         ;;delete
+                         ;;hardlink
+                         ))
+
+
+(defun kae/dired-mode-bindings ()
+  (define-key dired-mode-map " " 'scroll-up)
+  (define-key dired-mode-map "\C-?" 'scroll-down) ; DEL
+  (define-key dired-mode-map "1" 'delete-other-windows)
+  (define-key dired-mode-map "2" 'split-window-vertically)
+  (define-key dired-mode-map "5" 'split-window-horizontally)
+  (define-key dired-mode-map "a" 'kae/dired-apply-function)
+  (define-key dired-mode-map "b" 'dired-byte-recompile)
+
+  ;;(define-key dired-mode-map "h" 'kae/dired-hide-matching-filenames)
+  (define-key dired-mode-map "K" 'kae/dired-keep-matching-filenames)
+
+  (define-key dired-mode-map "q" 'kae/dired-kill-current-and-find-superior-dired)
+  ;;(define-key dired-mode-map "r" 'kae/dired-edit-filename)
+  (define-key dired-mode-map "t" 'kae/dired-visit-tags-table)
+
+  (define-key dired-mode-map "V" 'kae/dired-visit-vm-folder)
+  (define-key dired-mode-map "z" 'kae/dired-spawn-shell)
+
+  ;;(define-key dired-mode-map "D" 'kae/dired-keep-directories)
+  (define-key dired-mode-map "E" 'kae/dired-edit-linktext)
+  (define-key dired-mode-map "F" 'kae/dired-follow-link)
+
+  ;;(define-key dired-mode-map "H" 'kae/dired-hide-file)
+  ;;(define-key dired-mode-map "!" 'kae/dired-command-file)
+  (define-key dired-mode-map "|" 'kae/dired-pipe-file)
+  (define-key dired-mode-map "@"
+    '(lambda ()
+       (interactive)
+       (dired-flag-backup-files)
+       (dired-flag-auto-save-files)))
+  (define-key dired-mode-map "."
+    '(lambda ()
+       (interactive)
+       (goto-char (point-min))
+       (dired-goto-next-nontrivial-file)))
+  (define-key dired-mode-map "<" '(lambda ()
+                                    (interactive)
+                                    (goto-char (point-min))
+                                    (forward-line 3)
+                                    (dired-move-to-filename)))
+  (define-key dired-mode-map ">" '(lambda ()
+                                    (interactive)
+                                    (goto-char (point-max))
+                                    (forward-line -1)
+                                    (dired-move-to-filename)))
+  ;;(define-key dired-mode-map "\\" 'kae/dired-up)
+  (define-key dired-mode-map "^"  'kae/dired-up)
+  ;;(define-key dired-mode-map "/" 'kae/dired-down)
+  (define-key dired-mode-map "]" 'kae/dired-down)
+  (define-key dired-mode-map "\eg" '(lambda ()
+                                      (interactive)
+                                      (let ((filename (dired-get-filename t)))
+                                        (kae/dired-spawn-shell)
+                                        (end-of-buffer)
+                                        (insert filename)))))
+(eval-after-load "dired" '(kae/dired-mode-bindings))
+
+(add-hook 'dired-mode-hook
+          '(lambda ()
+             (make-local-variable 'dired-associated-shell-buffer)
+             (setq dired-associated-shell-buffer nil)
+             ;;(kae/dired-mode-bindings)
+             ))
+
+;; When I invoke Dired, position me at the most-recently edited file
+;; if it can be determined.
+;;
+(defadvice dired (after goto-relevant-file activate)
+  "When I invoke Dired, position at the file I was looking at
+when I invoked it, if that makes sense."
+  (kae/dired-advice))
+(defun kae/dired-advice ()
+  (let ((most-recent-buffer (other-buffer (current-buffer) t)))
+    (if most-recent-buffer
+        (let ((most-recent-file (buffer-file-name most-recent-buffer)))
+          (if most-recent-file
+              (if (or (file-regular-p most-recent-file)
+                      (file-directory-p most-recent-file))
+                  (let ((most-recent-dir (file-name-directory most-recent-file)))
+                    (if (string= (expand-file-name default-directory)
+                                 (expand-file-name most-recent-dir))
+                        (let ((entry-name (file-name-nondirectory most-recent-file)))
+                          (goto-char (point-min))
+
+                          ;; Probably should wrap this to ignore errors:
+                          ;;
+                          (dired-goto-file most-recent-file))))))))))
+
+;; When I use "s" to resort the Dired buffer,
+;; I like to be left at the top again.
+;;
+(defadvice dired-sort-toggle-or-edit (after goto-top activate)
+  "After resorting the dired buffer, go to the top of it."
+  (goto-char (point-min))
+  (dired-goto-next-file))
+
+;; If I'm renaming a single file, let me just edit the existing name.
+;;
+(defadvice dired-do-rename (around rename-by-edit activate)
+
+  "If I'm renaming a single file, let me just edit the existing name."
+
+  ;; Only do this if there's 1 file to be renamed
+  ;;
+  (if (eq 1 (length (dired-get-marked-files)))
+      (let* ((current-name (dired-get-filename))
+             (current-basename (file-name-nondirectory current-name)))
+        current-name
+        (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
+                                         'read-file-name-internal                   ;; table
+                                         default-directory                          ;; predicate
+                                         nil                                        ;; require-match
+                                         current-basename                           ;; initial-input
+                                         'file-name-history)))
+          (setq new-name (expand-file-name new-name))
+
+          ;; If the user supplied a directory name after all,
+          ;; compute the target path.
+          ;;
+          (if (file-directory-p new-name)
+              (setq new-name (concat (file-name-as-directory new-name)
+                                     current-basename)))
+
+          ;; Do the rename operation, updating any Emacs buffer info.
+          ;;
+          (dired-rename-file current-name new-name nil)
+
+          ;; Update the Dired buffer
+          ;;
+          (dired-add-file new-name)))
+    ad-do-it))
+
+;; When I use "s" to resort the Dired buffer,
+;; I like to be left at the top again.
+;;
+(defadvice dired-sort-toggle-or-edit (after goto-top activate)
+  "After resorting the dired buffer, got to the top of it."
+  (goto-char (point-min))
+  (dired-goto-next-file))
+
+(autoload 'dired-update-file-line "dired-aux")
+(defun kae/dired-edit-linktext ()
+  "Replace the contents of a symbolic link."
+  (interactive)
+  (let ((linkname (dired-get-filename)))
+    (let ((current-linktext (file-symlink-p linkname)))
+      (if current-linktext
+          (let ((new-linktext (completing-read "New link text: "
+                                               'read-file-name-internal
+                                               default-directory
+                                               nil
+                                               current-linktext
+                                               'file-name-history)))
+            ;; Delete the old link
+            ;;
+            (delete-file linkname)
+
+            ;; Create the new link
+            ;;
+            (make-symbolic-link new-linktext linkname t)
+
+            ;; Redisplay the new link
+            ;;
+            (dired-update-file-line linkname))
+
+        (error "Not a symbolic link")))))
+
+(defun kae/dired-kill-current-and-find-superior-dired ()
+  (interactive)
+  (let ((alternate (kae/dired-find-alternate-buffer))
+        (superior (kae/dired-find-superior-buffer))
+        (inferior (current-buffer)))
+    (if dired-associated-shell-buffer
+        (progn
+          (delete-windows-on dired-associated-shell-buffer)
+          (kill-buffer dired-associated-shell-buffer)))
+    (if alternate
+        (switch-to-buffer alternate)
+      (if superior
+          (switch-to-buffer superior)))
+    (kill-buffer inferior)))
+
+(defun kae/dired-find-alternate-buffer ()
+
+  "Find another dired-mode buffer containing the same dir as the current."
+
+  (let ((current (current-buffer))
+        (list-of-buffers (buffer-list))
+        (dir-name (file-name-as-directory default-directory)))
+    (save-excursion
+      (catch 'exit-loop
+        (while list-of-buffers
+          (let ((b (car list-of-buffers)))
+            (set-buffer b)
+            (if (and
+                 (string= dir-name default-directory)
+                 (eq major-mode 'dired-mode)
+                 (not (eq current b)))
+                (throw 'exit-loop b)))
+          (setq list-of-buffers (cdr list-of-buffers)))
+        (throw 'exit-loop nil)))))
+
+(defun kae/dired-find-dired-buffer (path)
+
+  "Find a dired-mode buffer containing DIR."
+
+  (let ((list-of-buffers (buffer-list))
+        (dir-name (file-name-as-directory path)))
+    (save-excursion
+      (catch 'exit-loop
+        (while list-of-buffers
+          (let ((b (car list-of-buffers)))
+            (set-buffer b)
+            (if (and
+                 (string= dir-name default-directory)
+                 (eq major-mode 'dired-mode))
+                (throw 'exit-loop b)))
+          (setq list-of-buffers (cdr list-of-buffers)))
+        (throw 'exit-loop nil)))))
+
+(defun kae/dired-find-superior-buffer ()
+
+  "Find a dired-mode buffer whose default directory is the superior
+      directory to the the default directory of the current-buffer."
+
+  (let ((current-dir-name default-directory))
+    (let ((superior-dir-name (file-name-directory
+                              (directory-file-name current-dir-name))))
+      (if superior-dir-name
+          (kae/dired-find-dired-buffer superior-dir-name)
+        nil))))
+
+(defun kae/dired-up ()
+
+  "Find or create a dired buffer for the directory containing the current
+      directory."
+
+  (interactive)
+
+  (let ((superior (kae/dired-find-superior-buffer))
+        (inferior-leaf-name (file-name-nondirectory (directory-file-name default-directory))))
+    (if superior
+        (progn
+          (switch-to-buffer superior)
+          (let ((previous-point (point)))
+            (goto-char 0)
+            (if (re-search-forward (concat " " (regexp-quote inferior-leaf-name) " *.*$") nil t)
+                (dired-move-to-filename)
+              (goto-char previous-point))))
+      (if (file-directory-p "..")
+          (progn
+            (dired "..")
+            (goto-char 0)
+            (re-search-forward (concat " " (regexp-quote inferior-leaf-name) "$") nil t)
+            (dired-move-to-filename))
+        (message "No containing directory")))))
+
+(defun kae/dired-visit-tags-table ()
+
+  "In dired, visit the file or directory named on this line as a tags file."
+
+  (interactive)
+  (visit-tags-table (dired-get-filename))
+  (message "Current tags table is %s" tags-file-name))
+
+(defvar kae/dired-last-piped-command nil)
+(defun kae/dired-pipe-file ()
+
+  "In dired, run a command with pointed at file as stdin."
+
+  (interactive)
+
+  (let ((command (read-from-minibuffer "Command: "
+                                       (if kae/dired-last-piped-command
+                                           kae/dired-last-piped-command
+                                         nil)
+                                       nil
+                                       nil)))
+    (let ((buffer (get-buffer-create "*Shell Command Output*")))
+      (with-current-buffer buffer
+        (erase-buffer))
+      (call-process shell-file-name
+                    (dired-get-filename)
+                    buffer
+                    nil
+                    "-c"
+                    command)
+      (setq kae/dired-last-piped-command command)
+      (if (with-current-buffer buffer
+            (> (buffer-size) 0))
+          (set-window-start (display-buffer buffer) 1)
+        (message "(Shell command completed with no output)")))))
+
+(defun kae/dired-spawn-shell ()
+
+  "Spawn a shell buffer in another window, with current directory set to the
+      directory being edited."
+
+  (interactive)
+
+  ;; This code was borrowed from (defun shell ...) and modified.
+
+  (require 'shell)
+  (let* ((buf-part-name default-directory)
+         (buf-name (concat "*" buf-part-name "*")))
+
+    ;; If the appropriate shell buffer apparently doesn't exist
+    ;; create it...
+    (if (not (comint-check-proc buf-name))
+        (let* ((prog (or explicit-shell-file-name
+                         (getenv "ESHELL")
+                         (getenv "SHELL")
+                         "/bin/sh"))
+               (name (file-name-nondirectory prog))
+               (startfile (concat "~/.emacs_" name))
+               (xargs-name (intern-soft (concat "explicit-" name "-args")))
+               (process-environment (cons (concat "DIRED_HOME=" default-directory)
+                                          process-environment)))
+          (let* ((new-buf (apply 'make-comint buf-part-name prog
+                                 (if (file-exists-p startfile) startfile)
+                                 (if (and xargs-name (boundp 'xargs-name))
+                                     (symbol-value xargs-name)
+                                   '("-i")))))
+            (setq dired-associated-shell-buffer new-buf)
+            (set-buffer new-buf)
+            (shell-mode)))
+
+      ;; ...otherwise just associate it with the dired buffer
+      ;;
+      (setq dired-associated-shell-buffer (get-buffer buf-name)))
+
+
+    ;; We probably should make sure that the buffer we found,
+    ;;    - is in shell mode
+    ;;    - has its current directory where we expec.
+    ;; Later..
+
+    ;; Now display the shell buffer, splitting the dired window if
+    ;; necessary.
+    ;;
+    (let ((shell-window (get-buffer-window buf-name)))
+      (if (null shell-window)
+          (setq shell-window (split-window)))
+      (set-window-buffer shell-window buf-name)
+      (select-window shell-window)
+      (set-buffer (get-buffer buf-name))
+      (goto-char (point-max)))))
+
+(defun kae/dired-follow-link ()
+  "Follow the link under the cursor."
+  (interactive)
+
+  (let ((link (dired-get-filename)))
+    (let ((linktext (file-symlink-p link)))
+      (if linktext
+          (cond
+           ((file-directory-p linktext) (dired linktext))
+           ((file-symlink-p linktext) (dired linktext))
+           (t (find-file linktext)))
+        (error "Not a symbolic link")))))
+
+(defun kae/dired-down ()
+
+  "Find or create a dired buffer for the directory containing the pointed at
+      directory."
+
+  (interactive)
+
+  (let ((dir (dired-get-filename)))
+    (cond
+
+     ;; For directories:
+     ;;
+     ((file-directory-p dir)
+      (let ((buf (kae/dired-find-dired-buffer dir)))
+        (if buf
+            (switch-to-buffer buf)
+          (dired dir))))
+
+     ;; For symlinks:
+     ;;
+     ((file-symlink-p dir)
+
+      ;; See if there is a Dired Mode buffer already.
+      ;;
+      (let ((buf (kae/dired-find-dired-buffer dir)))
+        (if buf
+            (switch-to-buffer buf)
+
+          ;; Otherwise, see if the link target is a directory.
+          ;;
+          (let ((linktext (file-symlink-p dir)))
+            (if (file-directory-p linktext)
+                (dired linktext)
+              (error "Not a link to a directory"))))))
+     (t
+      (error "Not a directory")))))
+
+(defun kae/dired-sidebar-down ()
+
+  "Find or create a dired buffer for the directory containing the pointed at
+      directory."
+
+  (interactive)
+
+  (let ((dir (dired-get-filename)))
+    (cond
+
+     ;; For directories:
+     ;;
+     ((file-directory-p dir)
+      (dired-sidebar-switch-to-dir dir))
+
+     ;; For symlinks:
+     ;;
+     ((file-symlink-p dir)
+
+      ;; See if there is a Dired Mode buffer already.
+      ;;
+      (let ((buf (kae/dired-find-dired-buffer dir)))
+        (if buf
+            (dired-sidebar-show-sidebar buf)
+
+          ;; Otherwise, see if the link target is a directory.
+          ;;
+          (let ((linktext (file-symlink-p dir)))
+            (if (file-directory-p linktext)
+                (dired-sidebar-switch-to-dir linktext)
+              (error "Not a link to a directory"))))))
+     (t
+      (error "Not a directory")))))
+
+(defun kae/dired-keep-matching-filenames (regexp)
+
+  "Filter a Dired Mode buffer, keeping only those files which match
+      the supplied REGEXP."
+
+  (interactive "sRegular expression: ")
+
+  ;; Design decision: should we start from the full contents or
+  ;; from what is currently displayed.
+  ;; For now we choose the former.
+  ;;
+  (kae/dired-revert-buffer)
+
+  (let ((buffer-read-only nil))
+
+    ;; Keep the two header lines, and filter the rest.
+    ;;
+    (iterate-over-lines-in-region
+     (progn
+       (goto-char (point-min))
+       (forward-line 2)
+       (point))
+     (point-max)
+     '(lambda ()
+        (let ((filename (dired-get-filename t t)))
+          (if filename
+              (if (not (string-match regexp filename))
+                  (kill-line 1)))))))
+  ;; Update mode line.
+  ;;
+  (setq mode-name (concat mode-name " (keeping matches for \"" regexp "\")"))
+  (set-buffer-modified-p (buffer-modified-p)))
+
+(defun kae/dired-hide-matching-filenames (regexp)
+
+  "Filter a Dired Mode buffer, hiding those files which match the supplied REGEXP."
+
+  (interactive "sRegular expression: ")
+
+  ;; Design decision: should we start from the full contents or
+  ;; from what is currently displayed.
+  ;; For now we choose the former.
+  ;;
+  (kae/dired-revert-buffer)
+
+  (let ((buffer-read-only nil))
+    ;; Keep the two header lines, and filter the rest.
+    ;;
+    (iterate-over-lines-in-region
+     (progn
+       (goto-char (point-min))
+       (forward-line 2)
+       (point))
+     (point-max)
+     '(lambda ()
+        (let ((filename (dired-get-filename t t)))
+          (if filename
+              (if (string-match regexp filename)
+                  (kill-line 1)))))))
+  ;; Update mode line.
+  ;;
+  (setq mode-name (concat mode-name " (hiding matches for \"" regexp "\")"))
+  (set-buffer-modified-p (buffer-modified-p)))
+
+(defun kae/dired-revert-buffer ()
+
+  "Revert the Dired Mode buffer, resetting the mode line back to normal."
+  (interactive)
+  (setq mode-name "Dired")
+  (dired-revert t t))
+
+;;}}}
 ;;{{{ Javascript
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 
@@ -1676,7 +2268,7 @@ for common operations.
 ;;}}}
 ;;{{{ Magit
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (progn
       (setq magit-last-seen-setup-instructions "1.4.0")
       (require 'magit)))
@@ -1684,7 +2276,7 @@ for common operations.
 ;;}}}
 ;;{{{ Confluence wiki editing mode
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (progn
       (require 'confluence)
       (setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
@@ -1706,7 +2298,7 @@ for common operations.
 
 ;;{{{ Auto-complete
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (progn
       (require 'auto-complete-config)
       (add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
@@ -1715,7 +2307,7 @@ for common operations.
 ;;}}}
 ;;{{{ NXHTML
 
-(defun esler-pretty-print-xml-region (begin end)
+(defun kae/pretty-print-xml-region (begin end)
   "Pretty format XML markup in region. You need to have nxml-mode
 http://www.emacswiki.org/cgi-bin/wiki/NxmlMode installedto do
 this.  The function inserts linebreaks to separate tags that have
@@ -1757,7 +2349,7 @@ by using nxml's indentation rules."
 ;; of interactive process-based modes, including Shell Mode, Telnet Mode...
 ;; It implements behaviour common to all of them.
 ;;
-(defun esler-comint-mode-bindings ()
+(defun kae/comint-mode-bindings ()
 
   ;; For typing passwords while in a shell buffer.
   ;;
@@ -1766,7 +2358,7 @@ by using nxml's indentation rules."
   ;; Map M-g to a function which copies everything between point
   ;; and the end of the line, to the end of the buffer.
   ;;
-  (define-key comint-mode-map "\eg" 'esler-emulate-apollo-again-key)
+  (define-key comint-mode-map "\eg" 'kae/emulate-apollo-again-key)
 
   ;; Some telnets map ENTER to LF instead of CR.
   ;;
@@ -1777,7 +2369,7 @@ by using nxml's indentation rules."
   ;;
   (define-key comint-mode-map "\C-a" 'comint-bol))
 
-(eval-after-load "comint" '(esler-comint-mode-bindings))
+(eval-after-load "comint" '(kae/comint-mode-bindings))
 
 (add-hook 'comint-mode-hook
           '(lambda ()
@@ -1814,7 +2406,7 @@ by using nxml's indentation rules."
              ;;
              (setq comint-completion-recexact t)
 
-             ;;(esler-comint-mode-bindings)
+             ;;(kae/comint-mode-bindings)
              ))
 
 (add-hook 'comint-output-filter-functions
@@ -1837,12 +2429,12 @@ by using nxml's indentation rules."
 ;;}}}
 ;;{{{  Shell Mode.
 
-(add-hook 'shell-mode-hook 'esler-shell-mode-hook)
-(defun esler-shell-mode-hook ()
+(add-hook 'shell-mode-hook 'kae/shell-mode-hook)
+(defun kae/shell-mode-hook ()
 
   ;; Set up bindings common to all Comint-based modes.
   ;;
-  (esler-comint-mode-bindings)
+  (kae/comint-mode-bindings)
 
   ;; Make absolutely sure that auto-fill is off.
   ;;
@@ -1876,7 +2468,7 @@ by using nxml's indentation rules."
 
              ;; Set up bindings common to all Comint-based modes.
              ;;
-             (esler-comint-mode-bindings)))
+             (kae/comint-mode-bindings)))
 
 ;;}}}
 ;;{{{  Rlogin Mode.
@@ -1907,13 +2499,13 @@ by using nxml's indentation rules."
 ;;}}}
 ;;{{{  IELM
 
-(defun esler-ielm-mode-bindings ()
-  (message "Running esler-ielm-mode-bindings")
+(defun kae/ielm-mode-bindings ()
+  (message "Running kae/ielm-mode-bindings")
   (define-key ielm-map " " 'self-insert-command))
 ;; For some reason, this doesn't work: anymore:
 ;;
-(eval-after-load "ielm" '(esler-ielm-mode-bindings))
-(add-hook 'inferior-emacs-lisp-mode-hook 'esler-ielm-mode-bindings)
+(eval-after-load "ielm" '(kae/ielm-mode-bindings))
+(add-hook 'inferior-emacs-lisp-mode-hook 'kae/ielm-mode-bindings)
 
 ;;}}}
 
@@ -1923,7 +2515,7 @@ by using nxml's indentation rules."
 
 ;;{{{  Haskell related
 
-(if esler-modern-emacs
+(if kae/modern-emacs
     (progn
       ;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
 
@@ -2010,7 +2602,7 @@ by using nxml's indentation rules."
 
 ;;{{{ The Esler style
 
-(defconst esler-c-style-description
+(defconst kae/c-style-description
   '(
     "cc-mode" ;; Inherit from this
     (c-electric-pound-behavior      . (alignleft))
@@ -2048,16 +2640,16 @@ by using nxml's indentation rules."
 ;;}}}
 
 (require 'cc-mode)
-(c-add-style "esler" esler-c-style-description)
+(c-add-style "esler" kae/c-style-description)
 
-(defun esler-file-seems-to-be-MFC ()
+(defun kae/file-seems-to-be-MFC ()
   (save-excursion
     (goto-char (point-min))
     (re-search-forward "[aA][fF][xX]" nil t)))
 
 ;; Function to decide what style to use.
 ;;
-(defun esler-c-choose-style ()
+(defun kae/c-choose-style ()
   (let ((result "esler"))
     result))
 
@@ -2065,20 +2657,20 @@ by using nxml's indentation rules."
 
 ;; Customisations for C and C++ but not Java.
 ;;
-(add-hook 'c-mode-hook 'esler-c-and-c++-mode-hook)
-(add-hook 'c-mode-hook 'esler-c-mode-hook)
-(add-hook 'c++-mode-hook 'esler-c-and-c++-mode-hook)
+(add-hook 'c-mode-hook 'kae/c-and-c++-mode-hook)
+(add-hook 'c-mode-hook 'kae/c-mode-hook)
+(add-hook 'c++-mode-hook 'kae/c-and-c++-mode-hook)
 
 ;; Try to turn on C++ mode for .h files in Windows when appropriate.
 ;;
-(defun esler-c-mode-hook ()
+(defun kae/c-mode-hook ()
   (if (and at-site-work running-on-w32)
       (if (and (buffer-file-name)
                (string-match "\\.h$" (buffer-file-name))
-               (esler-file-seems-to-be-MFC))
+               (kae/file-seems-to-be-MFC))
           (c++-mode))))
 
-(defun esler-c-and-c++-mode-hook ()
+(defun kae/c-and-c++-mode-hook ()
 
   ;; Display trailing whitepace in red.
   ;;
@@ -2086,11 +2678,11 @@ by using nxml's indentation rules."
 
   ;; Choose an indentation style.
   ;;
-  (c-set-style (esler-c-choose-style)))
+  (c-set-style (kae/c-choose-style)))
 
 ;; Customizations common to C, C++, Java.
 ;;
-(defun esler-c-mode-bindings ()
+(defun kae/c-mode-bindings ()
 
 
   ;; Turn off electric semi-colon.
@@ -2103,10 +2695,10 @@ by using nxml's indentation rules."
   (define-key c-mode-map "\C-m" 'newline-and-indent-if-not-bol)
   (define-key c-mode-map "\n"   'newline-and-indent-if-not-bol)
   (define-key c-mode-map "\r"   'newline-and-indent-if-not-bol))
-(eval-after-load "cc-mode" '(esler-c-mode-bindings))
+(eval-after-load "cc-mode" '(kae/c-mode-bindings))
 
-(add-hook 'c-mode-common-hook 'esler-c-mode-common-hook)
-(defun esler-c-mode-common-hook ()
+(add-hook 'c-mode-common-hook 'kae/c-mode-common-hook)
+(defun kae/c-mode-common-hook ()
 
   ;; Disable filladapt for C modes.
   ;;
@@ -2128,7 +2720,7 @@ by using nxml's indentation rules."
   ;;
   (c-toggle-auto-hungry-state 1)
 
-  (esler-c-mode-bindings))
+  (kae/c-mode-bindings))
 
 ;; NYI: use c-font-lock-extra-types, c++-font-lock-extra-types
 ;;
@@ -2182,7 +2774,7 @@ by using nxml's indentation rules."
                         ))))
 (c-add-style "atria-java" atria-java-style-description)
 
-(defun esler-java-mode-hook ()
+(defun kae/java-mode-hook ()
 
   (setq show-trailing-whitespace t)
 
@@ -2191,7 +2783,7 @@ by using nxml's indentation rules."
   (c-set-style "atria-java")
   (setq fill-column 79))
 
-(add-hook 'java-mode-hook 'esler-java-mode-hook)
+(add-hook 'java-mode-hook 'kae/java-mode-hook)
 
 ;; Refine the automatic expansion of control-flow constructs.
 ;;
@@ -2249,10 +2841,10 @@ should not occur"
 ;; This is necessary because, unfortunately, scheme.el defines run-scheme to autoload
 ;; from xscheme.el.
 
-(defun esler-scheme-mode-bindings ()
+(defun kae/scheme-mode-bindings ()
   (define-key scheme-mode-map "\n" 'newline-and-indent-if-not-bol)
   (define-key scheme-mode-map "\r" 'newline-and-indent-if-not-bol))
-(eval-after-load "scheme" '(esler-scheme-mode-bindings))
+(eval-after-load "scheme" '(kae/scheme-mode-bindings))
 
 (add-hook 'scheme-mode-hook
           '(lambda ()
@@ -2307,7 +2899,7 @@ should not occur"
 ;; Map M-g to a function which copies everything between point
 ;; and the end of the line, to the end of the buffer.
 (eval-after-load "lisp-mode"
-  '(lambda () (define-key lisp-interaction-mode-map "\eg" 'esler-emulate-apollo-again-key)))
+  '(lambda () (define-key lisp-interaction-mode-map "\eg" 'kae/emulate-apollo-again-key)))
 
 ;;}}}
 ;;{{{  Makefile Mode.
@@ -2395,7 +2987,7 @@ file modes."
 ;; Note that indented-text-mode calls text-mode-hook.
 ;; Note that auto-fill-hook is a buffer-local variable.
 
-(defun esler-visiting-a-Makefile-p ()
+(defun kae/visiting-a-Makefile-p ()
   (let ((name buffer-file-name))
 
     ;; For some reason, text-mode-hook gets called twice.
@@ -2436,7 +3028,7 @@ in which case just newline."
 
              ;; If editing a Makefile, use real tabs, otherwise don't.
 
-             (if (esler-visiting-a-Makefile-p)
+             (if (kae/visiting-a-Makefile-p)
                  (progn
                    (setq indent-tabs-mode t)
                    (auto-fill-mode -1))
@@ -2449,28 +3041,28 @@ in which case just newline."
              ;;             ;;
              ;;             (if (memq major-mode '(indented-text-mode mail-mode))
              ;;                 (progn
-             ;;                   (local-set-key "\eh" 'esler-mark-indented-paragraph)
-             ;;                   (local-set-key "\eq" 'esler-fill-indented-paragraph))
+             ;;                   (local-set-key "\eh" 'kae/mark-indented-paragraph)
+             ;;                   (local-set-key "\eq" 'kae/fill-indented-paragraph))
              ;;               (progn
              ;;                 (local-set-key "\eh" 'mark-paragraph)
              ;;                 (local-set-key "\eq" 'fill-paragraph)))))
              ))
 
-(defun esler-mark-indented-paragraph ()
+(defun kae/mark-indented-paragraph ()
 
   (interactive)
 
-  (let ((pair (esler-locate-indented-paragraph)))
+  (let ((pair (kae/locate-indented-paragraph)))
     (set-mark  (nth 0 pair))
     (goto-char (nth 1 pair))))
 
-(defun esler-fill-indented-paragraph (justify-flag)
+(defun kae/fill-indented-paragraph (justify-flag)
 
   (interactive "P")
 
   (if (not (eq major-mode 'indented-text-mode))
       (fill-paragraph justify-flag)
-    (let ((pair (esler-locate-indented-paragraph)))
+    (let ((pair (kae/locate-indented-paragraph)))
       (let ((fill-prefix (make-string (current-indentation) ?\040))
 	    (begin-marker (set-marker (make-marker) (nth 0 pair)))
 	    (end-marker   (set-marker (make-marker) (nth 1 pair))))
@@ -2486,7 +3078,7 @@ in which case just newline."
 	(set-marker begin-marker nil)
 	(set-marker end-marker nil)))))
 
-(defun esler-locate-indented-paragraph ()
+(defun kae/locate-indented-paragraph ()
 
   "Recognises a paragraph in Indented Text Mode to be a contiguous group of
 lines with the same indentation, or bounded by a line consisting only of white
@@ -2525,521 +3117,6 @@ paragraph."
       (list begin end))))
 
 ;;}}}
-;;{{{  Dired Mode.
-
-(add-hook 'dired-load-hook
-          (lambda () (require 'dired-sort-menu)))
-
-;; Regexp matching "trivial" files at the start of a buffer:
-;;  .
-;;  ..
-;;  .,
-;;  .copyarea.db
-;;  #---
-;;
-(setq dired-trivial-filenames
-      "^\\.\\.?$\\|^\\.,\\|^\\.copyarea\\.db\\|^#")
-
-(setq dired-dwim-target t)
-
-;; Menu for sorting Dired buffers.
-;;
-;;(eval-after-load "dired" (require 'dired-sort-menu))
-
-;; Enable recursive deletes and copies.
-;;
-(setq dired-recursive-deletes 'top)
-(setq dired-recursive-copies 'top)
-
-;; Which operations I don't want confirmed:
-;;
-(setq dired-no-confirm '(byte-compile
-                         chgrp
-                         chmod
-                         chown
-                         compress
-                         copy
-                         load
-                         move
-                         print
-                         shell
-                         symlink
-                         uncompress
-                         ;;delete
-                         ;;hardlink
-                         ))
-
-(defun esler-dired-mode-bindings ()
-  (define-key dired-mode-map " " 'scroll-up)
-  (define-key dired-mode-map "\C-?" 'scroll-down) ; DEL
-  (define-key dired-mode-map "1" 'delete-other-windows)
-  (define-key dired-mode-map "2" 'split-window-vertically)
-  (define-key dired-mode-map "5" 'split-window-horizontally)
-  (define-key dired-mode-map "a" 'esler-dired-apply-function)
-  (define-key dired-mode-map "b" 'dired-byte-recompile)
-
-  ;;(define-key dired-mode-map "h" 'esler-dired-hide-matching-filenames)
-  (define-key dired-mode-map "K" 'esler-dired-keep-matching-filenames)
-
-  (define-key dired-mode-map "q" 'esler-dired-kill-current-and-find-superior-dired)
-  ;;(define-key dired-mode-map "r" 'esler-dired-edit-filename)
-  (define-key dired-mode-map "t" 'esler-dired-visit-tags-table)
-
-  (define-key dired-mode-map "V" 'esler-dired-visit-vm-folder)
-  (define-key dired-mode-map "z" 'esler-dired-spawn-shell)
-
-  ;;(define-key dired-mode-map "D" 'esler-dired-keep-directories)
-  (define-key dired-mode-map "E" 'esler-dired-edit-linktext)
-  (define-key dired-mode-map "F" 'esler-dired-follow-link)
-
-  ;;(define-key dired-mode-map "H" 'esler-dired-hide-file)
-  ;;(define-key dired-mode-map "!" 'esler-dired-command-file)
-  (define-key dired-mode-map "|" 'esler-dired-pipe-file)
-  (define-key dired-mode-map "@"
-    '(lambda ()
-       (interactive)
-       (dired-flag-backup-files)
-       (dired-flag-auto-save-files)))
-  (define-key dired-mode-map "."
-    '(lambda ()
-       (interactive)
-       (goto-char (point-min))
-       (dired-goto-next-nontrivial-file)))
-  (define-key dired-mode-map "<" '(lambda ()
-                                    (interactive)
-                                    (goto-char (point-min))
-                                    (forward-line 3)
-                                    (dired-move-to-filename)))
-  (define-key dired-mode-map ">" '(lambda ()
-                                    (interactive)
-                                    (goto-char (point-max))
-                                    (forward-line -1)
-                                    (dired-move-to-filename)))
-  ;;(define-key dired-mode-map "\\" 'esler-dired-up)
-  (define-key dired-mode-map "^"  'esler-dired-up)
-  ;;(define-key dired-mode-map "/" 'esler-dired-down)
-  (define-key dired-mode-map "]" 'esler-dired-down)
-  (define-key dired-mode-map "\eg" '(lambda ()
-                                      (interactive)
-                                      (let ((filename (dired-get-filename t)))
-                                        (esler-dired-spawn-shell)
-                                        (end-of-buffer)
-                                        (insert filename)))))
-(eval-after-load "dired" '(esler-dired-mode-bindings))
-
-(add-hook 'dired-mode-hook
-          '(lambda ()
-             (make-local-variable 'dired-associated-shell-buffer)
-             (setq dired-associated-shell-buffer nil)
-             ;;(esler-dired-mode-bindings)
-             ))
-
-;; When I invoke Dired, position me at the most-recently edited file
-;; if it can be determined.
-;;
-(defadvice dired (after goto-relevant-file activate)
-  "When I invoke Dired, position at the file I was looking at
-when I invoked it, if that makes sense."
-  (esler-dired-advice))
-(defun esler-dired-advice ()
-  (let ((most-recent-buffer (other-buffer (current-buffer) t)))
-    (if most-recent-buffer
-        (let ((most-recent-file (buffer-file-name most-recent-buffer)))
-          (if most-recent-file
-              (if (or (file-regular-p most-recent-file)
-                      (file-directory-p most-recent-file))
-                  (let ((most-recent-dir (file-name-directory most-recent-file)))
-                    (if (string= (expand-file-name default-directory)
-                                 (expand-file-name most-recent-dir))
-                        (let ((entry-name (file-name-nondirectory most-recent-file)))
-                          (goto-char (point-min))
-
-                          ;; Probably should wrap this to ignore errors:
-                          ;;
-                          (dired-goto-file most-recent-file))))))))))
-
-;; When I use "s" to resort the Dired buffer,
-;; I like to be left at the top again.
-;;
-(defadvice dired-sort-toggle-or-edit (after goto-top activate)
-  "After resorting the dired buffer, go to the top of it."
-  (goto-char (point-min))
-  (dired-goto-next-file))
-
-;; If I'm renaming a single file, let me just edit the existing name.
-;;
-(defadvice dired-do-rename (around rename-by-edit activate)
-
-  "If I'm renaming a single file, let me just edit the existing name."
-
-  ;; Only do this if there's 1 file to be renamed
-  ;;
-  (if (eq 1 (length (dired-get-marked-files)))
-      (let* ((current-name (dired-get-filename))
-             (current-basename (file-name-nondirectory current-name)))
-        current-name
-        (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
-                                         'read-file-name-internal                   ;; table
-                                         default-directory                          ;; predicate
-                                         nil                                        ;; require-match
-                                         current-basename                           ;; initial-input
-                                         'file-name-history)))
-          (setq new-name (expand-file-name new-name))
-
-          ;; If the user supplied a directory name after all,
-          ;; compute the target path.
-          ;;
-          (if (file-directory-p new-name)
-              (setq new-name (concat (file-name-as-directory new-name)
-                                     current-basename)))
-
-          ;; Do the rename operation, updating any Emacs buffer info.
-          ;;
-          (dired-rename-file current-name new-name nil)
-
-          ;; Update the Dired buffer
-          ;;
-          (dired-add-file new-name)))
-    ad-do-it))
-
-;; When I use "s" to resort the Dired buffer,
-;; I like to be left at the top again.
-;;
-(defadvice dired-sort-toggle-or-edit (after goto-top activate)
-  "After resorting the dired buffer, got to the top of it."
-  (goto-char (point-min))
-  (dired-goto-next-file))
-
-(autoload 'dired-update-file-line "dired-aux")
-(defun esler-dired-edit-linktext ()
-  "Replace the contents of a symbolic link."
-  (interactive)
-  (let ((linkname (dired-get-filename)))
-    (let ((current-linktext (file-symlink-p linkname)))
-      (if current-linktext
-          (let ((new-linktext (completing-read "New link text: "
-                                               'read-file-name-internal
-                                               default-directory
-                                               nil
-                                               current-linktext
-                                               'file-name-history)))
-            ;; Delete the old link
-            ;;
-            (delete-file linkname)
-
-            ;; Create the new link
-            ;;
-            (make-symbolic-link new-linktext linkname t)
-
-            ;; Redisplay the new link
-            ;;
-            (dired-update-file-line linkname))
-
-        (error "Not a symbolic link")))))
-
-(defun esler-dired-kill-current-and-find-superior-dired ()
-  (interactive)
-  (let ((alternate (esler-dired-find-alternate-buffer))
-        (superior (esler-dired-find-superior-buffer))
-        (inferior (current-buffer)))
-    (if dired-associated-shell-buffer
-        (progn
-          (delete-windows-on dired-associated-shell-buffer)
-          (kill-buffer dired-associated-shell-buffer)))
-    (if alternate
-        (switch-to-buffer alternate)
-      (if superior
-          (switch-to-buffer superior)))
-    (kill-buffer inferior)))
-
-(defun esler-dired-find-alternate-buffer ()
-
-  "Find another dired-mode buffer containing the same dir as the current."
-
-  (let ((current (current-buffer))
-        (list-of-buffers (buffer-list))
-        (dir-name (file-name-as-directory default-directory)))
-    (save-excursion
-      (catch 'exit-loop
-        (while list-of-buffers
-          (let ((b (car list-of-buffers)))
-            (set-buffer b)
-            (if (and
-                 (string= dir-name default-directory)
-                 (eq major-mode 'dired-mode)
-                 (not (eq current b)))
-                (throw 'exit-loop b)))
-          (setq list-of-buffers (cdr list-of-buffers)))
-        (throw 'exit-loop nil)))))
-
-(defun esler-dired-find-dired-buffer (path)
-
-  "Find a dired-mode buffer containing DIR."
-
-  (let ((list-of-buffers (buffer-list))
-        (dir-name (file-name-as-directory path)))
-    (save-excursion
-      (catch 'exit-loop
-        (while list-of-buffers
-          (let ((b (car list-of-buffers)))
-            (set-buffer b)
-            (if (and
-                 (string= dir-name default-directory)
-                 (eq major-mode 'dired-mode))
-                (throw 'exit-loop b)))
-          (setq list-of-buffers (cdr list-of-buffers)))
-        (throw 'exit-loop nil)))))
-
-(defun esler-dired-find-superior-buffer ()
-
-  "Find a dired-mode buffer whose default directory is the superior
-      directory to the the default directory of the current-buffer."
-
-  (let ((current-dir-name default-directory))
-    (let ((superior-dir-name (file-name-directory
-                              (directory-file-name current-dir-name))))
-      (if superior-dir-name
-          (esler-dired-find-dired-buffer superior-dir-name)
-        nil))))
-
-(defun esler-dired-up ()
-
-  "Find or create a dired buffer for the directory containing the current
-      directory."
-
-  (interactive)
-
-  (let ((superior (esler-dired-find-superior-buffer))
-        (inferior-leaf-name (file-name-nondirectory (directory-file-name default-directory))))
-    (if superior
-        (progn
-          (switch-to-buffer superior)
-          (let ((previous-point (point)))
-            (goto-char 0)
-            (if (re-search-forward (concat " " (regexp-quote inferior-leaf-name) " *.*$") nil t)
-                (dired-move-to-filename)
-              (goto-char previous-point))))
-      (if (file-directory-p "..")
-          (progn
-            (dired "..")
-            (goto-char 0)
-            (re-search-forward (concat " " (regexp-quote inferior-leaf-name) "$") nil t)
-            (dired-move-to-filename))
-        (message "No containing directory")))))
-
-(defun esler-dired-visit-tags-table ()
-
-  "In dired, visit the file or directory named on this line as a tags file."
-
-  (interactive)
-  (visit-tags-table (dired-get-filename))
-  (message "Current tags table is %s" tags-file-name))
-
-(defvar esler-dired-last-piped-command nil)
-(defun esler-dired-pipe-file ()
-
-  "In dired, run a command with pointed at file as stdin."
-
-  (interactive)
-
-  (let ((command (read-from-minibuffer "Command: "
-                                       (if esler-dired-last-piped-command
-                                           esler-dired-last-piped-command
-                                         nil)
-                                       nil
-                                       nil)))
-    (let ((buffer (get-buffer-create "*Shell Command Output*")))
-      (with-current-buffer buffer
-        (erase-buffer))
-      (call-process shell-file-name
-                    (dired-get-filename)
-                    buffer
-                    nil
-                    "-c"
-                    command)
-      (setq esler-dired-last-piped-command command)
-      (if (with-current-buffer buffer
-            (> (buffer-size) 0))
-          (set-window-start (display-buffer buffer) 1)
-        (message "(Shell command completed with no output)")))))
-
-(defun esler-dired-spawn-shell ()
-
-  "Spawn a shell buffer in another window, with current directory set to the
-      directory being edited."
-
-  (interactive)
-
-  ;; This code was borrowed from (defun shell ...) and modified.
-
-  (require 'shell)
-  (let* ((buf-part-name default-directory)
-         (buf-name (concat "*" buf-part-name "*")))
-
-    ;; If the appropriate shell buffer apparently doesn't exist
-    ;; create it...
-    (if (not (comint-check-proc buf-name))
-        (let* ((prog (or explicit-shell-file-name
-                         (getenv "ESHELL")
-                         (getenv "SHELL")
-                         "/bin/sh"))
-               (name (file-name-nondirectory prog))
-               (startfile (concat "~/.emacs_" name))
-               (xargs-name (intern-soft (concat "explicit-" name "-args")))
-               (process-environment (cons (concat "DIRED_HOME=" default-directory)
-                                          process-environment)))
-          (let* ((new-buf (apply 'make-comint buf-part-name prog
-                                 (if (file-exists-p startfile) startfile)
-                                 (if (and xargs-name (boundp 'xargs-name))
-                                     (symbol-value xargs-name)
-                                   '("-i")))))
-            (setq dired-associated-shell-buffer new-buf)
-            (set-buffer new-buf)
-            (shell-mode)))
-
-      ;; ...otherwise just associate it with the dired buffer
-      ;;
-      (setq dired-associated-shell-buffer (get-buffer buf-name)))
-
-
-    ;; We probably should make sure that the buffer we found,
-    ;;    - is in shell mode
-    ;;    - has its current directory where we expec.
-    ;; Later..
-
-    ;; Now display the shell buffer, splitting the dired window if
-    ;; necessary.
-    ;;
-    (let ((shell-window (get-buffer-window buf-name)))
-      (if (null shell-window)
-          (setq shell-window (split-window)))
-      (set-window-buffer shell-window buf-name)
-      (select-window shell-window)
-      (set-buffer (get-buffer buf-name))
-      (goto-char (point-max)))))
-
-(defun esler-dired-follow-link ()
-  "Follow the link under the cursor."
-  (interactive)
-
-  (let ((link (dired-get-filename)))
-    (let ((linktext (file-symlink-p link)))
-      (if linktext
-          (cond
-           ((file-directory-p linktext) (dired linktext))
-           ((file-symlink-p linktext) (dired linktext))
-           (t (find-file linktext)))
-        (error "Not a symbolic link")))))
-
-(defun esler-dired-down ()
-
-  "Find or create a dired buffer for the directory containing the pointed at
-      directory."
-
-  (interactive)
-
-  (let ((dir (dired-get-filename)))
-    (cond
-
-     ;; For directories:
-     ;;
-     ((file-directory-p dir)
-      (let ((buf (esler-dired-find-dired-buffer dir)))
-        (if buf
-            (switch-to-buffer buf)
-          (dired dir))))
-
-     ;; For symlinks:
-     ;;
-     ((file-symlink-p dir)
-
-      ;; See if there is a Dired Mode buffer already.
-      ;;
-      (let ((buf (esler-dired-find-dired-buffer dir)))
-        (if buf
-            (switch-to-buffer buf)
-
-          ;; Otherwise, see if the link target is a directory.
-          ;;
-          (let ((linktext (file-symlink-p dir)))
-            (if (file-directory-p linktext)
-                (dired linktext)
-              (error "Not a link to a directory"))))))
-     (t
-      (error "Not a directory")))))
-
-(defun esler-dired-keep-matching-filenames (regexp)
-
-  "Filter a Dired Mode buffer, keeping only those files which match
-      the supplied REGEXP."
-
-  (interactive "sRegular expression: ")
-
-  ;; Design decision: should we start from the full contents or
-  ;; from what is currently displayed.
-  ;; For now we choose the former.
-  ;;
-  (esler-dired-revert-buffer)
-
-  (let ((buffer-read-only nil))
-
-    ;; Keep the two header lines, and filter the rest.
-    ;;
-    (iterate-over-lines-in-region
-     (progn
-       (goto-char (point-min))
-       (forward-line 2)
-       (point))
-     (point-max)
-     '(lambda ()
-        (let ((filename (dired-get-filename t t)))
-          (if filename
-              (if (not (string-match regexp filename))
-                  (kill-line 1)))))))
-  ;; Update mode line.
-  ;;
-  (setq mode-name (concat mode-name " (keeping matches for \"" regexp "\")"))
-  (set-buffer-modified-p (buffer-modified-p)))
-
-(defun esler-dired-hide-matching-filenames (regexp)
-
-  "Filter a Dired Mode buffer, hiding those files which match the supplied REGEXP."
-
-  (interactive "sRegular expression: ")
-
-  ;; Design decision: should we start from the full contents or
-  ;; from what is currently displayed.
-  ;; For now we choose the former.
-  ;;
-  (esler-dired-revert-buffer)
-
-  (let ((buffer-read-only nil))
-    ;; Keep the two header lines, and filter the rest.
-    ;;
-    (iterate-over-lines-in-region
-     (progn
-       (goto-char (point-min))
-       (forward-line 2)
-       (point))
-     (point-max)
-     '(lambda ()
-        (let ((filename (dired-get-filename t t)))
-          (if filename
-              (if (string-match regexp filename)
-                  (kill-line 1)))))))
-  ;; Update mode line.
-  ;;
-  (setq mode-name (concat mode-name " (hiding matches for \"" regexp "\")"))
-  (set-buffer-modified-p (buffer-modified-p)))
-
-(defun esler-dired-revert-buffer ()
-
-  "Revert the Dired Mode buffer, resetting the mode line back to normal."
-  (interactive)
-  (setq mode-name "Dired")
-  (dired-revert t t))
-
-;;}}}
 ;;{{{  Process Mode.
 
 (autoload 'ps-mode "ps-mode"
@@ -3068,7 +3145,7 @@ when I invoked it, if that makes sense."
   (push-window-config)
   (ps-mode))
 
-(defun esler-ps-mode-bindings ()
+(defun kae/ps-mode-bindings ()
   ;; Let "g" mean "get or refresh", as it does for
   ;; Dired Mode, VM Mode, GNUS, et al.
   ;;
@@ -3090,11 +3167,11 @@ when I invoked it, if that makes sense."
 
              ;; Establish my (somewhat) standard set of readonly-buffer bindings.
              ;;
-             (esler-standard-readonly-buffer-key-bindings)
+             (kae/standard-readonly-buffer-key-bindings)
 
              ;; And then override a few.
              ;;
-             (esler-ps-mode-bindings)
+             (kae/ps-mode-bindings)
              ))
 
 
@@ -3127,7 +3204,7 @@ including compressed ones."
 
 (setq auto-mode-alist (cons '("\\.tar$" . tar-mode) auto-mode-alist))
 
-(defun esler-tar-mode-bindings ()
+(defun kae/tar-mode-bindings ()
   (define-key tar-mode-map "q" '(lambda ()
                                   (interactive)
                                   (kill-buffer (current-buffer))))
@@ -3144,12 +3221,12 @@ including compressed ones."
        (mouse-set-point click)
        (sit-for 0)
        (tar-extract))))
-(eval-after-load "tar-mode" '(esler-tar-mode-bindings))
+(eval-after-load "tar-mode" '(kae/tar-mode-bindings))
 
 ;;}}}
 ;;{{{  Archive Mode
 
-(defun esler-archive-mode-bindings ()
+(defun kae/archive-mode-bindings ()
   (define-key archive-mode-map "q" '(lambda ()
                                       (interactive)
                                       (kill-buffer (current-buffer))))
@@ -3160,7 +3237,7 @@ including compressed ones."
   (define-key archive-mode-map "2" 'split-window-vertically)
   (define-key archive-mode-map "5" 'split-window-horizontally))
 
-(eval-after-load "arc-mode" '(esler-archive-mode-bindings))
+(eval-after-load "arc-mode" '(kae/archive-mode-bindings))
 
 ;;}}}
 ;;{{{  Emerge Mode.
@@ -3207,15 +3284,15 @@ including compressed ones."
 
 ;; Allow me to click on a man page reference to read it.
 ;;
-(defun esler-Man-mode-bindings ()
+(defun kae/Man-mode-bindings ()
   ;; Point-and-shoot at man page reference.
   ;;
-  (local-set-key [mouse-3] 'esler-Man-page-mouse-3-handler))
+  (local-set-key [mouse-3] 'kae/Man-page-mouse-3-handler))
 
 (add-hook 'Man-mode-hook
-          '(lambda () (esler-Man-mode-bindings)))
+          '(lambda () (kae/Man-mode-bindings)))
 
-(defun esler-Man-page-mouse-3-handler (click)
+(defun kae/Man-page-mouse-3-handler (click)
   "Read the man page referred to by the text under the mouse."
   (interactive "@e")
   (mouse-set-point click)
@@ -3238,14 +3315,14 @@ including compressed ones."
 
 (autoload 'view-mode "view" nil t)
 (setq view-read-only t)
-(defun esler-view-exit-action (buf)
+(defun kae/view-exit-action (buf)
   (interactive)
   (delete-windows-on buf)
   (kill-buffer buf))
-(setq view-exit-action 'esler-view-exit-action)
-(setq view-mode-hook 'esler-view-mode-hook)
-(defun esler-view-mode-hook ()
-  (esler-standard-readonly-buffer-key-bindings-in-keymap view-mode-map))
+(setq view-exit-action 'kae/view-exit-action)
+(setq view-mode-hook 'kae/view-mode-hook)
+(defun kae/view-mode-hook ()
+  (kae/standard-readonly-buffer-key-bindings-in-keymap view-mode-map))
 
 ;;}}}
 ;;{{{  Folding Minor Mode.
@@ -3272,7 +3349,7 @@ including compressed ones."
         (other	folding-mouse-call-original)
         ))
 
-(defun esler-folding-enfold-indented-buffer ()
+(defun kae/folding-enfold-indented-buffer ()
 
   "Insert fold marks according to the indentation in the buffer,
 so that the resultant buffer can be edited in folding Minor Mode.
@@ -3362,13 +3439,13 @@ This is real useful for making DSEE build descriptions comprehensible."
 
                ;; Mouse navigation in a folded outline buffer.
                ;;
-               (define-key outline-minor-mode-map [mouse-3] 'esler-mouse19-folding-outline-mouse-3-handler)
+               (define-key outline-minor-mode-map [mouse-3] 'kae/mouse19-folding-outline-mouse-3-handler)
 
                ;; Start off with the file folded.
                ;;
                (hide-sublevels 1))))
 
-(defun esler-mouse19-folding-outline-mouse-3-handler (click)
+(defun kae/mouse19-folding-outline-mouse-3-handler (click)
   "Enter or exit the fold pointed at.
 This must be bound to a mouse click."
   (interactive "@e")
@@ -3409,7 +3486,7 @@ This must be bound to a mouse click."
 ;;}}}
 ;;{{{  Occur Mode
 
-(defun esler-occur-mode-bindings ()
+(defun kae/occur-mode-bindings ()
   (local-set-key [mouse-3]
                  '(lambda (click)
                     "Select the occurrence clicked on."
@@ -3419,7 +3496,7 @@ This must be bound to a mouse click."
                     (occur-mode-goto-occurrence))))
 
 (add-hook 'occur-mode-hook
-          '(lambda (esler-occur-mode-bindings) ()))
+          '(lambda (kae/occur-mode-bindings) ()))
 
 ;;}}}
 ;;{{{  Compilation (and Grep) Mode.
@@ -3427,7 +3504,7 @@ This must be bound to a mouse click."
 ;; In a buffer output by M-x grep,
 ;; be able to point-and-click at an occurrence to find it in its file.
 ;;
-(defun esler-compilation-mode-bindings ()
+(defun kae/compilation-mode-bindings ()
   (local-set-key [mouse-3]
                  '(lambda (click)
                     "Select the occurrence clicked on."
@@ -3436,7 +3513,7 @@ This must be bound to a mouse click."
                     (sit-for 0)
                     (compile-goto-error nil))))
 (add-hook 'compilation-mode-hook
-          '(lambda () (esler-compilation-mode-bindings)))
+          '(lambda () (kae/compilation-mode-bindings)))
 
 ;;}}}
 
@@ -3461,7 +3538,7 @@ This must be bound to a mouse click."
   "Show where to find publicly contributed Emacs lisp programs."
   t)
 
-(setq lisp-code-directory (concat esler-elisp-directory
+(setq lisp-code-directory (concat kae/elisp-directory
                                   "/Lispdir/LCD-datafile"))
 
 ;; This used to be tut.cis... but that name no longer responds to FTP.
@@ -3554,17 +3631,17 @@ This must be bound to a mouse click."
 
       (setenv "EDITOR" "~/Library/bin/ec")
       
-      (defun esler-dired-launch-file (&optional arg)
+      (defun kae/dired-launch-file (&optional arg)
         (interactive "P")
         (mapcar
          (function
           (lambda (relative-object)
-            (esler-launch-file relative-object)))
+            (kae/launch-file relative-object)))
          (dired-get-marked-files t arg)))
 
       (eval-after-load
           "dired"
-        '(define-key dired-mode-map "j" 'esler-dired-launch-file))
+        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
 
       ;; Get the desired cursor shape.
       (set-default 'cursor-type 'box)
@@ -3721,7 +3798,7 @@ using cygpath"
 (if running-on-w32
     (progn
 
-      (defun esler-w32-canonicalize-path-seps (path)
+      (defun kae/w32-canonicalize-path-seps (path)
         (subst-char-in-string ?/ ?\\ path t))
 
       ;; In Dired Mode: I like to be able to change the case of file names.
@@ -3737,7 +3814,7 @@ using cygpath"
       ;; In Dired Mode: "open" a pointed-at object with the appropriate app.
       ;; (If it's a directory, fire up the Windows Explorer.)
       ;;
-      (defun esler-dired-launch-file (&optional arg)
+      (defun kae/dired-launch-file (&optional arg)
         (interactive "P")
         (mapcar
          (function
@@ -3772,14 +3849,14 @@ using cygpath"
               (progn
                 (message "Opening %s..." relative-object)
                 (w32-shell-execute "open"
-                                   (esler-w32-canonicalize-path-seps
+                                   (kae/w32-canonicalize-path-seps
                                     (expand-file-name relative-object)))
                 (message "Opening %s...done" relative-object))))))
          (dired-get-marked-files t arg)))
 
       (eval-after-load
           "dired"
-        '(define-key dired-mode-map "j" 'esler-dired-launch-file))
+        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
 
       ;; Start in a sensible place.
       ;;
