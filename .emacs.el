@@ -485,7 +485,7 @@ Ignores trailing '*' or '@' as in 'ls -F' output."
                (last-char (aref buffername (- (length buffername) 1))))
           (if (memq last-char skip-at-end)
               (setq buffername (substring buffername 0 -1)))
-          filename)))))
+          buffername)))))
 
 ;;}}}
 
@@ -1338,8 +1338,7 @@ and/or the vertical-line."
 ;; Provide machine identification on mode-line.
 ;;
 (set-default 'mode-line-buffer-identification
-             (let* ((system-name (system-name))
-                    (index (string-match "\\." (system-name))))
+             (let* ((index (string-match "\\." (system-name))))
                (if (not (numberp index))
                    (setq index (length (system-name))))
                (list (concat "Emacs" "@"
@@ -1358,18 +1357,24 @@ and/or the vertical-line."
 ;;{{{ Add a "KAE" menu bar entry
 
 (require 'easymenu)
-(setq kae-menu
+(setq dss-menu
       (easy-menu-define shortcuts-menu
         (list global-map)
         "Shortcuts menu"
-        (list "KAE"
+        (list "DSS"
+              ["DSS Dashboard" (find-file "~/dss/DssDashboard.org")]
               ["DSS Domain" (find-file "~/dss/DssDomain.org")]
               ["DSS Devops" (find-file "~/dss/DssDevops.org")]
               ["DSS Lore" (find-file "~/dss/Lore.org")]
               ["DSS Repos" (find-file "~/apps/github/repos/dss")]
               ["DSS directory" (find-file "~/dss")]
-              ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")]
-              "---------------------------------"
+              ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
+
+(setq kae-menu
+      (easy-menu-define shortcuts-menu
+        (list global-map)
+        "Shortcuts menu"
+        (list "KAE"
               ["AWS Lore" (find-file "~/dss/AwsLore.org")]
               ["Tech Lore" (find-file "~/dss/TechLore.org")]
               "---------------------------------"
@@ -1407,6 +1412,7 @@ and/or the vertical-line."
                :included running-on-w32
                ]
               )))
+(add-hook 'menu-bar-final-items 'DSS)
 (add-hook 'menu-bar-final-items 'KAE)
 (defun kae/project-dired-homedir ()
   (interactive)
