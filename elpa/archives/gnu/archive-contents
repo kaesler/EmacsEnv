@@ -1471,7 +1471,7 @@
 	 ("Helmut Eller" . "eller.helmut@gmail.com"))
 	(:url . "http://elpa.gnu.org/packages/peg.html"))])
  (persist .
-	  [(0 1)
+	  [(0 2)
 	   nil "Persist Variables" single
 	   ((:url . "http://elpa.gnu.org/packages/persist.html")
 	    (:authors

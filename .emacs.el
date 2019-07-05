@@ -1089,6 +1089,10 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 
 ;;{{{ ASCII keys.
 
+(global-set-key "\M-0" 'treemacs-select-window)
+
+(global-set-key "\C-xtt" 'treemacs)
+
 (global-set-key "\C-x\C-b" 'ibuffer)
 
 (global-set-key "\M-o" 'kae/another-line)
@@ -1622,6 +1626,14 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ Treemacs
+
+(defun kae/treemacs-mode-bindings ()
+  (define-key treemacs-mode-map "f" 'treemacs-visit-node-in-most-recently-used-window)
+  (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action)
+  )
+(eval-after-load "treemacs" '(kae/treemacs-mode-bindings))
+;;}}}
 ;;{{{ Dired Mode.
 
 ;;{{{ dired-sidebar
@@ -1704,10 +1716,12 @@ for common operations.
                          ;;hardlink
                          ))
 
+;;{{{ Key bindings
 
 (defun kae/dired-mode-bindings ()
   (define-key dired-mode-map " " 'scroll-up)
   (define-key dired-mode-map "\C-?" 'scroll-down) ; DEL
+  (define-key dired-mode-map "0" 'kae/dired-try-delete-window)
   (define-key dired-mode-map "1" 'kae/dired-only-1-dired-window)
   (define-key dired-mode-map "2" 'split-window-vertically)
   (define-key dired-mode-map "5" 'split-window-horizontally)
@@ -1751,6 +1765,9 @@ for common operations.
                                         (kae/dired-spawn-shell)
                                         (end-of-buffer)
                                         (insert filename)))))
+
+;;}}}
+
 (eval-after-load "dired" '(kae/dired-mode-bindings))
 
 (add-hook 'dired-mode-hook
