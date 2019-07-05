@@ -64,19 +64,17 @@
     (end-of-line)
     (buffer-substring (point-min) (point))))
 
-(let ((host-name (system-name))
-      (domain-name ""))
-  ;;      (domain-name (kae/command-output-first-line-as-string "domainname")))
+(let ((host-name (system-name)))
   (cond
    ;; Heuristically decide where we're running.
    ;;
    ((or
-     (string-equal "TTLTMAC031" host-name)
+     (string-equal "ke-682SJG5J-MBP" host-name)
      )
     (setq at-site-work t))
-
+   
    ((or
-     (string-match "DURIF" host-name)
+     (string-match "Kevins.iMac" host-name)
      )
     (setq at-site-home t))))
 
@@ -1021,7 +1019,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
       "Consolas-12"
     ;; This looks better on my laptop
     ;;
-    ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"))
+    ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"
       "Consolas-10"))
 
 (if running-on-w32
@@ -1040,7 +1038,7 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 ;; Also from  http://prdownloads.sf.net/corefonts/
 
 ;; "-*-Lucida Sans Typewriter-normal-r-*-*-12-120-120-120-c-*-iso8859-1"
-;; "-outline-Lucida Sans Typewriter-normal-r-normal-normal-16-120-96-96-c-100-iso10646-1"))
+;; "-outline-Lucida Sans Typewriter-normal-r-normal-normal-16-120-96-96-c-100-iso10646-1"
 
 ;; Also look here: http://c2.com/cgi/wiki?GoodProgrammerTypeface
 
@@ -1353,10 +1351,9 @@ and/or the vertical-line."
 
 ;;}}}
 ;;{{{  Customise the menu bar.
-
-;;{{{ Add a "KAE" menu bar entry
-
 (require 'easymenu)
+
+;;{{{ Add a "DSS" menu bar entry
 (setq dss-menu
       (easy-menu-define shortcuts-menu
         (list global-map)
@@ -1370,7 +1367,12 @@ and/or the vertical-line."
               ["DSS directory" (find-file "~/dss")]
               ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
 
-(setq kae-menu
+
+;;}}}
+
+;;{{{ Add a "KAE" menu bar entry
+
+(setq kae-menu      
       (easy-menu-define shortcuts-menu
         (list global-map)
         "Shortcuts menu"
@@ -1424,7 +1426,6 @@ and/or the vertical-line."
 
 (defun kae/project-dired-emacs-elisp ()
   (interactive)
-  ;;(dired (concat exec-directory "/../lisp")))
   (dired (concat exec-directory "/../../Resources/lisp")))
 
 ;;}}}
@@ -1469,6 +1470,7 @@ and/or the vertical-line."
 ;;}}}
 
 ;;}}}
+
 ;;{{{  Customise the minibuffer
 
 ;; For the minibuffer, disallow auto-show
@@ -1622,7 +1624,7 @@ for common operations.
 
 ;;{{{ Dired Mode.
 
-;; {{{ dired-sidebar
+;;{{{ dired-sidebar
 (use-package dired-sidebar
   :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
   :ensure t
@@ -3038,21 +3040,7 @@ in which case just newline."
                  (progn
                    (setq indent-tabs-mode t)
                    (auto-fill-mode -1))
-               (setq indent-tabs-mode nil))
-
-             ;;             ;; This conditional is necessary because there isn't an
-             ;;             ;; indented-text-mode-hook.  Indented Text Mode just runs
-             ;;             ;; the text-mode-hook.\
-             ;;             ;; Also, text-mode hook gets run for Mail Mode.
-             ;;             ;;
-             ;;             (if (memq major-mode '(indented-text-mode mail-mode))
-             ;;                 (progn
-             ;;                   (local-set-key "\eh" 'kae/mark-indented-paragraph)
-             ;;                   (local-set-key "\eq" 'kae/fill-indented-paragraph))
-             ;;               (progn
-             ;;                 (local-set-key "\eh" 'mark-paragraph)
-             ;;                 (local-set-key "\eq" 'fill-paragraph)))))
-             ))
+               (setq indent-tabs-mode nil))))
 
 (defun kae/mark-indented-paragraph ()
 
