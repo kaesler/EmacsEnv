@@ -1681,10 +1681,6 @@ for common operations.
 
 (setq dired-dwim-target t)
 
-;; Menu for sorting Dired buffers.
-;;
-;;(eval-after-load "dired" (require 'dired-sort-menu))
-
 ;; Enable recursive deletes and copies.
 ;;
 (setq dired-recursive-deletes 'top)
@@ -1712,28 +1708,18 @@ for common operations.
 (defun kae/dired-mode-bindings ()
   (define-key dired-mode-map " " 'scroll-up)
   (define-key dired-mode-map "\C-?" 'scroll-down) ; DEL
-  (define-key dired-mode-map "1" 'delete-other-windows)
+  (define-key dired-mode-map "1" 'kae/dired-only-1-dired-window)
   (define-key dired-mode-map "2" 'split-window-vertically)
   (define-key dired-mode-map "5" 'split-window-horizontally)
   (define-key dired-mode-map "a" 'kae/dired-apply-function)
   (define-key dired-mode-map "b" 'dired-byte-recompile)
-
-  ;;(define-key dired-mode-map "h" 'kae/dired-hide-matching-filenames)
   (define-key dired-mode-map "K" 'kae/dired-keep-matching-filenames)
-
   (define-key dired-mode-map "q" 'kae/dired-kill-current-and-find-superior-dired)
-  ;;(define-key dired-mode-map "r" 'kae/dired-edit-filename)
   (define-key dired-mode-map "t" 'kae/dired-visit-tags-table)
-
-  (define-key dired-mode-map "V" 'kae/dired-visit-vm-folder)
   (define-key dired-mode-map "z" 'kae/dired-spawn-shell)
-
-  ;;(define-key dired-mode-map "D" 'kae/dired-keep-directories)
   (define-key dired-mode-map "E" 'kae/dired-edit-linktext)
   (define-key dired-mode-map "F" 'kae/dired-follow-link)
 
-  ;;(define-key dired-mode-map "H" 'kae/dired-hide-file)
-  ;;(define-key dired-mode-map "!" 'kae/dired-command-file)
   (define-key dired-mode-map "|" 'kae/dired-pipe-file)
   (define-key dired-mode-map "@"
     '(lambda ()
@@ -1755,7 +1741,7 @@ for common operations.
                                     (goto-char (point-max))
                                     (forward-line -1)
                                     (dired-move-to-filename)))
-  ;;(define-key dired-mode-map "\\" 'kae/dired-up)
+  (define-key dired-mode-map "\\" 'kae/dired-try-delete-window)
   (define-key dired-mode-map "^"  'kae/dired-up)
   ;;(define-key dired-mode-map "/" 'kae/dired-down)
   (define-key dired-mode-map "]" 'kae/dired-down)
@@ -1771,8 +1757,9 @@ for common operations.
           '(lambda ()
              (make-local-variable 'dired-associated-shell-buffer)
              (setq dired-associated-shell-buffer nil)
-             ;;(kae/dired-mode-bindings)
              ))
+
+;;{{{ Advices
 
 ;; When I invoke Dired, position me at the most-recently edited file
 ;; if it can be determined.
@@ -1850,6 +1837,10 @@ when I invoked it, if that makes sense."
   (goto-char (point-min))
   (dired-goto-next-file))
 
+;;}}}
+
+;;{{{ My Dired commands
+
 (autoload 'dired-update-file-line "dired-aux")
 (defun kae/dired-edit-linktext ()
   "Replace the contents of a symbolic link."
@@ -1876,6 +1867,12 @@ when I invoked it, if that makes sense."
             (dired-update-file-line linkname))
 
         (error "Not a symbolic link")))))
+
+(defun kae/dired-try-delete-window ()
+  (interactive)
+  (condition-case nil
+      (delete-window)
+    (error nil)))
 
 (defun kae/dired-kill-current-and-find-superior-dired ()
   (interactive)
@@ -2212,6 +2209,46 @@ when I invoked it, if that makes sense."
   (interactive)
   (setq mode-name "Dired")
   (dired-revert t t))
+
+// First try to delete other Dired windows.
+// If there are none, delete other windows.
+(defun kae/dired-only-1-dired-window ()
+  (interactive)
+  (let ((deleted (kae/delete-other-dired-mode-windows)))
+    (if (not deleted)
+        (delete-other-windows))))
+
+(defun kae/delete-other-dired-mode-windows ()
+  (let* ((selwin (selected-window))
+         (other-windows (seq-filter (lambda (window) (not (eql window selwin)))
+                                    (window-list)))
+         (other-dired-windows (seq-filter
+                               (lambda (window)
+                                 (eql 'dired-mode
+                                      (buffer-local-value 'major-mode (window-buffer window))))
+                               other-windows)))
+    (seq-do (function delete-window) other-dired-windows)
+    (not (seq-empty-p other-dired-windows))))
+
+(defun kae/delete-other-windows-on-current-buffer ()
+  (let* ((other-windows (kae/other-windows-on-current-buffer))
+        (n (length other-windows)))
+    (seq-do (lambda (window) (delete-window window))
+            other-windows)
+    n))
+
+(defun kae/windows-on-buffer (buffer)
+  (let ((windows (window-list)))
+    (seq-filter (lambda (w) (eql buffer (window-buffer w)))
+                windows)))
+
+(defun kae/other-windows-on-current-buffer ()
+  (let ((selwin (selected-window))
+        (windows (kae/windows-on-buffer (current-buffer))))
+    (seq-filter (lambda (window) (not (eql window selwin)))
+                windows)))
+
+;;}}}
 
 ;;}}}
 ;;{{{ Javascript
