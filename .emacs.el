@@ -2210,8 +2210,8 @@ when I invoked it, if that makes sense."
   (setq mode-name "Dired")
   (dired-revert t t))
 
-// First try to delete other Dired windows.
-// If there are none, delete other windows.
+;; First try to delete other Dired windows.
+;; If there are none, delete other windows.
 (defun kae/dired-only-1-dired-window ()
   (interactive)
   (let ((deleted (kae/delete-other-dired-mode-windows)))
