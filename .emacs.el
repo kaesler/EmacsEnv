@@ -1626,6 +1626,10 @@ for common operations.
 
 (require 'use-package)
 
+;;{{{ back-button
+(require 'back-button)
+(back-button-mode 1)
+;;}}}
 ;;{{{ Treemacs
 
 (defun kae/treemacs-mode-bindings ()
