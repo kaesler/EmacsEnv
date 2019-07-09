@@ -1363,12 +1363,12 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "DSS"
+              ["DSS Current tasks" (find-file "~/dss/Tasks/Current")]
               ["DSS Dashboard" (find-file "~/dss/DssDashboard.org")]
               ["DSS Domain" (find-file "~/dss/DssDomain.org")]
               ["DSS Devops" (find-file "~/dss/DssDevops.org")]
               ["DSS Lore" (find-file "~/dss/Lore.org")]
               ["DSS Repos" (find-file "~/apps/github/repos/dss")]
-              ["DSS directory" (find-file "~/dss")]
               ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
 
 
