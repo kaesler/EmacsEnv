@@ -1630,9 +1630,9 @@ for common operations.
 
 (defun kae/treemacs-mode-bindings ()
   (define-key treemacs-mode-map "f" 'treemacs-visit-node-in-most-recently-used-window)
-  (define-key treemacs-mode-map [mouse-1] #'treemacs-single-click-expand-action)
   )
 (eval-after-load "treemacs" '(kae/treemacs-mode-bindings))
+
 ;;}}}
 ;;{{{ Dired Mode.
 
