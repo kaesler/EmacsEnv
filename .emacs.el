@@ -1355,22 +1355,24 @@ and/or the vertical-line."
 
 ;;}}}
 ;;{{{  Customise the menu bar.
+
 (require 'easymenu)
 
 ;;{{{ Add a "DSS" menu bar entry
+
 (setq dss-menu
       (easy-menu-define shortcuts-menu
         (list global-map)
         "Shortcuts menu"
         (list "DSS"
               ["DSS Current tasks" (find-file "~/dss/Tasks/Current")]
+              ["DSS My backlog" (find-file "~/dss/Tasks/Current/MyBacklog.org")]
               ["DSS Dashboard" (find-file "~/dss/DssDashboard.org")]
-              ["DSS Domain" (find-file "~/dss/DssDomain.org")]
-              ["DSS Devops" (find-file "~/dss/DssDevops.org")]
+              ["DSS Domain Knowledge" (find-file "~/dss/DssDomain.org")]
+              ["DSS Devops Knowledge" (find-file "~/dss/DssDevops.org")]
               ["DSS Lore" (find-file "~/dss/Lore.org")]
               ["DSS Repos" (find-file "~/apps/github/repos/dss")]
               ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
-
 
 ;;}}}
 
