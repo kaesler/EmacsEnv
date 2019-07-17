@@ -381,6 +381,8 @@ customize the resulting theme."
                                       :foreground ,base1
                                       :underline ,s-line
                                       :weight bold))))
+;;;;; display-fill-column-indicator
+     `(fill-column-indicator ((,class :foreground ,base02 :weight semilight)))
 ;;;;; dropdown
      `(dropdown-list-face ((,class (:background ,base02 :foreground ,cyan))))
      `(dropdown-list-selection-face ((,class (:background ,cyan-lc :foreground ,cyan-hc))))
@@ -612,6 +614,8 @@ customize the resulting theme."
 ;;;;; column-enforce-mode
      `(column-enforce-face ((,class (:background unspecified :foreground ,magenta
                                                  :inverse-video unspecified))))
+;;;;; col-highlight
+     `(col-highlight ((,class (:background ,base02))))
 ;;;;; company-mode
      `(company-echo ((,class nil)))
      `(company-echo-common ((,class (:background ,red))))

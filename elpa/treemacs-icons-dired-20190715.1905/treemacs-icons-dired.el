@@ -4,7 +4,7 @@
 
 ;; Author: Alexander Miller <alexanderm@web.de>
 ;; Package-Requires: ((treemacs "0.0") (emacs "25.2") (cl-lib "0.5"))
-;; Package-Version: 20190619.1516
+;; Package-Version: 20190715.1905
 ;; Package-X-Original-Version: 0
 ;; Homepage: https://github.com/Alexander-Miller/treemacs
 
@@ -131,6 +131,8 @@ This will make sure the icons' background colors will align with hl-line mode."
         (add-hook 'dired-after-readin-hook #'treemacs-icons-dired--display)
         (add-hook 'dired-mode-hook #'treemacs--select-icon-set)
         (add-hook 'dired-mode-hook #'treemacs-icons-dired--enable-highlight-correction)
+        (advice-add #'ranger-setup :before #'treemacs--select-icon-set)
+        (advice-add #'ranger-setup :before #'treemacs-icons-dired--enable-highlight-correction)
         (dolist (buffer (buffer-list))
           (with-current-buffer buffer
             (when (derived-mode-p 'dired-mode)
@@ -139,6 +141,8 @@ This will make sure the icons' background colors will align with hl-line mode."
     (remove-hook 'dired-after-readin-hook #'treemacs-icons-dired--display)
     (remove-hook 'dired-mode-hook #'treemacs--select-icon-set)
     (remove-hook 'dired-mode-hook #'treemacs-icons-dired--enable-highlight-correction)
+    (advice-add #'ranger-setup :before #'treemacs--select-icon-set)
+    (advice-add #'ranger-setup :before #'treemacs-icons-dired--enable-highlight-correction)
     (dolist (buffer (buffer-list))
       (with-current-buffer buffer
         (when (derived-mode-p 'dired-mode)

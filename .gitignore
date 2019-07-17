@@ -8,3 +8,5 @@ Old
 .emacs.custom
 ac-comphist.dat
 ensime/
+var/
+
