@@ -9,4 +9,6 @@ Old
 ac-comphist.dat
 ensime/
 var/
+.cache
+
 
