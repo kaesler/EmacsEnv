@@ -1638,6 +1638,8 @@ for common operations.
   (define-key treemacs-mode-map "f" 'treemacs-visit-node-in-most-recently-used-window)
   )
 (eval-after-load "treemacs" '(kae/treemacs-mode-bindings))
+(eval-after-load "treemacs" '(treemacs-toggle-fixed-width))
+
 
 ;;}}}
 ;;{{{ Dired Mode.

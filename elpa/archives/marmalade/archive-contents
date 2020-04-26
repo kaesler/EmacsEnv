@@ -1,11 +1,11 @@
 (1
  (zone-tunnels .
-	       [(20180309 2159)
+	       [(20200126 1129)
 		((emacs
 		  (24)))
 		"A zone program inspired from the old DOS game" single])
  (zone-quotes .
-	      [(20190425 2327)
+	      [(20200126 1129)
 	       ((emacs
 		 (24)))
 	       "A zone program to display quotes from a specific collection" single])
@@ -521,7 +521,7 @@
 	    [(2012 4 7)
 	     nil "replace a word with a synonym looked up in a web service." single])
  (theme-looper .
-	       [(20190430 2031)
+	       [(20200410 1259)
 		((emacs
 		  (24))
 		 (cl-lib
