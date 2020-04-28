@@ -987,6 +987,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (modify-frame-parameters (selected-frame)
                            (list
                             (cons 'name new-name))))
+
 ;;}}}
 
 ;;{{{  extract-matches -- extract all matches for a regexp from a buffer.
@@ -1358,21 +1359,23 @@ and/or the vertical-line."
 
 (require 'easymenu)
 
-;;{{{ Add a "DSS" menu bar entry
+;;{{{ Add a "MDRM" menu bar entry
 
-(setq dss-menu
+;;(require 'kae-mdrm-ehacks)
+(setq mdrm-menu
       (easy-menu-define shortcuts-menu
         (list global-map)
         "Shortcuts menu"
-        (list "DSS"
-              ["DSS Current tasks" (find-file "~/dss/Tasks/Current")]
-              ["DSS My backlog" (find-file "~/dss/Tasks/Current/MyBacklog.org")]
-              ["DSS Dashboard" (find-file "~/dss/DssDashboard.org")]
-              ["DSS Domain Knowledge" (find-file "~/dss/DssDomain.org")]
-              ["DSS Devops Knowledge" (find-file "~/dss/DssDevops.org")]
-              ["DSS Lore" (find-file "~/dss/Lore.org")]
-              ["DSS Repos" (find-file "~/apps/github/repos/dss")]
-              ["DSS One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
+        (list "MDRM"
+              ["MDRM Current tasks" (find-file "~/dss/Tasks/Current")]
+              ["MDRM Insert svc URL" (kae-mdrm-insert-svc-url)]
+              ["MDRM My backlog" (find-file "~/dss/Tasks/Current/MyBacklog.org")]
+              ["MDRM Dashboard" (find-file "~/dss/DssDashboard.org")]
+              ["MDRM Domain Knowledge" (find-file "~/dss/DssDomain.org")]
+              ["MDRM Devops Knowledge" (find-file "~/dss/DssDevops.org")]
+              ["MDRM Lore" (find-file "~/dss/Lore.org")]
+              ["MDRM Repos" (find-file "~/apps/github/repos/dss")]
+              ["MDRM One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
 
 ;;}}}
 
@@ -1420,7 +1423,7 @@ and/or the vertical-line."
                :included running-on-w32
                ]
               )))
-(add-hook 'menu-bar-final-items 'DSS)
+(add-hook 'menu-bar-final-items 'MDRM)
 (add-hook 'menu-bar-final-items 'KAE)
 (defun kae/project-dired-homedir ()
   (interactive)
@@ -2395,7 +2398,7 @@ by using nxml's indentation rules."
 ;;}}}
 ;;{{{ CCrypt
 
-(require 'ps-ccrypt "ps-ccrypt.el")
+;;(require 'ps-ccrypt "ps-ccrypt.el")
 
 ;;}}}
 
@@ -3645,7 +3648,7 @@ This must be bound to a mouse click."
 ;;}}}
 ;;{{{  Mkid
 
-(require 'gid)
+;; (require 'gid)
 
 ;;}}}
 ;;{{{  Bibl Mode
@@ -3962,6 +3965,11 @@ using cygpath"
 (server-start)
 (setq server-window 'pop-to-buffer)
 
+;;}}}
+
+;;{{{ Work stuff
+(if at-site-work
+    (require 'kae-mdrm-ehacks))
 ;;}}}
 
 (message "End of .emacs...")
