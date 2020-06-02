@@ -1367,15 +1367,15 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "MDRM"
-              ["MDRM Current tasks" (find-file "~/dss/Tasks/Current")]
-              ["MDRM Insert svc URL" (kae-mdrm-insert-svc-url)]
-              ["MDRM My backlog" (find-file "~/dss/Tasks/Current/MyBacklog.org")]
-              ["MDRM Dashboard" (find-file "~/dss/DssDashboard.org")]
-              ["MDRM Domain Knowledge" (find-file "~/dss/DssDomain.org")]
-              ["MDRM Devops Knowledge" (find-file "~/dss/DssDevops.org")]
-              ["MDRM Lore" (find-file "~/dss/Lore.org")]
-              ["MDRM Repos" (find-file "~/apps/github/repos/dss")]
-              ["MDRM One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
+              ["Current tasks" (find-file "~/dss/Tasks/Current")]
+              ["Insert svc URL" (kae-mdrm-insert-svc-url)]
+              ["My backlog" (find-file "~/dss/Tasks/Current/MyBacklog.org")]
+              ["Dashboard" (find-file "~/dss/DssDashboard.org")]
+              ["Domain Knowledge" (find-file "~/dss/DssDomain.org")]
+              ["Devops Knowledge" (find-file "~/dss/DssDevops.org")]
+              ["Lore" (find-file "~/dss/Lore.org")]
+              ["Repos" (find-file "~/apps/github/repos/dss")]
+              ["One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
 
 ;;}}}
 
