@@ -1,0 +1,2 @@
+;;; -*- no-byte-compile: t -*-
+(define-package "bash-completion" "20200630.1757" "BASH completion for the shell buffer" '((emacs "24.3")) :commit "0210d346f1b43021ff9900155b3b3220b0790070" :keywords '("shell" "bash" "bash-completion") :authors '(("Stephane Zermatten" . "szermatt@gmx.net")) :maintainer '("Stephane Zermatten" . "szermatt@gmail.com") :url "http://github.com/szermatt/emacs-bash-completion")
