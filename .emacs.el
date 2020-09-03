@@ -19,7 +19,7 @@
     (progn
       (require 'package)
       (add-to-list 'package-archives
-                   '("melpa" . "http://melpa.milkbox.net/packages/") t)
+                   '("melpa" . "https://stable.melpa.org/packages/") t)
       (add-to-list 'package-archives
                    '("marmalade" . "https://marmalade-repo.org/packages/") t)
       (package-initialize)))
@@ -2293,8 +2293,9 @@ when I invoked it, if that makes sense."
 
 ;;}}}
 ;;{{{ Bash completion
-(require 'bash-completion)
-(bash-completion-setup)
+;; Became non-performant
+;; (require 'bash-completion)
+;; (bash-completion-setup)
 ;;}}}
 ;;{{{ Docker
 
