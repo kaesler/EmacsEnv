@@ -1,11 +1,3 @@
-;; This file has been formatted so it can be viewed/edited in
-;; Folding Minor Mode.
-;;
-
-(message "Start of .emacs...")
-
-(cd "~/")
-
 ;;{{{  Set some global variables.
 
 (setq user-emacs-directory "~/apps/emacs/")
@@ -20,8 +12,8 @@
       (require 'package)
       (add-to-list 'package-archives
                    '("melpa" . "https://stable.melpa.org/packages/") t)
-      (add-to-list 'package-archives
-                   '("marmalade" . "https://marmalade-repo.org/packages/") t)
+      ;; (add-to-list 'package-archives
+      ;;              '("marmalade" . "https://marmalade-repo.org/packages/") t)
       (package-initialize)))
 
 ;;}}}
@@ -1630,7 +1622,11 @@ for common operations.
 ;;{{{  Configure MODES and packages.
 
 (require 'use-package)
-
+;;{{{ Ido
+(setq ido-enable-flex-matching t)
+(setq ido-everywhere t)
+(ido-mode 1)
+;;}}}
 ;;{{{ back-button
 (require 'back-button)
 (back-button-mode 1)
