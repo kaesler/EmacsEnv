@@ -1623,9 +1623,9 @@ for common operations.
 
 (require 'use-package)
 ;;{{{ Ido
-(setq ido-enable-flex-matching t)
-(setq ido-everywhere t)
-(ido-mode 1)
+;;(setq ido-enable-flex-matching t)
+;;(setq ido-everywhere t)
+;;(ido-mode 1)
 ;;}}}
 ;;{{{ back-button
 (require 'back-button)

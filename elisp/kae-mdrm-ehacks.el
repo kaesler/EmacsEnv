@@ -8,7 +8,7 @@
 (defun kae-mdrm-read-app ()
     (completing-read
      "MDRM app: "
-     '("license-service" "widevine" "fairplay" "playready" "download-history-service" "key-service")
+     '("license-service" "widevine" "fairplay" "playready" "download-history-service" "key-service" "media-rights-service" "nagra")
      nil
      t))
 
