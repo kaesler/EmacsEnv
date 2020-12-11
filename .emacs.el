@@ -11,7 +11,7 @@
     (progn
       (require 'package)
       (add-to-list 'package-archives
-                   '("melpa" . "https://stable.melpa.org/packages/") t)
+                   '("melpa-stable" . "https://stable.melpa.org/packages/") t)
       ;; (add-to-list 'package-archives
       ;;              '("marmalade" . "https://marmalade-repo.org/packages/") t)
       (package-initialize)))
@@ -135,6 +135,11 @@
 
 ;;}}}
 
+{{{ Bugfix:
+
+;; Needed to allow package-list "U" to work right.
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+}}}
 ;;{{{  My identity
 
 (setq user-full-name "Kevin Esler")
