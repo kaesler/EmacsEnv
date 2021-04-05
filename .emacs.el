@@ -14,7 +14,8 @@
                    '("melpa-stable" . "https://stable.melpa.org/packages/") t)
       ;; (add-to-list 'package-archives
       ;;              '("marmalade" . "https://marmalade-repo.org/packages/") t)
-      (package-initialize)))
+      ;;(package-initialize)
+      ))
 
 ;;}}}
 
@@ -135,11 +136,11 @@
 
 ;;}}}
 
-{{{ Bugfix:
+;;{{{ Bugfix:
 
 ;; Needed to allow package-list "U" to work right.
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-}}}
+;;}}}
 ;;{{{  My identity
 
 (setq user-full-name "Kevin Esler")
@@ -2670,8 +2671,8 @@ by using nxml's indentation rules."
       (add-to-list 'company-backends 'company-ghc)
       (custom-set-variables '(company-ghc-show-info t))
 
-      (require 'rainbow-delimiters)
-      (add-hook 'haskell-mode-hook 'rainbow-delimiters-mode)
+      ;;(require 'rainbow-delimiters)
+      ;;(add-hook 'haskell-mode-hook 'rainbow-delimiters-mode)
 
       ))
 
