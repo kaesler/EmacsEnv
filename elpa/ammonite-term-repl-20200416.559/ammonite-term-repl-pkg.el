@@ -1,2 +1,0 @@
-;;; -*- no-byte-compile: t -*-
-(define-package "ammonite-term-repl" "20200416.559" "Scala Ammonite REPL in term mode." '((emacs "24.3") (s "1.12.0") (scala-mode "0.23")) :commit "b552fe21977e005c1c460bf6607557e67241a6b6" :keywords '("processes" "ammnite" "term" "scala") :authors '(("zwild" . "judezhao@outlook.com")) :maintainer '("zwild" . "judezhao@outlook.com") :url "https://github.com/zwild/ammonite-term-repl")
