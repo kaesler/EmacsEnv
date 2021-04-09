@@ -1,0 +1,83 @@
+;;; -*- coding: utf-8 -*-
+
+;; ----- ido-last-directory-list -----
+(
+ ("/Users/kevinesler/apps/" . "EmacsEnv/")
+ ("/usr/local/" . "bin/")
+ ("/usr/" . "local/")
+ ("/Users/kevinesler/" . "apps/")
+)
+
+;; ----- ido-work-directory-list -----
+(
+ "/Users/kevinesler/apps/EmacsEnv/"
+ "/Users/kevinesler/apps/github/repos/opensource/dotty/"
+ "/Users/kevinesler/apps/"
+ "/Users/kevinesler/apps/github/repos/kae/RetirementSpreadsheetScripts/"
+ "/usr/local/bin/"
+ "/Users/kevinesler/apps/github/repos/kae/ScalaJsExl/"
+ "/Users/kevinesler/apps/github/repos/kae/ScalaJsExl/target/scala-2.13/scalajsexl-opt/"
+ "/Users/kevinesler/Dropbox/ArchivedDocuments/Tax/2019/"
+ "/Users/kevinesler/Dropbox/"
+ "/Users/kevinesler/apps/github/repos/kae/LectorSchedule/software/ScheduleGenerator/src/main/scala/kae/lectorschedule/y2020/dec/"
+)
+
+;; ----- ido-work-file-list -----
+(
+ "Model.js"
+ "rmd.js"
+)
+
+;; ----- ido-dir-file-cache -----
+(
+ ("/Users/kevinesler/apps/EmacsEnv/" (24518 51799 773047 346000) ".emacs.elc" ".cache/" ".git/" "elpa/" ".emacs.custom" "network-security.data" ".gitignore" "elisp/" "url/" "auto-save-list/" "ensime/" ".emacs.el" "var/" "#.gitignore#" "transient/" "tramp" "projectile-bookmarks.eld" ".,/" "eshell/" "ido.last" "ac-comphist.dat" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/opensource/" (24320 52872 533974 545000) "scalaz/" "dotty/" "aws-sdk-js/" "aws-sdk-js-v3/" "cloudformal/" "Ammonite/" "scala-js-awssdk/" "scalaz-stream/" "dist-prog-book/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/opensource/dotty/" (24530 52670 512724 84000) "tasty-inspector/" "interfaces/" "build.sbt" "NOTICE.md" "compiler/" "doc-tool/" ".git/" "scala3doc/" ".mailmap" "scalastyle-config.xml" "tasty/" ".vscode-template/" "language-server/" ".gitattributes" ".github/" "CONTRIBUTING.md" "semanticdb/" "sandbox/" ".jvmopts" ".gitignore" "sbt-dotty/" "project/" "scala3doc-testcases/" "README.md" ".gitmodules" "docs/" "bench-run/" "library/" "tests/" "vscode-dotty/" "dist/" "bin/" "stdlib-bootstrapped-tasty-tests/" "LICENSE" "community-build/" "sjs-compiler-tests/" "staging/" "sbt-bridge/" "stdlib-bootstrapped/" "bench/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/" (24529 61904 707875 201000) "finances-fresh/" "build.sbt" "emoji-java/" "Cibo/" "FreeApplicativeExl/" "finances/" "Learning.borked/" "Fs2Exl/" "MediaRightsEditing/" "mdrm-versions/" "AkkaStreamsRefresher/" "Ammonite/" "LearnDotty/" "RetirementSpreadsheetScripts/" "tsefb/" "ScalaJsExl/" "LectorSchedule/" "fs2/" "aws-scripting/" "retirement/" "fpinscala-fork/" "StateMonadEtc/" "tse/" "Learning/" "mdrm-versions.tgz" "Hopper/" ".DS_Store" "cats/" "aws-tooling/" "nscala-money/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/RetirementSpreadsheetScripts/" (24530 2037 672644 654000) "Model.js" ".,/" "../" "./")
+
+ ("/usr/local/bin/" (24529 64596 809004 48000) "gdate" ".keepme" "gbasenc" "gnumfmt" "workbook" "gstdbuf" "gprintf" "god" "git" "bundler" "npm" "gfactor" "sha512sum" "gsleep" "sass-convert" "ggroups" "gcat" "gchgrp" "gstty" "npx" "gtee" "guname" "dotr" "kubectl" "glogname" "sass" "gchcon" "git-upload-pack" "docker-compose" "gtail" "node" "gpwd" "rougify" "stack" "hostid" "pinky" "gtimeout" "gptx" "git-shell" "base32" "gnproc" "git-cvsserver" "gwc" "gbase64" "gexpr" "gcksum" "gtty" "gcomm" "sha384sum" "shred" "gsha224sum" "ginstall" "sbt" "vpnkit" "gdircolors" "safe_yaml" "sha256sum" "sha1sum" "gseq" "gsplit" "gwhoami" "g[" "gcsplit" "kramdown" "pcre2-config" "gunlink" "gfmt" "gshuf" "com.docker.cli" "gsort" "gunexpand" "gmd5sum" "gtest" "docker-credential-desktop" "idea" "gjoin" "gdf" "gmkfifo" "gtouch" "gb2sum" "gdu" "common" "gecho" "gnice" "gpathchk" "gruncon" "gexpand" "amm" "gtac" "gsum" "guptime" "gsync" "gchown" "gtrue" "gls" "gcp" "chcon" "docker-credential-osxkeychain" "stdbuf" "gtruncate" "git-upload-archive" "bundle" "gbasename" "gln" "nproc" "listen" "genv" "code" "gpinky" "gid" "numfmt" "tac" "timeout" "brew" "kubectl.docker" "dotc" "realpath" "gpaste" "docker-credential-ecr-login" "dotd" "gchroot" "gsha384sum" "gdirname" "gtr" "gnohup" "ghostid" "sha224sum" "gbase32" "scss" "gchmod" "gdir" "gvdir" "gcut" "gwho" "gfalse" "gsha256sum" "pcre2test" "grm" "b2sum" "d8" "gitk" "gsha1sum" "gyes" "gmktemp" "gstat" "glink" "ghead" "hyperkit" "ptx" "notary" "truncate" "gpr" "guniq" "docker" "git-receive-pack" "gkill" "pandoc" "gmkdir" "runcon" "jekyll" "gmv" "gshred" "greadlink" "gnl" "gfold" "grmdir" "grealpath" "wget" "pcre2grep" "gtsort" "gdd" "shuf" "gmknod" "gprintenv" "gusers" "gsha512sum" "md5sum" "../" "./")
+
+ ("/usr/local/" (24496 847 305553 831000) "share/" "texlive/" "Cellar/" "opt/" "lib/" "Caskroom/" "var/" "Homebrew/" "etc/" "remotedesktop/" "include/" ".com.apple.installer.keep" "bin/" "../" "./")
+
+ ("/usr/" (24076 20864 0 0) "share/" "X11R6" "X11" "lib/" "local/" "sbin/" "libexec/" "standalone/" "bin/" "../" "./")
+
+ ("/Users/kevinesler/Applications/" (22389 50504 0 0) ".localized" "../" "./")
+
+ ("/Users/kevinesler/apps/github/" (22400 29809 0 0) "repos/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/" (23065 36739 0 0) "opensource/" ".DS_Store" "kae/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/ScalaJsExl/target/" (24529 38425 443605 442000) "scala-2.13/" "global-logging/" ".history3" "streams/" "task-temp-directory/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/ScalaJsExl/target/scala-2.13/" (24529 38426 22433 908000) "zinc/" "scalajsexl-opt/" "classes/" "update/" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/ScalaJsExl/target/scala-2.13/scalajsexl-opt/" (24529 38426 288332 265000) "main.js" "main.js.map" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/ScalaJsExl/" (24529 37648 112672 55000) "src/" ".idea/" "build.sbt" "package.json" "package-lock.json" "project/" "node_modules/" ".bsp/" "target/" ".,/" "../" "./")
+
+ ("/Users/kevinesler/apps/" (24386 41758 971492 141000) "lightroom/" "intellij/" "Node/" "EmacsEnvOld/" "Quicken/" "github/" "emacs/" "blurb/" "EmacsEnv/" "Calibre/" "MoneyDance/" "../" "./")
+
+ ("/Users/" (24076 20864 0 0) "juliaesler/" "loginwindow/" "kevinesler/" "Guest/" "Shared/" ".localized" "../" "./")
+
+ ("/Users/kevinesler/Dropbox/ArchivedDocuments/" (24408 8981 428498 849000) "Correspondence/" "Credentials/" "Travel/" "TT/" "ProductInfo/" "QuickenBackups/" "DisneyParkCompTickets/" "Poems/" "EstatePlan/" "Fitness/" "SharedWithJohn/" "PaperBonds/" "SydneyRealEstate/" "Cars/" "House/" "JuliaVolleyball/" "InsurancePolicies/" "JuliaSchool/" "SocialSecurity/" "RetirementPlanning/" "1p7/" "openvpn/" "PowerOfAttorney/" "NortonWenzelDocs/" "Software/" "CreditCards/" "EndOfLife/" "Tax/" "Speeches/" "Divorce/" "Paychecks/" "Projects/" "Contracts/" "Art/" "OldEmail/" "JuliaAthletics/" "HuckinsFarmAMC/" "Identity/" "JuryDuty/" "MedicalDental/" "AccountStatements/" "Cpt/" ".DS_Store" "BedfordTownInfo/" "Career/" "ScrapBook/" "QuickenMacBackups/" "CameraManuals/" "Reading/" "Receipts/" "RationalStockOptions/" "../" "./")
+
+ ("/Users/kevinesler/Dropbox/ArchivedDocuments/Tax/2019/" (24528 4515 687670 368000) "rmd.js" "Untitled.pdf" "KevinEslerTax2019.tax2019" "docs/" "Form-709/" ".,/" ".DS_Store" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/LectorSchedule/software/ScheduleGenerator/src/main/scala/kae/lectorschedule/y2020/dec/" (24514 41069 996423 694000) "Lectors.scala" "Inputs.org" "CmdGenerateSchedule.scala" "Constraints.scala" "../" "./")
+
+ ("/Users/kevinesler/apps/github/repos/kae/LectorSchedule/software/ScheduleGenerator/src/main/scala/kae/lectorschedule/y2020/" (24503 62258 447804 284000) "jun/" "dec/" "sep/" "mar/" "../" "./")
+
+ ("/Users/kevinesler/Dropbox/ArchivedDocuments/SocialSecurity/" (24153 17075 449607 159000) "Your_Social_Security_Statement_2020-Feb-28.pdf" "Old/" ".DS_Store" "../" "./")
+
+ ("/Users/kevinesler/Dropbox/" (24383 10662 566244 619000) "Lightroom/" "1Password/" "Passwords app.dbx-passwords" "Pix4Kev/" "Apps/" "LearningScala/" "tmp/" "PhotoMasters/" "Coursera/" "Photos/" ".dropbox.cache/" "MacApps/" "00Inbox/" "prc6smi-2960.gpx" ".ynabSettings.yroot" "ArchivedDocuments/" "Recipes/" ".dropbox" "Audio/" "simone_photos/" "Camera Uploads/" "DSS/" "ThinkingRock/" ".Papers3.syncsettings" "Resume/" "Learning/" "Knights/" "Prayers/" "Papers/" "Vault.dbx-vault" "DeGoesFpOo.pages" "test/" "Icon" "Rowing/" "ToOMalleyReMcCarrick.pages" ".DS_Store" "ArchivedCode/" "SimonesTapes/" "Computer backup.dbx-backup" "Video/" "Reading/" ".ws.agile.1Password.settings" "../" "./")
+
+ ("/Users/kevinesler/" (24386 41894 717985 880000) ".gtk-bookmarks" ".bash_history" "apps/" ".gitconfig" ".aws/" ".inputrc" "tmp/" "Downloads/" ".m2/" ".vscode/" ".mono/" ".markdownNavigator/" "Documents/" ".npm/" ".scala_history" ".Trash/" "wallpaper/" "Dropbox/" ".emacs~" ".freemind/" "Applications/" ".emacs" "Movies/" ".twitter_api/" ".dropbox/" "Public/" ".sbt/" "Google Drive/" ".thinkingrock/" ".bash_sessions/" ".cups/" ".android/" ".node_repl_history" ".emacs.d/" ".coursier/" ".IdentityService/" ".oracle_jre_usage/" ".gphoto/" "Library/" "Desktop/" ".p2/" ".bundle/" ".g8/" "StuffAboutOpenJdk" "Pictures/" "Projects/" "Creative Cloud Files/" ".local/" ".templateengine/" ".adobe/" ".ServiceHub/" ".bashrc" ".subversion/" ".tooling/" ".wget-hsts" ".CFUserTextEncoding" ".ammonite/" "get-pip.py" ".,/" ".DS_Store" ".ivy2/" ".docker/" ".idea-build/" "Music/" ".config/" ".eclipse/" ".stack/" "../" "./")
+)
+
+;; ----- ido-unc-hosts-cache -----
+t
