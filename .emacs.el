@@ -1358,26 +1358,6 @@ and/or the vertical-line."
 
 (require 'easymenu)
 
-;;{{{ Add a "MDRM" menu bar entry
-
-;;(require 'kae-mdrm-ehacks)
-(setq mdrm-menu
-      (easy-menu-define shortcuts-menu
-        (list global-map)
-        "Shortcuts menu"
-        (list "MDRM"
-              ["Current tasks" (find-file "~/dss/Tasks/Current")]
-              ["Insert svc URL" (kae-mdrm-insert-svc-url)]
-              ["My backlog" (find-file "~/dss/Tasks/Current/MyBacklog.org")]
-              ["Dashboard" (find-file "~/dss/DssDashboard.org")]
-              ["Domain Knowledge" (find-file "~/dss/DssDomain.org")]
-              ["Devops Knowledge" (find-file "~/dss/DssDevops.org")]
-              ["Lore" (find-file "~/dss/Lore.org")]
-              ["Repos" (find-file "~/apps/github/repos/dss")]
-              ["One Drive" (find-file "~/OneDrive - BAMTECH Media/")])))
-
-;;}}}
-
 ;;{{{ Add a "KAE" menu bar entry
 
 (setq kae-menu      
@@ -1385,8 +1365,8 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
-              ["AWS Lore" (find-file "~/dss/AwsLore.org")]
-              ["Tech Lore" (find-file "~/dss/TechLore.org")]
+              ["Tech Lore" (find-file "~/Dropbox/TechLore.org")]
+              ["Emacs config" (find-file "~/apps/EmacsEnv")]
               "---------------------------------"
               ["~/tmp" (find-file "~/tmp/")]
               ["~/Downloads" (find-file "~/Downloads/")]
