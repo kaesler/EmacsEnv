@@ -1690,7 +1690,10 @@ for common operations.
 (use-package dired
   :ensure nil
   :config (progn
-            (setq insert-directory-program "/usr/local/opt/coreutils/libexec/gnubin/ls")
+            (setq insert-directory-program
+                  (if (file-exists-p "/opt/homebrew/opt/coreutils/libexec/gnubin/ls")
+                      "/opt/homebrew/opt/coreutils/libexec/gnubin/ls"
+                    "/usr/local/opt/coreutils/libexec/gnubin/ls"))
             (setq dired-listing-switches "-lXGh --almost-all --group-directories-first")
             (setq dired-omit-files nil)
             (setq dired-omit-extensions nil)
