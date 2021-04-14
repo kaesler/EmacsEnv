@@ -2611,10 +2611,16 @@ by using nxml's indentation rules."
         '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
         )
 
-      (setenv "PATH" (concat "~/.cabal/bin:" (getenv "PATH")))
-      (add-to-list 'exec-path "~/.cabal/bin")
-      (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
-      (add-to-list 'exec-path "~/Library/Haskell/bin")
+      (if (file-directory-p  "~/.cabal/bin")
+          (progn
+            (setenv "PATH" (concat "~/.cabal/bin:"p  (getenv "PATH")))
+            (add-to-list 'exec-path "~/.cabal/bin")))
+      
+      (if (file-directory-p  "~/Library/Haskell/bin")
+          (progn
+            (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "~/Library/Haskell/bin")))
+      
       (custom-set-variables '(haskell-tags-on-save t))
 
       (custom-set-variables
@@ -3694,13 +3700,23 @@ This must be bound to a mouse click."
 (if running-on-mac
     (progn
 
-      (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
-      (add-to-list 'exec-path "/usr/local/bin")
+      (if (file-directory-p "/opt/homebrew/bin")
+          (progn
+            (setenv "PATH" (concat "/opt/homebrew/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "/opt/homebrew/bin")))
 
-      (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
-      (add-to-list 'exec-path "~/Library/bin")
+      (if (file-directory-p "/usr/local/bin")
+          (progn
+            (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "/usr/local/bin")))
 
-      (setenv "EDITOR" "~/Library/bin/ec")
+      (if (file-directory-p "~/Library/bin")
+          (progn
+            (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "~/Library/bin")))
+
+      (if (file-executable-p "~/Library/bin/ec")
+          (setenv "EDITOR" "~/Library/bin/ec"))
       
       (defun kae/dired-launch-file (&optional arg)
         (interactive "P")
