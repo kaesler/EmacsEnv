@@ -141,6 +141,7 @@
 
 ;; Needed to allow package-list "U" to work right.
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 ;;}}}
 ;;{{{  My identity
 
@@ -1368,6 +1369,7 @@ and/or the vertical-line."
               ["Tech Lore" (find-file "~/Dropbox/TechLore.org")]
               ["Emacs config" (find-file "~/apps/EmacsEnv")]
               "---------------------------------"
+              ["Github repos" (find-file "~/apps/github/repos/kaesler")]
               ["~/tmp" (find-file "~/tmp/")]
               ["~/Downloads" (find-file "~/Downloads/")]
               ["~/Dropbox" (find-file "~/Dropbox/")]
@@ -2605,8 +2607,6 @@ by using nxml's indentation rules."
       ;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
 
       (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-      ;;(add-hook 'haskell-mode-hook 'structured-haskell-mode)
-      ;;(add-hook 'haskell-mode-hook 'turn-on-hi2)
       (eval-after-load 'haskell-mode
         '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
         )
@@ -2615,12 +2615,12 @@ by using nxml's indentation rules."
           (progn
             (setenv "PATH" (concat "~/.cabal/bin:"p  (getenv "PATH")))
             (add-to-list 'exec-path "~/.cabal/bin")))
-      
+
       (if (file-directory-p  "~/Library/Haskell/bin")
           (progn
             (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
             (add-to-list 'exec-path "~/Library/Haskell/bin")))
-      
+
       (custom-set-variables '(haskell-tags-on-save t))
 
       (custom-set-variables
@@ -2633,8 +2633,8 @@ by using nxml's indentation rules."
            (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
            (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
            (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
-           (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
-           (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)
+           ;;(define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
+           ;;(define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)
            (define-key haskell-mode-map (kbd "SPC") 'haskell-mode-contextual-space)))
       (eval-after-load 'haskell-cabal
         '(progn
@@ -2643,27 +2643,21 @@ by using nxml's indentation rules."
            (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
            (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
 
-      (custom-set-variables '(haskell-process-type 'cabal-repl))
-
+      (custom-set-variables '(haskell-process-type 'auto))
 
       (eval-after-load 'haskell-mode
         '(define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile))
       (eval-after-load 'haskell-cabal
         '(define-key haskell-cabal-mode-map (kbd "C-c C-o") 'haskell-compile))
 
-      (autoload 'ghc-init "ghc" nil t)
-      (autoload 'ghc-debug "ghc" nil t)
-      (add-hook 'haskell-mode-hook (lambda () (ghc-init)))
-
       (require 'company)
       (add-hook 'after-init-hook 'global-company-mode)
 
-      (add-to-list 'company-backends 'company-ghc)
-      (custom-set-variables '(company-ghc-show-info t))
-
-      ;;(require 'rainbow-delimiters)
-      ;;(add-hook 'haskell-mode-hook 'rainbow-delimiters-mode)
-
+      ;; (autoload 'ghc-init "ghc" nil t)
+      ;; (autoload 'ghc-debug "ghc" nil t)
+      ;; (add-hook 'haskell-mode-hook (lambda () (ghc-init)))
+      ;; (add-to-list 'company-backends 'company-ghc)
+      ;; (custom-set-variables '(company-ghc-show-info t))
       ))
 
 ;;}}}
