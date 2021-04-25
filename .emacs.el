@@ -3,20 +3,15 @@
 (setq user-emacs-directory "~/apps/emacs/")
 (defvar kae/elisp-directory (concat user-emacs-directory "elisp"))
 
-(defvar kae/modern-emacs (> emacs-major-version 23))
-
 ;;{{{ Package
 
-(if kae/modern-emacs
-    (progn
-      (require 'package)
-      (add-to-list 'package-archives
-                   '("melpa" . "https://melpa.org/packages/") t)
-                   ;;'("melpa-stable" . "https://stable.melpa.org/packages/") t)
-      ;; (add-to-list 'package-archives
-      ;;              '("marmalade" . "https://marmalade-repo.org/packages/") t)
-      ;;(package-initialize)
-      ))
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+;;'("melpa-stable" . "https://stable.melpa.org/packages/") t)
+;; (add-to-list 'package-archives
+;;              '("marmalade" . "https://marmalade-repo.org/packages/") t)
+;;(package-initialize)
 
 ;;}}}
 
@@ -1177,9 +1172,7 @@ With numeric arg, redraw around that line."
            (setq this-command 'recenter-first)
            (recenter nil)))))
 
-(if kae/modern-emacs
-    (global-set-key "\e=" 'count-words-region)
-  (global-set-key "\e=" 'count-region))
+(global-set-key "\e=" 'count-words-region)
 
 (global-set-key "\C-x=" 'what-cursor-position-and-line)
 
@@ -1227,9 +1220,8 @@ It defaults to the most recent such command."
 (global-set-key [f4] 'speedbar)
 (global-set-key [f5] 'find-file-at-point)
 
-(progn
-  (global-set-key [S-up] 'scroll-down-one-line)
-  (global-set-key [S-down] 'scroll-up-one-line))
+(global-set-key [S-up] 'scroll-down-one-line)
+(global-set-key [S-down] 'scroll-up-one-line)
 
 (defun scroll-up-one-line ()
   "Scroll text of window up by one line."
@@ -1545,8 +1537,7 @@ otherwise return DIR"
 
 ;;{{{ facemenu.el
 
-(if kae/modern-emacs
-    (require 'facemenu))
+(require 'facemenu)
 
 ;;}}}
 
@@ -2355,25 +2346,21 @@ when I invoked it, if that makes sense."
 ;;}}}
 ;;{{{ Magit
 
-(if kae/modern-emacs
-    (progn
-      (setq magit-last-seen-setup-instructions "1.4.0")
-      (require 'magit)))
+(setq magit-last-seen-setup-instructions "1.4.0")
+(require 'magit)
 
 ;;}}}
 ;;{{{ Confluence wiki editing mode
 
-(if kae/modern-emacs
-    (progn
-      (require 'confluence)
-      (setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
-      
-      (global-set-key "\C-xwf" 'confluence-get-page)
-      
-      (add-hook 'confluence-mode-hook
-                (local-set-key "\C-xw" confluence-prefix-map)
-                (local-set-key "\M-j" 'confluence-newline-and-indent)
-                (local-set-key "\M-;" 'confluence-list-indent-dwim))))
+(require 'confluence)
+(setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
+
+(global-set-key "\C-xwf" 'confluence-get-page)
+
+(add-hook 'confluence-mode-hook
+          (local-set-key "\C-xw" confluence-prefix-map)
+          (local-set-key "\M-j" 'confluence-newline-and-indent)
+          (local-set-key "\M-;" 'confluence-list-indent-dwim))
 
 ;;}}}
 
@@ -2385,11 +2372,9 @@ when I invoked it, if that makes sense."
 
 ;;{{{ Auto-complete
 
-(if kae/modern-emacs
-    (progn
-      (require 'auto-complete-config)
-      (add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
-      (ac-config-default)))
+(require 'auto-complete-config)
+(add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
+(ac-config-default)
 
 ;;}}}
 ;;{{{ NXHTML
@@ -2602,63 +2587,94 @@ by using nxml's indentation rules."
 
 ;;{{{  Haskell related
 
-(if kae/modern-emacs
+;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
+  
+(defun kae-make-haskell-menu ()
+  (easy-menu-define haskell-mode-menu haskell-mode-map
+    "Menu for the Haskell major mode."
+    ;; Suggestions from Pupeno <pupeno@pupeno.com>:
+    ;; - choose the underlying interpreter
+    ;; - look up docs
+    `("Haskell"
+      ["Indent line" indent-according-to-mode]
+      ["(Un)Comment region" comment-region mark-active]
+      "---"
+      ["Compile" haskell-compile]
+      ["Start interpreter" haskell-interactive-switch]
+      ["Load file" haskell-process-load-file]
+      "---"
+      ["Load tidy core" ghc-core-create-core]
+      "---"
+      ,(if (default-boundp 'eldoc-documentation-function)
+           ["Doc mode" eldoc-mode
+            :style toggle :selected (bound-and-true-p eldoc-mode)]
+         ["Doc mode" haskell-doc-mode
+          :style toggle :selected (and (boundp 'haskell-doc-mode) haskell-doc-mode)])
+      ["Customize" (customize-group 'haskell)]
+      )))
+
+(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+(eval-after-load 'haskell-mode
+  '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
+  )
+
+;; "Stack install" puts things here, like hasktags.
+(if (file-directory-p  "~/.local/bin")
     (progn
-      ;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
+      (setenv "PATH" (concat "~/.local/bin:"  (getenv "PATH")))
+      (add-to-list 'exec-path "~/.local/bin")))
 
-      (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
-      (eval-after-load 'haskell-mode
-        '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
-        )
+(if (file-directory-p  "~/.cabal/bin")
+    (progn
+      (setenv "PATH" (concat "~/.cabal/bin:"p  (getenv "PATH")))
+      (add-to-list 'exec-path "~/.cabal/bin")))
 
-      (if (file-directory-p  "~/.cabal/bin")
-          (progn
-            (setenv "PATH" (concat "~/.cabal/bin:"p  (getenv "PATH")))
-            (add-to-list 'exec-path "~/.cabal/bin")))
+(if (file-directory-p  "~/Library/Haskell/bin")
+    (progn
+      (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
+      (add-to-list 'exec-path "~/Library/Haskell/bin")))
 
-      (if (file-directory-p  "~/Library/Haskell/bin")
-          (progn
-            (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
-            (add-to-list 'exec-path "~/Library/Haskell/bin")))
+;; haskell-hasktags-path
+(let ((path (executable-find "hasktags")))
+  (if path
+      (progn
+        (setq haskell-tags-on-save t)
+        (setq haskell-hasktags-path path))))
 
-      (custom-set-variables '(haskell-tags-on-save t))
+(custom-set-variables
+ '(haskell-process-suggest-remove-import-lines t)
+ '(haskell-process-auto-import-loaded-modules t)
+ '(haskell-process-log t))
+(eval-after-load 'haskell-mode
+  '(progn
+     (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
+     (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+     (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
+     (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)))
+(eval-after-load 'haskell-cabal
+  '(progn
+     (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+     (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
+     (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
+     (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
 
-      (custom-set-variables
-       '(haskell-process-suggest-remove-import-lines t)
-       '(haskell-process-auto-import-loaded-modules t)
-       '(haskell-process-log t))
-      (eval-after-load 'haskell-mode
-        '(progn
-           (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
-           (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-           (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
-           (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
-           ;;(define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
-           ;;(define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)
-           (define-key haskell-mode-map (kbd "SPC") 'haskell-mode-contextual-space)))
-      (eval-after-load 'haskell-cabal
-        '(progn
-           (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-           (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
-           (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
-           (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
+(custom-set-variables '(haskell-process-type 'auto))
 
-      (custom-set-variables '(haskell-process-type 'auto))
+(eval-after-load 'haskell-mode
+  '(define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile))
+(eval-after-load 'haskell-cabal
+  '(define-key haskell-cabal-mode-map (kbd "C-c C-o") 'haskell-compile))
 
-      (eval-after-load 'haskell-mode
-        '(define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile))
-      (eval-after-load 'haskell-cabal
-        '(define-key haskell-cabal-mode-map (kbd "C-c C-o") 'haskell-compile))
+(require 'company)
+(add-hook 'after-init-hook 'global-company-mode)
 
-      (require 'company)
-      (add-hook 'after-init-hook 'global-company-mode)
+(eval-after-load 'haskell-mode (function kae-make-haskell-menu))
 
-      ;; (autoload 'ghc-init "ghc" nil t)
-      ;; (autoload 'ghc-debug "ghc" nil t)
-      ;; (add-hook 'haskell-mode-hook (lambda () (ghc-init)))
-      ;; (add-to-list 'company-backends 'company-ghc)
-      ;; (custom-set-variables '(company-ghc-show-info t))
-      ))
+;; (autoload 'ghc-init "ghc" nil t)
+;; (autoload 'ghc-debug "ghc" nil t)
+;; (add-hook 'haskell-mode-hook (lambda () (ghc-init)))
+;; (add-to-list 'company-backends 'company-ghc)
+;; (custom-set-variables '(company-ghc-show-info t))
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
