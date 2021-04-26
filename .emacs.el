@@ -2413,7 +2413,7 @@ by using nxml's indentation rules."
 
 ;;}}}
 
-;;{{{  Command-line interactive packages
+;;{{{ Command-line interactive packages
 
 ;;{{{  Comint Mode(s).
 
@@ -2587,43 +2587,9 @@ by using nxml's indentation rules."
 
 ;;{{{  Haskell related
 
-;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
+;; It seems that Haskel Mode contains most of what you want.
 
-;; Get what I want for Haskell into the menu
-(defun kae-make-haskell-menu ()
-  (easy-menu-define haskell-mode-menu haskell-mode-map
-    "Menu for the Haskell major mode."
-    ;; Suggestions from Pupeno <pupeno@pupeno.com>:
-    ;; - choose the underlying interpreter
-    ;; - look up docs
-    `("Haskell"
-      ["Load file" haskell-process-load-file]
-      ["Start interpreter" haskell-interactive-switch]
-      ["Build project" haskell-process-cabal-build]
-      ["Compile file" haskell-compile]
-      ["Format buffer" ormolu-format-buffer]
-      ["Info at point" haskell-process-do-info]
-      ["Type at point" haskell-process-do-type]
-      "---"
-      ,(if (default-boundp 'eldoc-documentation-function)
-           ["Doc mode" eldoc-mode
-            :style toggle :selected (bound-and-true-p eldoc-mode)]
-         ["Doc mode" haskell-doc-mode
-          :style toggle :selected (and (boundp 'haskell-doc-mode) haskell-doc-mode)])
-      ["Customize" (customize-group 'haskell)]
-      )))
-
-;; Not sure this is necessary
-(progn
-  (add-hook 'haskell-mode-hook '(haskell-indentation-mode t))
-  (require 'haskell-interactive-mode)
-  (require 'haskell-process)
-  (add-hook 'haskell-mode-hook 'interactive-haskell-mode))
-
-(eval-after-load 'haskell-mode
-  '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
-  )
-
+;;{{{ Get PATH and exec-path correct.
 ;; "Stack install" puts things here, like hasktags.
 (if (file-directory-p  "~/.local/bin")
     (progn
@@ -2640,53 +2606,86 @@ by using nxml's indentation rules."
       (setenv "PATH" (concat "~/Library/Haskell/bin:" (getenv "PATH")))
       (add-to-list 'exec-path "~/Library/Haskell/bin")))
 
-;; haskell-hasktags-path
+;; Allow hasktags to be found.
 (let ((path (executable-find "hasktags")))
   (if path
       (progn
         (setq haskell-tags-on-save t)
         (setq haskell-hasktags-path path))))
+;;}}}
 
-(custom-set-variables
- '(haskell-process-suggest-remove-import-lines t)
- '(haskell-process-auto-import-loaded-modules t)
- '(haskell-process-log t))
+;;{{{ Some handly minor modes
+(require 'haskell-interactive-mode)
+(add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 
-(eval-after-load 'haskell-mode
-  '(progn
-     (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
-     (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-     (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
-     (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
-     ;; Perhaps redundant?
-     (define-key haskell-mode-map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)))
+(require 'haskell-decl-scan)
+(add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
 
-(eval-after-load 'haskell-cabal
-  '(progn
-     (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-     (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
-     (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
-     (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
+(require 'haskell-doc)
+(add-hook 'haskell-mode-hook 'haskell-doc-mode)
 
-(custom-set-variables
- '(haskell-process-type 'auto))
+;;}}}
 
-(eval-after-load 'haskell-mode
-  '(define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile))
-(eval-after-load 'haskell-cabal
-  '(define-key haskell-cabal-mode-map (kbd "C-c C-o") 'haskell-compile))
+;;{{{ Ormolu for formatting.
 
-(require 'company)
-(add-hook 'after-init-hook 'global-company-mode)
-
-(eval-after-load 'haskell-mode (function kae-make-haskell-menu))
-
-;; https://github.com/vyorkin/ormolu.el
 (use-package ormolu
  :hook (haskell-mode . ormolu-format-on-save-mode)
  :bind
  (:map haskell-mode-map
    ("C-c r" . ormolu-format-buffer)))
+;;}}}
+
+;;{{{ Customise menu
+
+;; Get what I want for Haskell into the menu.
+(defun kae/make-haskell-menu ()
+  (easy-menu-define haskell-mode-menu haskell-mode-map
+    "Menu for the Haskell major mode."
+    ;; Suggestions from Pupeno <pupeno@pupeno.com>:
+    ;; - choose the underlying interpreter
+    ;; - look up docs
+    `("Haskell"
+      ["Load file" haskell-process-load-file]
+      ["Start interpreter" haskell-interactive-switch]
+      ["Bring interpreter" haskell-interactive-bring]
+      ["Build project" haskell-compile]
+      ["Format buffer" ormolu-format-buffer]
+      ["Info at point" haskell-process-do-info]
+      ["Type at point" haskell-process-do-type]
+      "---"
+      ,(if (default-boundp 'eldoc-documentation-function)
+           ["Doc mode" eldoc-mode
+            :style toggle :selected (bound-and-true-p eldoc-mode)]
+         ["Doc mode" haskell-doc-mode
+          :style toggle :selected (and (boundp 'haskell-doc-mode) haskell-doc-mode)])
+      ["Customize" (customize-group 'haskell)]
+      )))
+
+(eval-after-load 'haskell-mode (function kae/make-haskell-menu))
+
+;;}}}
+
+(custom-set-variables
+ '(haskell-process-type 'auto)
+ '(haskell-process-suggest-remove-import-lines t)
+ '(haskell-process-auto-import-loaded-modules t)
+ '(haskell-process-log t)
+ '(haskell-process-suggest-hoogle-imports t)
+ '(haskell-interactive-types-for-show-ambiguous nil)
+ )
+
+(eval-after-load 'haskell-mode
+  '(progn
+     (define-key haskell-mode-map (kbd "C-`") 'haskell-interactive-bring)
+     (define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile)
+     (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
+     (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+     (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
+     (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
+     (define-key haskell-mode-map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)))
+
+(require 'company)
+(add-hook 'after-init-hook 'global-company-mode)
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
