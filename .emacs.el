@@ -2588,7 +2588,8 @@ by using nxml's indentation rules."
 ;;{{{  Haskell related
 
 ;; See https://github.com/serras/emacs-haskell-tutorial/blob/master/tutorial.md
-  
+
+;; Get what I want for Haskell into the menu
 (defun kae-make-haskell-menu ()
   (easy-menu-define haskell-mode-menu haskell-mode-map
     "Menu for the Haskell major mode."
@@ -2596,14 +2597,13 @@ by using nxml's indentation rules."
     ;; - choose the underlying interpreter
     ;; - look up docs
     `("Haskell"
-      ["Indent line" indent-according-to-mode]
-      ["(Un)Comment region" comment-region mark-active]
-      "---"
-      ["Compile" haskell-compile]
-      ["Start interpreter" haskell-interactive-switch]
       ["Load file" haskell-process-load-file]
-      "---"
-      ["Load tidy core" ghc-core-create-core]
+      ["Start interpreter" haskell-interactive-switch]
+      ["Build project" haskell-process-cabal-build]
+      ["Compile file" haskell-compile]
+      ["Format buffer" ormolu-format-buffer]
+      ["Info at point" haskell-process-do-info]
+      ["Type at point" haskell-process-do-type]
       "---"
       ,(if (default-boundp 'eldoc-documentation-function)
            ["Doc mode" eldoc-mode
@@ -2613,7 +2613,13 @@ by using nxml's indentation rules."
       ["Customize" (customize-group 'haskell)]
       )))
 
-(add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
+;; Not sure this is necessary
+(progn
+  (add-hook 'haskell-mode-hook '(haskell-indentation-mode t))
+  (require 'haskell-interactive-mode)
+  (require 'haskell-process)
+  (add-hook 'haskell-mode-hook 'interactive-haskell-mode))
+
 (eval-after-load 'haskell-mode
   '(define-key haskell-mode-map [f8] 'haskell-navigate-imports)
   )
@@ -2645,12 +2651,16 @@ by using nxml's indentation rules."
  '(haskell-process-suggest-remove-import-lines t)
  '(haskell-process-auto-import-loaded-modules t)
  '(haskell-process-log t))
+
 (eval-after-load 'haskell-mode
   '(progn
      (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
      (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
      (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
-     (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)))
+     (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
+     ;; Perhaps redundant?
+     (define-key haskell-mode-map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)))
+
 (eval-after-load 'haskell-cabal
   '(progn
      (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
@@ -2658,7 +2668,8 @@ by using nxml's indentation rules."
      (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
      (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
 
-(custom-set-variables '(haskell-process-type 'auto))
+(custom-set-variables
+ '(haskell-process-type 'auto))
 
 (eval-after-load 'haskell-mode
   '(define-key haskell-mode-map (kbd "C-c C-o") 'haskell-compile))
@@ -2670,11 +2681,12 @@ by using nxml's indentation rules."
 
 (eval-after-load 'haskell-mode (function kae-make-haskell-menu))
 
-;; (autoload 'ghc-init "ghc" nil t)
-;; (autoload 'ghc-debug "ghc" nil t)
-;; (add-hook 'haskell-mode-hook (lambda () (ghc-init)))
-;; (add-to-list 'company-backends 'company-ghc)
-;; (custom-set-variables '(company-ghc-show-info t))
+;; https://github.com/vyorkin/ormolu.el
+(use-package ormolu
+ :hook (haskell-mode . ormolu-format-on-save-mode)
+ :bind
+ (:map haskell-mode-map
+   ("C-c r" . ormolu-format-buffer)))
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
