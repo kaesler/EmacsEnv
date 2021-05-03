@@ -1599,6 +1599,296 @@ for common operations.
 
 ;;}}}
 
+;;{{{  Mac OS X specifics
+
+(if running-on-mac
+    (progn
+
+      (if (file-directory-p "/opt/homebrew/bin")
+          (progn
+            (setenv "PATH" (concat "/opt/homebrew/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "/opt/homebrew/bin")))
+
+      (if (file-directory-p "/usr/local/bin")
+          (progn
+            (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "/usr/local/bin")))
+
+      (if (file-directory-p "~/Library/bin")
+          (progn
+            (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
+            (add-to-list 'exec-path "~/Library/bin")))
+
+      (if (file-executable-p "~/Library/bin/ec")
+          (setenv "EDITOR" "~/Library/bin/ec"))
+      
+      (defun kae/dired-launch-file (&optional arg)
+        (interactive "P")
+        (mapcar
+         (function
+          (lambda (relative-object)
+            (kae/launch-file relative-object)))
+         (dired-get-marked-files t arg)))
+
+      (eval-after-load
+          "dired"
+        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
+
+      ;; Get the desired cursor shape.
+      (set-default 'cursor-type 'box)
+
+      ;; Allow press and hold in Emacs
+      (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
+
+      ;; Improve scrolling
+      (setq mouse-wheel-scroll-amount '(0.01))
+
+      ;; Start in a sensible place.
+      ;;
+      (cd "~/")
+
+      (setq tab-width 4)))
+
+;;}}}
+
+;;{{{  Win32-specifics
+
+;;{{{ Find Cygwin and Bash
+
+(if running-on-w32
+    (progn
+      (defun find-cygwin-root ()
+        (let ((root (concat "c:\\" "cygwin")))
+          (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
+              root)))
+
+      (defvar cygwin-root nil)
+      (defvar cygwin-bash-location nil)
+
+      (setq cygwin-root (find-cygwin-root))
+      (if (not (null cygwin-root))
+          (setq cygwin-bash-location (concat cygwin-root "\\bin\\bash.exe")))))
+
+;;}}}
+
+;;{{{ Some Bash support
+
+(defun bash-toggle-slashes ()
+  "Toggle all \\ to / or all / to \\ on the current comint input region."
+  (interactive)
+  (save-excursion
+    (let* (start
+           end
+           (proc (get-buffer-process (current-buffer))) )
+      (end-of-line 1)
+      (setq end (point))
+      (cond ((and proc (processp proc))
+             (setq start (marker-position (process-mark proc))))
+            (t
+             (comint-bol 1)
+             (setq start (point))))
+      (cond ((< end start)
+             (goto-char end)
+             (beginning-of-line 1)
+             (setq start (point))))
+      (goto-char start)
+      (cond ((search-forward "\\" end t)
+             (\\/-region start end))
+            ((search-forward "/" end t)
+             (/\\-region start end))))))
+
+(defun change-character-in-buffer (from to)
+  (interactive "cChange character: \ncTo character: \n")
+  (change-character-in-region from to (point-min) (point-max)))
+
+(defalias '// 'change-character-in-region)
+
+(defun /\\-buffer ()
+  "Change all / to \\ in the buffer."
+  (interactive)
+  (change-character-in-buffer ?/ ?\\))
+
+(defun /\\-region (start end)
+  "Change all / to \\ for the rest of the buffer."
+  (interactive "r")
+  (change-character-in-region ?/ ?\\ start end))
+
+(defalias '/\\ '/\\-region)
+
+(defun \\/-buffer ()
+  "Change all \\ to / in the buffer."
+  (interactive)
+  (change-character-in-buffer ?\\ ?/))
+
+(defun \\/-region (start end)
+  "Change all \\ to / for the region START to END."
+  (interactive "r")
+  (change-character-in-region ?\\ ?/ start end))
+
+(defun /.-region (start end)
+  "Change all / to . for the region START to END."
+  (interactive "r")
+  (change-character-in-region ?/ ?. start end))
+
+(defun \./-region (start end)
+  "Change all . to / for the region START to END."
+  (interactive "r")
+  (change-character-in-region ?. ?/ start end))
+
+(defalias '\\/ '\\/-region)
+(defalias '\./ '\./-region)
+(defalias '/. '/.-region)
+
+(defun ^m ()
+  "Remove all ^M's from the buffer."
+  (interactive)
+  (^m-region (point-min) (point-max)))
+
+(defalias '^M '^m)
+(defalias '^M '6m)
+
+(defun ^m-buffer ()
+  "Remove all ^M's from the buffer."
+  (interactive)
+  (^m-region (point-min) (point-max)))
+
+(defalias '^m '^m-buffer)
+(defalias '^M '^m-buffer)
+
+(defun ^m-region (min max)
+  "Remove all ^M's from the region."
+  (interactive "r")
+  (save-excursion
+    (goto-char max)
+    (while (re-search-backward "\C-m$" min t)
+      (delete-char 1))))
+
+(defun :/-region (start end)
+  "Convert a path in the region START to END from Windows format to CygWin32 format,
+using cygpath"
+  (interactive "r")
+  (shell-command-on-region start end (concat "cygpath --unix '" (buffer-substring-no-properties start end) "'") t t)
+  (goto-char (mark))
+  (backward-delete-char-untabify 1)
+  )
+
+(defalias ':/ ':/-region)
+
+(defun /:-region (start end)
+  "Convert a path in the region START to END from CygWin32 format to Windows format,
+using cygpath"
+  (interactive "r")
+  (shell-command-on-region start end (concat "cygpath --windows '" (buffer-substring-no-properties start end) "'") t t)
+  (goto-char (mark))
+  (backward-delete-char-untabify 1))
+
+(defalias ':/ ':/-region)
+
+;;}}}
+
+(if running-on-w32
+    (progn
+
+      (defun kae/w32-canonicalize-path-seps (path)
+        (subst-char-in-string ?/ ?\\ path t))
+
+      ;; In Dired Mode: I like to be able to change the case of file names.
+      ;; NYI: doesn't work for directories. (problem inside rename-file C func).
+      ;;
+      (defadvice dired-rename-file (before kae-permit-case-change act)
+        (if (and (string= (downcase (ad-get-arg 0))
+                          (downcase (ad-get-arg 1)))
+                 (equal (file-attributes (ad-get-arg 0))
+                        (file-attributes (ad-get-arg 1))))
+            (ad-set-arg 2 t)))
+
+      ;; In Dired Mode: "open" a pointed-at object with the appropriate app.
+      ;; (If it's a directory, fire up the Windows Explorer.)
+      ;;
+      (defun kae/dired-launch-file (&optional arg)
+        (interactive "P")
+        (mapcar
+         (function
+          (lambda (relative-object)
+            (cond
+             ;; Directory: launch Explorer
+             ;;
+             ((file-directory-p relative-object)
+              (start-process-shell-command "Windows NT Explorer"
+                                           nil
+                                           "explorer"
+                                           (concat relative-object ",/e")))
+             ;; .EXE, .COM, .CMD, .BAT: invoke it
+             ;;
+             ((or (string-match "\\.exe$" (downcase relative-object))
+                  (string-match "\\.bat$" (downcase relative-object))
+                  (string-match "\\.com$" (downcase relative-object))
+                  (string-match "\\.cmd$" (downcase relative-object)))
+              (start-process-shell-command relative-object
+                                           nil
+                                           (concat default-directory "/"
+                                                   (substring relative-object 0 -4))))
+
+             ;; .mdp, .dsw, .dsp: invoke VC
+             ;;   (Temporary hack until w32-shell-execute learns to invoke the
+             ;;    default verb on an object when nil is provided.)
+             ;;
+             ((string-match "\\.mdp\\|dsw\\|dsp$" (downcase relative-object))
+              (w32-shell-execute "&Open with MSDev" (expand-file-name relative-object)))
+
+             (t
+              (progn
+                (message "Opening %s..." relative-object)
+                (w32-shell-execute "open"
+                                   (kae/w32-canonicalize-path-seps
+                                    (expand-file-name relative-object)))
+                (message "Opening %s...done" relative-object))))))
+         (dired-get-marked-files t arg)))
+
+      (eval-after-load
+          "dired"
+        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
+
+      ;; Start in a sensible place.
+      ;;
+      (cd "~/")
+
+      (setq tab-width 4)
+
+      ;; For the MKS shell
+      ;;
+      (cond
+
+       ;; Try these in order:
+       ;;
+
+       ;;  - Bash
+       ;;
+       ((file-exists-p  cygwin-bash-location)
+        (progn
+          (setenv "SHELL" "c:/cygwin/bin/bash.exe")
+          (setq shell-file-name "bash")
+          (setq explicit-shell-file-name "bash")
+          (setq shell-command-switch "-c")
+          (load "comint")
+          (fset 'original-comint-exec-1 (symbol-function 'comint-exec-1))
+          (defun comint-exec-1 (name buffer command switches)
+            (let ((binary-process-input t)
+                  (binary-process-output nil))
+              (original-comint-exec-1 name buffer command switches)))
+          ))
+
+       ;;  - The NT shell
+       ;;
+       (t
+        (progn
+          (setenv "SHELL" "cmd.exe")
+          (setq explicit-cmd.exe-args '("/q"))
+          (setq w32-quote-process-args t)))
+       )))
+
+;;}}}
+
 ;;{{{  Configure MODES and packages.
 
 (require 'use-package)
@@ -2590,6 +2880,7 @@ by using nxml's indentation rules."
 ;; It seems that Haskel Mode contains most of what you want.
 
 ;;{{{ Get PATH and exec-path correct.
+
 ;; "Stack install" puts things here, like hasktags.
 (if (file-directory-p  "~/.local/bin")
     (progn
@@ -2612,9 +2903,11 @@ by using nxml's indentation rules."
       (progn
         (setq haskell-tags-on-save t)
         (setq haskell-hasktags-path path))))
+
 ;;}}}
 
-;;{{{ Some handly minor modes
+;;{{{ Some handy minor modes
+
 (require 'haskell-interactive-mode)
 (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
 
@@ -2623,6 +2916,10 @@ by using nxml's indentation rules."
 
 (require 'haskell-doc)
 (add-hook 'haskell-mode-hook 'haskell-doc-mode)
+
+(require 'flycheck-haskell)
+(add-hook 'haskell-mode-hook 'flycheck-haskell-setup)
+(add-hook 'haskell-mode-hook 'flycheck-mode)
 
 ;;}}}
 
@@ -3708,301 +4005,6 @@ This must be bound to a mouse click."
 (require 'paren)
 
 ;;}}}
-
-;;}}}
-
-;;{{{  Mac OS X specifics
-
-;; In Dired Mode: "open" a pointed-at object with the appropriate app.
-;; (If it's a directory, fire up the Finder
-;;
-
-
-(if running-on-mac
-    (progn
-
-      (if (file-directory-p "/opt/homebrew/bin")
-          (progn
-            (setenv "PATH" (concat "/opt/homebrew/bin:" (getenv "PATH")))
-            (add-to-list 'exec-path "/opt/homebrew/bin")))
-
-      (if (file-directory-p "/usr/local/bin")
-          (progn
-            (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH")))
-            (add-to-list 'exec-path "/usr/local/bin")))
-
-      (if (file-directory-p "~/Library/bin")
-          (progn
-            (setenv "PATH" (concat "~/Library/bin:" (getenv "PATH")))
-            (add-to-list 'exec-path "~/Library/bin")))
-
-      (if (file-executable-p "~/Library/bin/ec")
-          (setenv "EDITOR" "~/Library/bin/ec"))
-      
-      (defun kae/dired-launch-file (&optional arg)
-        (interactive "P")
-        (mapcar
-         (function
-          (lambda (relative-object)
-            (kae/launch-file relative-object)))
-         (dired-get-marked-files t arg)))
-
-      (eval-after-load
-          "dired"
-        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
-
-      ;; Get the desired cursor shape.
-      (set-default 'cursor-type 'box)
-
-      ;; Allow press and hold in Emacs
-      (ns-set-resource nil "ApplePressAndHoldEnabled" "NO")
-
-      ;; Improve scrolling
-      (setq mouse-wheel-scroll-amount '(0.01))
-
-      ;; Start in a sensible place.
-      ;;
-      (cd "~/")
-
-      (setq tab-width 4)))
-
-;;}}}
-
-;;{{{  Win32-specifics
-
-;;{{{ Find Cygwin and Bash
-
-(if running-on-w32
-    (progn
-      (defun find-cygwin-root ()
-        (let ((root (concat "c:\\" "cygwin")))
-          (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
-              root)))
-
-      (defvar cygwin-root nil)
-      (defvar cygwin-bash-location nil)
-
-      (setq cygwin-root (find-cygwin-root))
-      (if (not (null cygwin-root))
-          (setq cygwin-bash-location (concat cygwin-root "\\bin\\bash.exe")))))
-
-;;}}}
-
-;;{{{ Some Bash support
-
-(defun bash-toggle-slashes ()
-  "Toggle all \\ to / or all / to \\ on the current comint input region."
-  (interactive)
-  (save-excursion
-    (let* (start
-           end
-           (proc (get-buffer-process (current-buffer))) )
-      (end-of-line 1)
-      (setq end (point))
-      (cond ((and proc (processp proc))
-             (setq start (marker-position (process-mark proc))))
-            (t
-             (comint-bol 1)
-             (setq start (point))))
-      (cond ((< end start)
-             (goto-char end)
-             (beginning-of-line 1)
-             (setq start (point))))
-      (goto-char start)
-      (cond ((search-forward "\\" end t)
-             (\\/-region start end))
-            ((search-forward "/" end t)
-             (/\\-region start end))))))
-
-(defun change-character-in-buffer (from to)
-  (interactive "cChange character: \ncTo character: \n")
-  (change-character-in-region from to (point-min) (point-max)))
-
-(defalias '// 'change-character-in-region)
-
-(defun /\\-buffer ()
-  "Change all / to \\ in the buffer."
-  (interactive)
-  (change-character-in-buffer ?/ ?\\))
-
-(defun /\\-region (start end)
-  "Change all / to \\ for the rest of the buffer."
-  (interactive "r")
-  (change-character-in-region ?/ ?\\ start end))
-
-(defalias '/\\ '/\\-region)
-
-(defun \\/-buffer ()
-  "Change all \\ to / in the buffer."
-  (interactive)
-  (change-character-in-buffer ?\\ ?/))
-
-(defun \\/-region (start end)
-  "Change all \\ to / for the region START to END."
-  (interactive "r")
-  (change-character-in-region ?\\ ?/ start end))
-
-(defun /.-region (start end)
-  "Change all / to . for the region START to END."
-  (interactive "r")
-  (change-character-in-region ?/ ?. start end))
-
-(defun \./-region (start end)
-  "Change all . to / for the region START to END."
-  (interactive "r")
-  (change-character-in-region ?. ?/ start end))
-
-(defalias '\\/ '\\/-region)
-(defalias '\./ '\./-region)
-(defalias '/. '/.-region)
-
-(defun ^m ()
-  "Remove all ^M's from the buffer."
-  (interactive)
-  (^m-region (point-min) (point-max)))
-
-(defalias '^M '^m)
-(defalias '^M '6m)
-
-(defun ^m-buffer ()
-  "Remove all ^M's from the buffer."
-  (interactive)
-  (^m-region (point-min) (point-max)))
-
-(defalias '^m '^m-buffer)
-(defalias '^M '^m-buffer)
-
-(defun ^m-region (min max)
-  "Remove all ^M's from the region."
-  (interactive "r")
-  (save-excursion
-    (goto-char max)
-    (while (re-search-backward "\C-m$" min t)
-      (delete-char 1))))
-
-(defun :/-region (start end)
-  "Convert a path in the region START to END from Windows format to CygWin32 format,
-using cygpath"
-  (interactive "r")
-  (shell-command-on-region start end (concat "cygpath --unix '" (buffer-substring-no-properties start end) "'") t t)
-  (goto-char (mark))
-  (backward-delete-char-untabify 1)
-  )
-
-(defalias ':/ ':/-region)
-
-(defun /:-region (start end)
-  "Convert a path in the region START to END from CygWin32 format to Windows format,
-using cygpath"
-  (interactive "r")
-  (shell-command-on-region start end (concat "cygpath --windows '" (buffer-substring-no-properties start end) "'") t t)
-  (goto-char (mark))
-  (backward-delete-char-untabify 1))
-
-(defalias ':/ ':/-region)
-
-;;}}}
-
-(if running-on-w32
-    (progn
-
-      (defun kae/w32-canonicalize-path-seps (path)
-        (subst-char-in-string ?/ ?\\ path t))
-
-      ;; In Dired Mode: I like to be able to change the case of file names.
-      ;; NYI: doesn't work for directories. (problem inside rename-file C func).
-      ;;
-      (defadvice dired-rename-file (before kae-permit-case-change act)
-        (if (and (string= (downcase (ad-get-arg 0))
-                          (downcase (ad-get-arg 1)))
-                 (equal (file-attributes (ad-get-arg 0))
-                        (file-attributes (ad-get-arg 1))))
-            (ad-set-arg 2 t)))
-
-      ;; In Dired Mode: "open" a pointed-at object with the appropriate app.
-      ;; (If it's a directory, fire up the Windows Explorer.)
-      ;;
-      (defun kae/dired-launch-file (&optional arg)
-        (interactive "P")
-        (mapcar
-         (function
-          (lambda (relative-object)
-            (cond
-             ;; Directory: launch Explorer
-             ;;
-             ((file-directory-p relative-object)
-              (start-process-shell-command "Windows NT Explorer"
-                                           nil
-                                           "explorer"
-                                           (concat relative-object ",/e")))
-             ;; .EXE, .COM, .CMD, .BAT: invoke it
-             ;;
-             ((or (string-match "\\.exe$" (downcase relative-object))
-                  (string-match "\\.bat$" (downcase relative-object))
-                  (string-match "\\.com$" (downcase relative-object))
-                  (string-match "\\.cmd$" (downcase relative-object)))
-              (start-process-shell-command relative-object
-                                           nil
-                                           (concat default-directory "/"
-                                                   (substring relative-object 0 -4))))
-
-             ;; .mdp, .dsw, .dsp: invoke VC
-             ;;   (Temporary hack until w32-shell-execute learns to invoke the
-             ;;    default verb on an object when nil is provided.)
-             ;;
-             ((string-match "\\.mdp\\|dsw\\|dsp$" (downcase relative-object))
-              (w32-shell-execute "&Open with MSDev" (expand-file-name relative-object)))
-
-             (t
-              (progn
-                (message "Opening %s..." relative-object)
-                (w32-shell-execute "open"
-                                   (kae/w32-canonicalize-path-seps
-                                    (expand-file-name relative-object)))
-                (message "Opening %s...done" relative-object))))))
-         (dired-get-marked-files t arg)))
-
-      (eval-after-load
-          "dired"
-        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
-
-      ;; Start in a sensible place.
-      ;;
-      (cd "~/")
-
-      (setq tab-width 4)
-
-      ;; For the MKS shell
-      ;;
-      (cond
-
-       ;; Try these in order:
-       ;;
-
-       ;;  - Bash
-       ;;
-       ((file-exists-p  cygwin-bash-location)
-        (progn
-          (setenv "SHELL" "c:/cygwin/bin/bash.exe")
-          (setq shell-file-name "bash")
-          (setq explicit-shell-file-name "bash")
-          (setq shell-command-switch "-c")
-          (load "comint")
-          (fset 'original-comint-exec-1 (symbol-function 'comint-exec-1))
-          (defun comint-exec-1 (name buffer command switches)
-            (let ((binary-process-input t)
-                  (binary-process-output nil))
-              (original-comint-exec-1 name buffer command switches)))
-          ))
-
-       ;;  - The NT shell
-       ;;
-       (t
-        (progn
-          (setenv "SHELL" "cmd.exe")
-          (setq explicit-cmd.exe-args '("/q"))
-          (setq w32-quote-process-args t)))
-       )))
 
 ;;}}}
 
