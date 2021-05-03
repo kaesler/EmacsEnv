@@ -2921,6 +2921,11 @@ by using nxml's indentation rules."
 (add-hook 'haskell-mode-hook 'flycheck-haskell-setup)
 (add-hook 'haskell-mode-hook 'flycheck-mode)
 
+(add-hook 'haskell-mode-hook
+          (lambda ()
+            (set (make-local-variable 'company-backends)
+                 (append '((company-capf company-dabbrev-code))
+                         company-backends))))
 ;;}}}
 
 ;;{{{ Ormolu for formatting.
