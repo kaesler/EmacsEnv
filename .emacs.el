@@ -2926,6 +2926,7 @@ by using nxml's indentation rules."
             (set (make-local-variable 'company-backends)
                  (append '((company-capf company-dabbrev-code))
                          company-backends))))
+
 ;;}}}
 
 ;;{{{ Ormolu for formatting.
@@ -2943,13 +2944,11 @@ by using nxml's indentation rules."
 (defun kae/make-haskell-menu ()
   (easy-menu-define haskell-mode-menu haskell-mode-map
     "Menu for the Haskell major mode."
-    ;; Suggestions from Pupeno <pupeno@pupeno.com>:
-    ;; - choose the underlying interpreter
-    ;; - look up docs
     `("Haskell"
+      ["Bring interpreter" haskell-interactive-bring]
       ["Load file" haskell-process-load-file]
       ["Start interpreter" haskell-interactive-switch]
-      ["Bring interpreter" haskell-interactive-bring]
+      ["Change REPL target" haskell-session-change-target]
       ["Build project" haskell-compile]
       ["Format buffer" ormolu-format-buffer]
       ["Info at point" haskell-process-do-info]
