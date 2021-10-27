@@ -1,0 +1,2 @@
+;;; Generated package description from ormolu.el  -*- no-byte-compile: t -*-
+(define-package "ormolu" "20211020.2229" "Format Haskell source code using the \"ormolu\" program" '((emacs "24") (reformatter "0.4")) :commit "1941a8ce48027b5670d226bacc2fa10b00774b3a" :authors '(("Vasiliy Yorkin" . "vasiliy.yorkin@gmail.com")) :maintainer '("Vasiliy Yorkin") :keywords '("files" "tools") :url "https://github.com/vyorkin/ormolu.el")
