@@ -1358,6 +1358,9 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
+              ["Conviva Journal" (find-file "~/Dropbox/Conviva/Journal.org")]
+              ["Conviva Lore" (find-file "~/Dropbox/Conviva/ConvivaLore.org")]
+              "---------------------------------"
               ["Tech Lore" (find-file "~/Dropbox/TechLore.org")]
               ["Emacs config" (find-file "~/apps/EmacsEnv")]
               "---------------------------------"
