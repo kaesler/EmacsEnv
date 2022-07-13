@@ -1895,6 +1895,9 @@ using cygpath"
 ;;{{{  Configure MODES and packages.
 
 (require 'use-package)
+;;{{{
+(require 'idris-mode)
+;;}}}
 ;;{{{ Agda
 
 (load-file (let ((coding-system-for-read 'utf-8))
