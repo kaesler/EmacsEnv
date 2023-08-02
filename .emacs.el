@@ -132,7 +132,7 @@
 
 ;;}}}
 
-;;{{{ Bugfix:
+;;{{{  Bugfix:
 
 ;; Needed to allow package-list "U" to work right.
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
@@ -1895,7 +1895,7 @@ using cygpath"
 ;;{{{  Configure MODES and packages.
 
 (require 'use-package)
-;;{{{
+;;{{{ Idris Mode
 (require 'idris-mode)
 ;;}}}
 ;;{{{ Agda
@@ -1911,28 +1911,28 @@ using cygpath"
 
 ;;}}}
 ;;{{{ Tide for Typescript
-(defun setup-tide-mode ()
-  (interactive)
-  (tide-setup)
-  (flycheck-mode +1)
-  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-  (eldoc-mode +1)
-  (tide-hl-identifier-mode +1)
-  ;; company is an optional dependency. You have to
-  ;; install it separately via package-install
-  ;; `M-x package-install [ret] company`
-  (company-mode +1))
+;; (defun setup-tide-mode ()
+;;   (interactive)
+;;   (tide-setup)
+;;   (flycheck-mode +1)
+;;   (setq flycheck-check-syntax-automatically '(save mode-enabled))
+;;   (eldoc-mode +1)
+;;   (tide-hl-identifier-mode +1)
+;;   ;; company is an optional dependency. You have to
+;;   ;; install it separately via package-install
+;;   ;; `M-x package-install [ret] company`
+;;   (company-mode +1))
 
-;; aligns annotation to the right hand side
-(setq company-tooltip-align-annotations t)
+;; ;; aligns annotation to the right hand side
+;; (setq company-tooltip-align-annotations t)
 
-;; formats the buffer before saving
-(add-hook 'before-save-hook 'tide-format-before-save)
+;; ;; formats the buffer before saving
+;; (add-hook 'before-save-hook 'tide-format-before-save)
 
-(add-hook 'typescript-mode-hook 'setup-tide-mode)
-(setq tide-format-options
-      '(:insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil)
-)
+;; (add-hook 'typescript-mode-hook 'setup-tide-mode)
+;; (setq tide-format-options
+;;       '(:insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil)
+;; )
 
 ;;}}}
 ;;{{{ Ido
@@ -2629,13 +2629,13 @@ when I invoked it, if that makes sense."
 
 ;;{{{ Tramp
 
-(require 'tramp)
-(setq tramp-debug-buffer t)
-(setq tramp-verbose 9)
-;;(setq tramp-default-method "ssh")
-;;(setq tramp-password-prompt-regexp ".*[Pp]assword: *$")
-;;(setq tramp-shell-prompt-pattern "^[^;$#>]*[;$#>] *")
-(setq password-cache-expiry nil)
+;; (require 'tramp)
+;; (setq tramp-debug-buffer t)
+;; (setq tramp-verbose 9)
+;; ;;(setq tramp-default-method "ssh")
+;; ;;(setq tramp-password-prompt-regexp ".*[Pp]assword: *$")
+;; ;;(setq tramp-shell-prompt-pattern "^[^;$#>]*[;$#>] *")
+;; (setq password-cache-expiry nil)
 
 ;;}}}
 ;;{{{ Pivotal

@@ -1,6 +1,6 @@
-;; -*- emacs-lisp -*- <15/09/16 21:49:00 /Users/kesler/apps/emacs/tramp>
+;; -*- emacs-lisp -*- <23/08/02 11:09:13 ~/apps/emacs/tramp>
 ;; Tramp connection history.  Don't change this file.
-;; You can delete it, forcing Tramp to reapply the checks.
+;; Run `M-x tramp-cleanup-all-connections' instead.
 
-((["scp" nil "github.com" nil nil]
-  nil))
+(((tramp-file-name "cache" nil nil nil nil nil nil)
+  ("tramp-version" "2.6.0.29.1")))
