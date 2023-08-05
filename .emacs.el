@@ -240,6 +240,14 @@
 
 ;;{{{  Useful commands and functions.
 
+(defun kae/iterm2 ()
+  "Launch new iTerm in the current directory"
+  (interactive)
+  (call-process "open" nil 0 nil
+                "-a"
+                "iTerm.app"
+                default-directory))
+
 ;; Launch a file based on its file type as in Windows/Mac.
 (defun kae/launch-file (file)
   (interactive "f")
@@ -1358,8 +1366,7 @@ and/or the vertical-line."
         (list global-map)
         "Shortcuts menu"
         (list "KAE"
-              ["Conviva Journal" (find-file "~/Dropbox/Conviva/Journal.org")]
-              ["Conviva Lore" (find-file "~/Dropbox/Conviva/ConvivaLore.org")]
+              ["iTerm" kae/iterm2]
               "---------------------------------"
               ["Tech Lore" (find-file "~/Dropbox/TechLore.org")]
               ["Emacs config" (find-file "~/apps/EmacsEnv")]
