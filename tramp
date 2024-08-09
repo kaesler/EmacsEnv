@@ -1,6 +1,6 @@
-;; -*- emacs-lisp -*- <23/08/02 11:09:13 ~/apps/emacs/tramp>
+;; -*- emacs-lisp -*- <24/08/09 09:35:31 ~/apps/emacs/tramp>
 ;; Tramp connection history.  Don't change this file.
 ;; Run `M-x tramp-cleanup-all-connections' instead.
 
 (((tramp-file-name "cache" nil nil nil nil nil nil)
-  ("tramp-version" "2.6.0.29.1")))
+  ("tramp-version" "2.6.3")))

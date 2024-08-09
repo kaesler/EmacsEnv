@@ -243,10 +243,10 @@
 (defun kae/iterm2 ()
   "Launch new iTerm in the current directory"
   (interactive)
-  (call-process "open" nil 0 nil
+  (call-process "/usr/bin/open" nil 0 nil
                 "-a"
                 "iTerm.app"
-                default-directory))
+                (expand-file-name default-directory)))
 
 ;; Launch a file based on its file type as in Windows/Mac.
 (defun kae/launch-file (file)

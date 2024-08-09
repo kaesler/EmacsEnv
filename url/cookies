@@ -2,11 +2,18 @@
 ;; Automatically generated file!!! DO NOT EDIT!!!
 
 (setq url-cookie-storage
- 'nil)
+ '((".google.com"
+  [url-cookie "NID" "511=Uj3DIoaAG526WdgyeXXiniY-qgTbNHqSfUuQFjL_jAN-8iqbXMRHSlVt5lkhaAhtvXIh--J_kxPbxQ1ADgneA3RwTVAbeTGwA6YcB5gBsKKIY4rEIwKT_LRZqN96y8uNhdcapoijKjInkRU6KUZ4rSvbMRIwPrxU_j6cgieuh80" "Thu, 07-Mar-2024 21:08:23 GMT" "/" ".google.com" nil]))
+)
 (setq url-cookie-secure-storage
- 'nil)
-
+ '(("accounts.google.com"
+  [url-cookie "__Host-GAPS" "1:1sGVRxOSEDPnDREKMkYQn6f-dkaOsQ:8bodcAElvc_jXgRW" "Fri, 05-Sep-2025 21:08:29 GMT" "/" "accounts.google.com" t]))
+)
+
 ;; Local Variables:
 ;; version-control: never
 ;; no-byte-compile: t
+;; coding: utf-8-emacs-unix
 ;; End:
+
+;;; cookies ends here
