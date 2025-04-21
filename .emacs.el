@@ -1947,10 +1947,6 @@ using cygpath"
 ;;(setq ido-everywhere t)
 ;;(ido-mode 1)
 ;;}}}
-;;{{{ back-button
-(require 'back-button)
-(back-button-mode 1)
-;;}}}
 ;;{{{ Treemacs
 
 (defun kae/treemacs-mode-bindings ()
@@ -2606,11 +2602,6 @@ when I invoked it, if that makes sense."
             (local-set-key (kbd "C-x C-e") 'js-send-last-sexp)
             (local-set-key (kbd "C-c b") 'js-send-buffer)))
 ;;}}}
-;;{{{ Kaesar
-
-(require 'kaesar-file)
-
-;;}}}
 ;;{{{ Bash completion
 ;; Became non-performant
 ;; (require 'bash-completion)
@@ -2665,19 +2656,6 @@ when I invoked it, if that makes sense."
 (require 'magit)
 
 ;;}}}
-;;{{{ Confluence wiki editing mode
-
-(require 'confluence)
-(setq confluence-url "http://timetrade.onconfluence.com/rpc/xmlrpc")
-
-(global-set-key "\C-xwf" 'confluence-get-page)
-
-(add-hook 'confluence-mode-hook
-          (local-set-key "\C-xw" confluence-prefix-map)
-          (local-set-key "\M-j" 'confluence-newline-and-indent)
-          (local-set-key "\M-;" 'confluence-list-indent-dwim))
-
-;;}}}
 
 ;;{{{ Ascii doc mode
 
@@ -2685,13 +2663,6 @@ when I invoked it, if that makes sense."
 
 ;;}}}
 
-;;{{{ Auto-complete
-
-(require 'auto-complete-config)
-(add-to-list 'ac-dictionary-directories "~/apps/emacs/ac-dict")
-(ac-config-default)
-
-;;}}}
 ;;{{{ NXHTML
 
 (defun kae/pretty-print-xml-region (begin end)
@@ -3010,8 +2981,8 @@ by using nxml's indentation rules."
      (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
      (define-key haskell-mode-map (kbd "M-.") 'haskell-mode-jump-to-def-or-tag)))
 
-(require 'company)
-(add-hook 'after-init-hook 'global-company-mode)
+;;(require 'company)
+;;(add-hook 'after-init-hook 'global-company-mode)
 
 ;;}}}
 ;;{{{  Hideshow Minor Mode
@@ -4062,3 +4033,4 @@ This must be bound to a mouse click."
 ;; End:
 
 ;;}}}
+

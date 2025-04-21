@@ -5,7 +5,8 @@
 ;; Author: Matúš Goljer <matus.goljer@gmail.com>
 ;; Maintainer: Matúš Goljer <matus.goljer@gmail.com>
 ;; Keywords: files
-;; Version: 0.0.1
+;; Package-Version: 20240629.1906
+;; Package-Revision: 63b04d17936c
 ;; Created: 14th February 2014
 ;; Package-Requires: ((dash "2.5.0") (emacs "24.3"))
 ;; URL: https://github.com/Fuco1/dired-hacks
