@@ -1,7 +1,9 @@
 ((magit-branch nil)
  (magit-cherry-pick
   ("--ff"))
- (magit-commit nil)
+ (magit-commit
+  ("--verbose")
+  nil)
  (magit-diff
   ("--no-ext-diff" "--stat"))
  (magit-dispatch nil)
