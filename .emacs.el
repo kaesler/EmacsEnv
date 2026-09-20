@@ -1,4 +1,10 @@
-;;{{{  Set some global variables.
+;;; -*- lexical-binding: t -*-
+;;{{{  Set some global variables.  
+;; Attempt to get 31.1 to work
+(setenv "MACOSX_DEPLOYMENT_TARGET" "27")
+;;(setq native-comp-speed -1)
+;;(setq native-comp-jit-compilation nil)
+;;(setq native-comp-enable-subr-trampolines nil)
 
 (setq user-emacs-directory "~/apps/emacs/")
 (defvar kae/elisp-directory (concat user-emacs-directory "elisp"))
@@ -8,17 +14,12 @@
 (require 'package)
 (add-to-list 'package-archives
              '("melpa" . "https://melpa.org/packages/") t)
-;;'("melpa-stable" . "https://stable.melpa.org/packages/") t)
-;; (add-to-list 'package-archives
-;;              '("marmalade" . "https://marmalade-repo.org/packages/") t)
-;;(package-initialize)
 
 ;;}}}
 
 ;;{{{  Determine what kind of OS and display is being used.
 
 (defvar running-on-mac (memq window-system '(ns)))
-(defvar running-on-w32 (memq window-system '(w32 win32 mswindows)))
 
 (defvar running-as-x-client (memq window-system '(x x11)))
 (defvar running-as-terminal-client (null window-system))
@@ -32,52 +33,8 @@
 
 ;;}}}
 
-;;{{{  Determine what site we're at.
-
-(defvar at-site-work nil)
-(defvar at-site-home nil)
-
-(defun kae/command-output-first-line-as-string (command)
-
-  "Capture the first line of a command's output as a string."
-
-  (with-current-buffer (get-buffer-create "*active function*")
-    (erase-buffer)
-    (call-process shell-file-name
-                  nil
-                  t
-                  nil
-                  "-c"
-                  command)
-    (goto-char (point-min))
-    (end-of-line)
-    (buffer-substring (point-min) (point))))
-
-(let ((host-name (system-name)))
-  (cond
-   ;; Heuristically decide where we're running.
-   ;;
-   ((or
-     (string-equal "ke-682SJG5J-MBP" host-name)
-     )
-    (setq at-site-work t))
-   
-   ((or
-     (string-match "Kevins.iMac" host-name)
-     )
-    (setq at-site-home t))))
-
-(defvar kae/small-screen (< (display-pixel-width) 1600))
-(add-hook 'before-make-frame-hook
-          (function
-           (lambda()
-             (setq kae/small-screen (< (display-pixel-width) 1600)))))
-
-;;}}}
-
 ;;{{{  Miscellaneous.
 
-(setq max-specpdl-size 1000)
 (setq max-lisp-eval-depth 1000)
 
 (setq gc-cons-threshold 1000000)
@@ -145,88 +102,6 @@
 (setq user-mail-address "kevin.esler@gmail.com")
 
 ;;}}}
-;;{{{  Register this emacs process
-
-;;{{{  Functions to register which emacs processes I have running
-
-(defun kae/register-emacs-process ()
-  (interactive)
-  (let* ((emacs-proc-dir "~/apps/emacs/.emacs_processes")
-         (pid-string (int-to-string (emacs-pid)))
-         (system-subdir (concat emacs-proc-dir "/" (system-name)))
-         (pid-file (concat system-subdir "/" (ignt-to-string (emacs-pid)))))
-
-    (kae/cleanup-emacs-process-registry)
-
-    (if (file-directory-p emacs-proc-dir)
-        (progn
-          (if (not (file-directory-p system-subdir))
-              (make-directory system-subdir))
-          (if (file-exists-p pid-file)
-              (delete-file pid-file))
-          (with-current-buffer (get-buffer-create "*esler-register-emacs-process*")
-            (erase-buffer)
-            (insert (mapconcat
-                     (function
-                      (lambda (x)
-                        x))
-                     command-line-args
-                     " "))
-            (insert "\n")
-            (write-file pid-file))))))
-
-(defun kae/unregister-emacs-process ()
-  (interactive)
-  (condition-case err
-      (let* ((emacs-proc-dir "~/apps/emacs/.emacs_processes")
-             (pid-string (int-to-string (emacs-pid)))
-             (system-subdir (concat emacs-proc-dir "/" (system-name)))
-             (pid-file (concat system-subdir "/" (int-to-string (emacs-pid)))))
-        (kae/cleanup-emacs-process-registry)
-        (if (file-exists-p pid-file)
-            (delete-file pid-file))
-        (if (file-directory-p system-subdir)
-            (if (equal 2 (length (directory-files system-subdir)))
-                (delete-directory system-subdir))))
-    (error nil)))
-
-(defun kae/process-exists (pid-string)
-  (zerop
-   (call-process
-    "kill"
-    nil                                 ; INFILE
-    nil                                 ; BUFFER
-    nil                                 ; DISPLAY
-    "-0"
-    pid-string)))
-
-(defun kae/cleanup-emacs-process-registry ()
-  (interactive)
-  (let* ((emacs-proc-dir "~/.emacs_processes")
-         (system-subdir (concat emacs-proc-dir "/" (system-name))))
-    (if (file-directory-p system-subdir)
-        (let ((pid-list (directory-files system-subdir
-                                         nil
-                                         "[0-9]+")))
-          (mapcar (function
-                   (lambda (pid-string)
-                     (if (not (kae/process-exists pid-string))
-                         (delete-file (concat system-subdir
-                                              "/"
-                                              pid-string)))))
-                  pid-list)))))
-
-;;}}}
-
-;; Ignore errors
-;;
-(condition-case err
-    (kae/register-emacs-process)
-  (error nil))
-
-(add-hook 'kill-emacs-hook 'kae/unregister-emacs-process)
-
-;;}}}
 
 ;;{{{  Load .emacs.custom
 
@@ -257,12 +132,7 @@
        (message "Opening %s..." file)
        (call-process "/usr/bin/open" nil 0 nil
                      (expand-file-name file))
-       (message "Opening %s...done" file)))
-
-   (running-on-w32
-     (w32-shell-execute "open"
-                        (kae/w32-canonicalize-path-seps
-                         (expand-file-name file))))))
+       (message "Opening %s...done" file)))))
 
 (defun directory-sub-dirs (dir)
   (let* ((entries (directory-files dir))
@@ -440,7 +310,7 @@ then only one line is copied."
 
 (defun find-file-at-point (&optional other-frame)
   "Find the file whose name the cursor is over.
-Ignores trailing '*' or '@' as in 'ls -F' output."
+Ignores trailing \\='*\\=' or \\='@\\=' as in \\='ls -F\\=' output."
   (interactive)
   (let ((file-name (extract-file-name-around-point)))
     (if (file-exists-p file-name)
@@ -699,7 +569,7 @@ as a C or Lisp comment."
   ;;
   (iterate-over-lines-in-region
    (point-min) (point-max)
-   '(lambda ()
+   #'(lambda ()
       (if (looking-at "^\\([0-9]+\\)\\([ \t]+\\)")
           (let ((number (buffer-substring (match-beginning 1) (match-end 1)))
                 (space-char 32))
@@ -727,51 +597,6 @@ as a C or Lisp comment."
 
 ;;{{{  edit-variable -- edit an elisp variable
 
-;; edit-variable.el - friendlier that set-variable
-
-;; Kevin Broadey, EDS-Scicon, 16 Oct 1992
-
-;; Copyleft and all wrongs unreserved!
-
-(provide 'edit-variable)
-
-(defun edit-variable (var)
-  "Edit the value of VARIABLE in the minibuffer.  Typing the help character
-displays the documentation string for VARIABLE."
-  (interactive "vEdit variable: ")
-  (let ((var-value (if (boundp var)
-		       (symbol-value var)))
-	(minibuffer-help-form '(funcall myhelp))
-	(myhelp
-	 (function (lambda ()
-		     (with-output-to-temp-buffer "*Help*"
-		       (prin1 var)
-		       (princ "\nDocumentation:\n")
-		       (princ (substring (documentation-property
-					  var 'variable-documentation)
-					 1))
-		       (if (boundp var)
-			   (let ((print-length 20))
-			     (princ "\n\nCurrent value: ")
-			     (prin1 (symbol-value var))))
-		       nil)))))
-    (set var
-	 (eval-minibuffer
-	  (format "Set %s to value: " var)
-	  (if (boundp var)
-	      ;; quote value unless it is NIL, T, string or number
-	      (format "%s%s"
-		      (if (or (null var-value)
-			      (eq var-value t)
-			      (stringp var-value)
-			      (numberp var-value))
-                          ""
-			"'")
-		      (prin1-to-string var-value)
-		      ))))))
-
-;;}}}
-
 ;;{{{  see-chars -- displays character typed.
 
 ;;     From Randal L. Schwartz <merlyn@intelob.intel.com>
@@ -796,7 +621,7 @@ displays the documentation string for VARIABLE."
   (interactive "r")
   (let ((kae/maximum-line-length 0))
     (iterate-over-lines-in-region begin end
-                                  '(lambda ()
+                                  #'(lambda ()
                                      (if (looking-at "^\\(.*\\)$")
                                          (let ((line-length (- (match-end 1) (match-beginning 1))))
                                            (if (> line-length kae/maximum-line-length)
@@ -805,9 +630,9 @@ displays the documentation string for VARIABLE."
         (message (int-to-string kae/maximum-line-length)))
     kae/maximum-line-length))
 
-(defun buffer-width (begin end)
+(defun buffer-width ()
   "Find the width of the longest line in the buffer."
-  (interactive "r")
+  (interactive)
   (let ((width (region-width (point-min) (point-max))))
     (if (called-interactively-p 'interactive)
         (message (int-to-string width)))
@@ -824,23 +649,6 @@ displays the documentation string for VARIABLE."
               (not (eobp)))
     (forward-line 1))
   (message "%d" (current-line-length)))
-
-;;}}}
-
-;;{{{  A function to determine if I'm on my "home node".
-
-(defun executing-on-my-home-node ()
-
-  "Determine if I'm running on my own node.  I want to restrict certain
-functions to be only possible on it, for example reading and writing mail."
-
-  (interactive)
-  (or t ;; Remove all restrictions for now
-      (string-match "cutter.*" (system-name))
-      (string-match "durif.*" (system-name))
-      (string-match "^aquinas.*" (system-name))
-      (string-match "^captan.*"   (system-name))
-      at-site-home))
 
 ;;}}}
 
@@ -880,8 +688,10 @@ execute the function THUNK."
 (require 'sort)
 
 (defun kae/sort-subr (reverse nextrecfun endrecfun &optional startkeyfun endkeyfun lessp-predicate)
-  "General text sorting routine to divide buffer into records and sort them.
-Arguments are REVERSE NEXTRECFUN ENDRECFUN &optional STARTKEYFUN ENDKEYFUN LESSP-PREDICATE.
+  "General text sorting routine to divide buffer into records
+and sort them.
+Arguments are REVERSE NEXTRECFUN ENDRECFUN &optional STARTKEYFUN
+ENDKEYFUN LESSP-PREDICATE.
 
 We consider this portion of the buffer to be divided into disjoint pieces
 called sort records.  A portion of each sort record (perhaps all of it)
@@ -959,7 +769,7 @@ REVERSE (non-nil means reverse order), BEG and END (region to sort)."
   (save-restriction
     (narrow-to-region beg end)
     (goto-char (point-min))
-    (kae/sort-subr reverse 'forward-line 'end-of-line nil nil '(lambda (a b)
+    (kae/sort-subr reverse 'forward-line 'end-of-line nil nil #'(lambda (a b)
                                                                    (not (string< a b))))))
 
 ;;}}}
@@ -1016,20 +826,6 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 
 ;; Configure a readable fixed-width font.
 ;;
-(defvar kae/w32-preferred-font
-  (if (or at-site-work
-          kae/small-screen)
-      ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-12-90-96-96-c-*-iso8859-1"
-      "Consolas-12"
-    ;; This looks better on my laptop
-    ;;
-    ;;"-*-Bitstream Vera Sans Mono-normal-r-*-*-16-120-96-96-c-*-iso8859-1"
-      "Consolas-10"))
-
-(if running-on-w32
-    (set-frame-font kae/w32-preferred-font)
-  (set-frame-font "Source Code Pro-14" nil t))
-
 (set-frame-font "Source Code Pro-14" nil t)
 
 ;; The Bitstream fonts were downloaded from: http://c2.com/cgi/wiki?BitstreamVera
@@ -1064,16 +860,8 @@ them to the temporary buffer \"*Extract matches*\", separated by newlines."
 (setq pop-up-frames nil)
 (setq pop-up-windows t)
 
-(if running-on-w32
-    (progn
-      (add-to-list 'default-frame-alist
-                   `(font . ,kae/w32-preferred-font))))
-
-(if kae/small-screen
-    (add-to-list 'default-frame-alist
-                 '(height . 45))
-  (add-to-list 'default-frame-alist
-               '(height . 60)))
+(add-to-list 'default-frame-alist
+               '(height . 60))
 (add-to-list 'default-frame-alist
              '(height . 58))
 (add-to-list 'default-frame-alist
@@ -1314,29 +1102,10 @@ and/or the vertical-line."
                  (enlarge-window-horizontally delta)
                  (setq prev-x new-x))))))))
 
-;; Drag mouse-1 always copies to the kill-ring, and the X11 selection buffer.
-;;
-(defadvice mouse-drag-region (after do-kill-ring-save activate)
-  (if mark-active
-      (kill-new (buffer-substring (region-beginning) (region-end)))))
-
 ;;}}}
 
 ;;}}}
 ;;{{{  Customise the mode line.
-
-;; Provide the time, and Mail notifications on the mode line.
-;;
-(if running-as-terminal-client
-    (if (file-exists-p (concat exec-directory "wakeup"))
-        (progn
-          (setq display-time-mail-file (concat "/usr/mail/" (user-real-login-name)))
-          (setq display-time-day-and-date t)
-          (defadvice vm-get-new-mail (after clear-mode-line activate)
-            "Clear out the mail indicator in the mode line."
-            (display-time-update))
-          (let ((process-connection-type nil))
-            (display-time)))))
 
 ;; Provide machine identification on mode-line.
 ;;
@@ -1361,7 +1130,7 @@ and/or the vertical-line."
 
 ;;{{{ Add a "KAE" menu bar entry
 
-(setq kae-menu      
+(setq kae-menu
       (easy-menu-define shortcuts-menu
         (list global-map)
         "Shortcuts menu"
@@ -1394,17 +1163,6 @@ and/or the vertical-line."
               "---------------------------------"
               ["Insert ISO date" kae/insert-iso-date t]
               "---------------------------------"
-              ["Windows Explorer"
-               (start-process-shell-command "Windows Explorer"
-                                            nil
-                                            "explorer"
-                                            ".,/e")
-               :included running-on-w32
-               ]
-              ["Windows Shell"
-               (kae/launch-file (executable-find "cmd.exe"))
-               :included running-on-w32
-               ]
               )))
 (add-hook 'menu-bar-final-items 'MDRM)
 (add-hook 'menu-bar-final-items 'KAE)
@@ -1561,8 +1319,7 @@ otherwise return DIR"
       (load-theme 'solarized-light)
       (enable-theme 'solarized-light)
       (add-hook 'after-make-frame-functions
-                (lambda (frame) (enable-theme 'solarized-light)))))
-
+                (lambda (_frame) (enable-theme 'solarized-light)))))
 
 ;;}}}
 
@@ -1663,24 +1420,6 @@ for common operations.
 
 ;;{{{  Win32-specifics
 
-;;{{{ Find Cygwin and Bash
-
-(if running-on-w32
-    (progn
-      (defun find-cygwin-root ()
-        (let ((root (concat "c:\\" "cygwin")))
-          (if (file-exists-p (concat root "\\bin\\cygwin1.dll"))
-              root)))
-
-      (defvar cygwin-root nil)
-      (defvar cygwin-bash-location nil)
-
-      (setq cygwin-root (find-cygwin-root))
-      (if (not (null cygwin-root))
-          (setq cygwin-bash-location (concat cygwin-root "\\bin\\bash.exe")))))
-
-;;}}}
-
 ;;{{{ Some Bash support
 
 (defun bash-toggle-slashes ()
@@ -1773,129 +1512,8 @@ for common operations.
     (while (re-search-backward "\C-m$" min t)
       (delete-char 1))))
 
-(defun :/-region (start end)
-  "Convert a path in the region START to END from Windows format to CygWin32 format,
-using cygpath"
-  (interactive "r")
-  (shell-command-on-region start end (concat "cygpath --unix '" (buffer-substring-no-properties start end) "'") t t)
-  (goto-char (mark))
-  (backward-delete-char-untabify 1)
-  )
-
-(defalias ':/ ':/-region)
-
-(defun /:-region (start end)
-  "Convert a path in the region START to END from CygWin32 format to Windows format,
-using cygpath"
-  (interactive "r")
-  (shell-command-on-region start end (concat "cygpath --windows '" (buffer-substring-no-properties start end) "'") t t)
-  (goto-char (mark))
-  (backward-delete-char-untabify 1))
-
-(defalias ':/ ':/-region)
-
 ;;}}}
 
-(if running-on-w32
-    (progn
-
-      (defun kae/w32-canonicalize-path-seps (path)
-        (subst-char-in-string ?/ ?\\ path t))
-
-      ;; In Dired Mode: I like to be able to change the case of file names.
-      ;; NYI: doesn't work for directories. (problem inside rename-file C func).
-      ;;
-      (defadvice dired-rename-file (before kae-permit-case-change act)
-        (if (and (string= (downcase (ad-get-arg 0))
-                          (downcase (ad-get-arg 1)))
-                 (equal (file-attributes (ad-get-arg 0))
-                        (file-attributes (ad-get-arg 1))))
-            (ad-set-arg 2 t)))
-
-      ;; In Dired Mode: "open" a pointed-at object with the appropriate app.
-      ;; (If it's a directory, fire up the Windows Explorer.)
-      ;;
-      (defun kae/dired-launch-file (&optional arg)
-        (interactive "P")
-        (mapcar
-         (function
-          (lambda (relative-object)
-            (cond
-             ;; Directory: launch Explorer
-             ;;
-             ((file-directory-p relative-object)
-              (start-process-shell-command "Windows NT Explorer"
-                                           nil
-                                           "explorer"
-                                           (concat relative-object ",/e")))
-             ;; .EXE, .COM, .CMD, .BAT: invoke it
-             ;;
-             ((or (string-match "\\.exe$" (downcase relative-object))
-                  (string-match "\\.bat$" (downcase relative-object))
-                  (string-match "\\.com$" (downcase relative-object))
-                  (string-match "\\.cmd$" (downcase relative-object)))
-              (start-process-shell-command relative-object
-                                           nil
-                                           (concat default-directory "/"
-                                                   (substring relative-object 0 -4))))
-
-             ;; .mdp, .dsw, .dsp: invoke VC
-             ;;   (Temporary hack until w32-shell-execute learns to invoke the
-             ;;    default verb on an object when nil is provided.)
-             ;;
-             ((string-match "\\.mdp\\|dsw\\|dsp$" (downcase relative-object))
-              (w32-shell-execute "&Open with MSDev" (expand-file-name relative-object)))
-
-             (t
-              (progn
-                (message "Opening %s..." relative-object)
-                (w32-shell-execute "open"
-                                   (kae/w32-canonicalize-path-seps
-                                    (expand-file-name relative-object)))
-                (message "Opening %s...done" relative-object))))))
-         (dired-get-marked-files t arg)))
-
-      (eval-after-load
-          "dired"
-        '(define-key dired-mode-map "j" 'kae/dired-launch-file))
-
-      ;; Start in a sensible place.
-      ;;
-      (cd "~/")
-
-      (setq tab-width 4)
-
-      ;; For the MKS shell
-      ;;
-      (cond
-
-       ;; Try these in order:
-       ;;
-
-       ;;  - Bash
-       ;;
-       ((file-exists-p  cygwin-bash-location)
-        (progn
-          (setenv "SHELL" "c:/cygwin/bin/bash.exe")
-          (setq shell-file-name "bash")
-          (setq explicit-shell-file-name "bash")
-          (setq shell-command-switch "-c")
-          (load "comint")
-          (fset 'original-comint-exec-1 (symbol-function 'comint-exec-1))
-          (defun comint-exec-1 (name buffer command switches)
-            (let ((binary-process-input t)
-                  (binary-process-output nil))
-              (original-comint-exec-1 name buffer command switches)))
-          ))
-
-       ;;  - The NT shell
-       ;;
-       (t
-        (progn
-          (setenv "SHELL" "cmd.exe")
-          (setq explicit-cmd.exe-args '("/q"))
-          (setq w32-quote-process-args t)))
-       )))
 
 ;;}}}
 
@@ -1917,46 +1535,7 @@ using cygpath"
      auto-mode-alist))
 
 ;;}}}
-;;{{{ Tide for Typescript
-;; (defun setup-tide-mode ()
-;;   (interactive)
-;;   (tide-setup)
-;;   (flycheck-mode +1)
-;;   (setq flycheck-check-syntax-automatically '(save mode-enabled))
-;;   (eldoc-mode +1)
-;;   (tide-hl-identifier-mode +1)
-;;   ;; company is an optional dependency. You have to
-;;   ;; install it separately via package-install
-;;   ;; `M-x package-install [ret] company`
-;;   (company-mode +1))
 
-;; ;; aligns annotation to the right hand side
-;; (setq company-tooltip-align-annotations t)
-
-;; ;; formats the buffer before saving
-;; (add-hook 'before-save-hook 'tide-format-before-save)
-
-;; (add-hook 'typescript-mode-hook 'setup-tide-mode)
-;; (setq tide-format-options
-;;       '(:insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil)
-;; )
-
-;;}}}
-;;{{{ Ido
-;;(setq ido-enable-flex-matching t)
-;;(setq ido-everywhere t)
-;;(ido-mode 1)
-;;}}}
-;;{{{ Treemacs
-
-(defun kae/treemacs-mode-bindings ()
-  (define-key treemacs-mode-map "f" 'treemacs-visit-node-in-most-recently-used-window)
-  )
-(eval-after-load "treemacs" '(kae/treemacs-mode-bindings))
-(eval-after-load "treemacs" '(treemacs-toggle-fixed-width))
-
-
-;;}}}
 ;;{{{ Dired Mode.
 
 ;;{{{ dired-sidebar
@@ -2000,13 +1579,7 @@ using cygpath"
                     "/usr/local/opt/coreutils/libexec/gnubin/ls"))
             (setq dired-listing-switches "-lXGh --almost-all --group-directories-first")
             (setq dired-omit-files nil)
-            (setq dired-omit-extensions nil)
-            ;;(add-hook 'dired-mode-hook 'dired-omit-mode)
-            ;;(add-hook 'dired-mode-hook 'dired-hide-details-mode)
-            ))
-
- (add-hook 'dired-load-hook
-          (lambda () (require 'dired-sort-menu)))
+            (setq dired-omit-extensions nil)))
 
 ;; Regexp matching "trivial" files at the start of a buffer:
 ;;  .
@@ -2054,29 +1627,29 @@ using cygpath"
   (define-key dired-mode-map "a" 'kae/dired-apply-function)
   (define-key dired-mode-map "b" 'dired-byte-recompile)
   (define-key dired-mode-map "K" 'kae/dired-keep-matching-filenames)
-  (define-key dired-mode-map "q" 'kae/dired-kill-current-and-find-superior-dired)
-  (define-key dired-mode-map "t" 'kae/dired-visit-tags-table)
-  (define-key dired-mode-map "z" 'kae/dired-spawn-shell)
-  (define-key dired-mode-map "E" 'kae/dired-edit-linktext)
-  (define-key dired-mode-map "F" 'kae/dired-follow-link)
+  (define-key dired-mode-map "q" #'kae/dired-kill-current-and-find-superior-dired)
+  (define-key dired-mode-map "t" #'kae/dired-visit-tags-table)
+  (define-key dired-mode-map "z" #'kae/dired-spawn-shell)
+  (define-key dired-mode-map "E" #'kae/dired-edit-linktext)
+  (define-key dired-mode-map "F" #'kae/dired-follow-link)
 
   (define-key dired-mode-map "|" 'kae/dired-pipe-file)
   (define-key dired-mode-map "@"
-    '(lambda ()
+    #'(lambda ()
        (interactive)
        (dired-flag-backup-files)
        (dired-flag-auto-save-files)))
   (define-key dired-mode-map "."
-    '(lambda ()
+    #'(lambda ()
        (interactive)
        (goto-char (point-min))
        (dired-goto-next-nontrivial-file)))
-  (define-key dired-mode-map "<" '(lambda ()
+  (define-key dired-mode-map "<" #'(lambda ()
                                     (interactive)
                                     (goto-char (point-min))
                                     (forward-line 3)
                                     (dired-move-to-filename)))
-  (define-key dired-mode-map ">" '(lambda ()
+  (define-key dired-mode-map ">" #'(lambda ()
                                     (interactive)
                                     (goto-char (point-max))
                                     (forward-line -1)
@@ -2085,11 +1658,11 @@ using cygpath"
   (define-key dired-mode-map "^"  'kae/dired-up)
   ;;(define-key dired-mode-map "/" 'kae/dired-down)
   (define-key dired-mode-map "]" 'kae/dired-down)
-  (define-key dired-mode-map "\eg" '(lambda ()
+  (define-key dired-mode-map "\eg" #'(lambda ()
                                       (interactive)
                                       (let ((filename (dired-get-filename t)))
                                         (kae/dired-spawn-shell)
-                                        (end-of-buffer)
+                                        (goto-char (point-max))
                                         (insert filename)))))
 
 ;;}}}
@@ -2097,10 +1670,9 @@ using cygpath"
 (eval-after-load "dired" '(kae/dired-mode-bindings))
 
 (add-hook 'dired-mode-hook
-          '(lambda ()
+          #'(lambda ()
              (make-local-variable 'dired-associated-shell-buffer)
-             (setq dired-associated-shell-buffer nil)
-             ))
+             (setq dired-associated-shell-buffer nil)))
 
 ;;{{{ Advices
 
@@ -2121,7 +1693,7 @@ when I invoked it, if that makes sense."
                   (let ((most-recent-dir (file-name-directory most-recent-file)))
                     (if (string= (expand-file-name default-directory)
                                  (expand-file-name most-recent-dir))
-                        (let ((entry-name (file-name-nondirectory most-recent-file)))
+                        (progn
                           (goto-char (point-min))
 
                           ;; Probably should wrap this to ignore errors:
@@ -2131,10 +1703,13 @@ when I invoked it, if that makes sense."
 ;; When I use "s" to resort the Dired buffer,
 ;; I like to be left at the top again.
 ;;
-(defadvice dired-sort-toggle-or-edit (after goto-top activate)
-  "After resorting the dired buffer, go to the top of it."
-  (goto-char (point-min))
-  (dired-goto-next-file))
+;; (define-advice
+;;     dired-sort-toggle-or-edit
+;;     (:after
+;;     (progn
+;;       (goto-char (point-min))
+;;       (dired-goto-next-file))))
+
 
 ;; If I'm renaming a single file, let me just edit the existing name.
 ;;
@@ -2505,7 +2080,7 @@ when I invoked it, if that makes sense."
        (forward-line 2)
        (point))
      (point-max)
-     '(lambda ()
+     #'(lambda ()
         (let ((filename (dired-get-filename t t)))
           (if filename
               (if (not (string-match regexp filename))
@@ -2536,7 +2111,7 @@ when I invoked it, if that makes sense."
        (forward-line 2)
        (point))
      (point-max)
-     '(lambda ()
+     #'(lambda ()
         (let ((filename (dired-get-filename t t)))
           (if filename
               (if (string-match regexp filename)
@@ -2730,7 +2305,7 @@ by using nxml's indentation rules."
 (eval-after-load "comint" '(kae/comint-mode-bindings))
 
 (add-hook 'comint-mode-hook
-          '(lambda ()
+          #'(lambda ()
 
              ;; Hang the expense.
              ;;
@@ -2822,7 +2397,7 @@ by using nxml's indentation rules."
 
 (autoload 'telnet "telnet" "Run telnet" t)
 (add-hook 'telnet-mode-hook
-          '(lambda ()
+          #'(lambda ()
 
              ;; Set up bindings common to all Comint-based modes.
              ;;
@@ -2885,7 +2460,7 @@ by using nxml's indentation rules."
 
 (if (file-directory-p  "~/.cabal/bin")
     (progn
-      (setenv "PATH" (concat "~/.cabal/bin:"p  (getenv "PATH")))
+      (setenv "PATH" (concat "~/.cabal/bin:"  (getenv "PATH")))
       (add-to-list 'exec-path "~/.cabal/bin")))
 
 (if (file-directory-p  "~/Library/Haskell/bin")
@@ -3070,15 +2645,6 @@ by using nxml's indentation rules."
 (add-hook 'c-mode-hook 'kae/c-mode-hook)
 (add-hook 'c++-mode-hook 'kae/c-and-c++-mode-hook)
 
-;; Try to turn on C++ mode for .h files in Windows when appropriate.
-;;
-(defun kae/c-mode-hook ()
-  (if (and at-site-work running-on-w32)
-      (if (and (buffer-file-name)
-               (string-match "\\.h$" (buffer-file-name))
-               (kae/file-seems-to-be-MFC))
-          (c++-mode))))
-
 (defun kae/c-and-c++-mode-hook ()
 
   ;; Display trailing whitepace in red.
@@ -3113,14 +2679,6 @@ by using nxml's indentation rules."
   ;;
   ;;(turn-off-filladapt-mode)
 
-  ;; Code written in MSDev often has hard tabs, and
-  ;; requires a tab-width of 4 to view sensibly.
-  ;;
-  (setq tab-width 8)
-  (if running-on-w32
-      (if (eq 'c++mode major-mode)
-          (setq tab-width 4)))
-
   ;; Use spaces instead of hard tabs.
   ;;
   (setq indent-tabs-mode nil)
@@ -3133,23 +2691,6 @@ by using nxml's indentation rules."
 
 ;; NYI: use c-font-lock-extra-types, c++-font-lock-extra-types
 ;;
-;; Also set up colouring of Atria types.
-;;
-(if running-on-w32
-    (progn
-      ;; Add colouring for MFC's special syntax additions
-      ;;
-      (font-lock-add-keywords 'c++-mode
-                              (list
-                               "\\<BEGIN_MESSAGE_MAP\\>"
-                               "\\<END_MESSAGE_MAP\\>"
-                               "\\<DECLARE_MESSAGE_MAP\\>"
-                               "\\<ON_[A-Z_]+\\>"))
-
-      (font-lock-add-keywords 'c-mode
-                              (list
-                               "\\<DECLARE_MESSAGE_MAP\\>"
-                               "\\<afx_msg\\>"))))
 
 ;;}}}
 ;;{{{  Java Support
@@ -3217,7 +2758,7 @@ should not occur"
 ;; Turn on auto-fill for Lisp Mode.
 ;;
 (add-hook 'emacs-lisp-mode-hook
-          '(lambda ()
+          #'(lambda ()
              (setq show-trailing-whitespace t)
              (auto-fill-mode 1)
              (set-fill-column 2000)))
@@ -3231,7 +2772,7 @@ should not occur"
 ;; Turn on auto-fill for Lisp Mode.
 ;;
 (add-hook 'lisp-mode-hook
-          '(lambda () (auto-fill-mode 1)))
+          #'(lambda () (auto-fill-mode 1)))
 
 ;;}}}
 ;;{{{  Scheme and related Modes.
@@ -3256,7 +2797,7 @@ should not occur"
 (eval-after-load "scheme" '(kae/scheme-mode-bindings))
 
 (add-hook 'scheme-mode-hook
-          '(lambda ()
+          #'(lambda ()
              (setq show-trailing-whitespace t)
              (autoload 'run-scheme "cmuscheme"
                "Run an inferior Scheme"
@@ -3280,18 +2821,14 @@ should not occur"
 ;; from xscheme.el.
 
 (add-hook 'scheme-mode-hook
-          '(lambda () (autoload 'run-scheme "cmuscheme"
+          #'(lambda () (autoload 'run-scheme "cmuscheme"
                         "Run an inferior Scheme"
                         t)))
 
-(setq scheme-program-name (cond
-                           (running-on-w32 "c:/cygwin/usr/local/bin/scsh")
-                           (t "scsh")))
+(setq scheme-program-name "scsh")
 (defun run-scsh ()
   (interactive)
-  (let ((scheme-program-name (cond
-                              (running-on-w32 "c:/cygwin/usr/local/bin/scsh")
-                              (t "scsh"))))
+  (let ((scheme-program-name  "scsh"))
     (run-scheme scheme-program-name)))
 
 
@@ -3308,7 +2845,7 @@ should not occur"
 ;; Map M-g to a function which copies everything between point
 ;; and the end of the line, to the end of the buffer.
 (eval-after-load "lisp-mode"
-  '(lambda () (define-key lisp-interaction-mode-map "\eg" 'kae/emulate-apollo-again-key)))
+  #'(lambda () (define-key lisp-interaction-mode-map "\eg" 'kae/emulate-apollo-again-key)))
 
 ;;}}}
 ;;{{{  Makefile Mode.
@@ -3321,16 +2858,6 @@ should not occur"
 (setq auto-mode-alist (cons '("[Mm]akefile$" . makefile-mode) auto-mode-alist))
 (setq auto-mode-alist (cons '("[Mm]akefile\\..*$" . makefile-mode) auto-mode-alist))
 (setq auto-mode-alist (cons '("[Mm]akefile_.*$" . makefile-mode) auto-mode-alist))
-
-(if running-on-w32
-    (progn
-      (setq auto-mode-alist (cons '("\\.[Mm][Aa][Kk]$" . makefile-mode) auto-mode-alist))
-
-      ;; VC's Mak-files have conditional directives beginning with "!"
-      ;; I'd like to colour them, but the following doesn't work.
-      ;;
-      (font-lock-add-keywords 'makefile-mode
-                              '("^!\\(IF\\|MESSAGE\\|ENDIF\\|ELSEIF\\|ELSE\\|ERROR\\)"))))
 
 ;;}}}
 ;;{{{  Shell script Mode
@@ -3421,7 +2948,7 @@ in which case just newline."
     (newline-and-indent)))
 
 (add-hook 'text-mode-hook
-          '(lambda ()
+          #'(lambda ()
 
              ;; Turn on auto fill.
 
@@ -3545,7 +3072,7 @@ paragraph."
   ;; Dired Mode, VM Mode, GNUS, et al.
   ;;
   (define-key ps-mode-map "g"
-    '(lambda ()
+    #'(lambda ()
        (interactive)
        (message "Reading process information...")
        (ps-mode-build-process-list)
@@ -3553,12 +3080,12 @@ paragraph."
 
   ;; Bind "q" to abandon Process Mode.
   ;;
-  (define-key ps-mode-map "q" '(lambda ()
+  (define-key ps-mode-map "q" #'(lambda ()
                                  (interactive)
                                  (ps-mode-quit)
                                  (pop-window-config))))
 (add-hook 'ps-mode-hook
-          '(lambda ()
+          #'(lambda ()
 
              ;; Establish my (somewhat) standard set of readonly-buffer bindings.
              ;;
@@ -3600,7 +3127,7 @@ including compressed ones."
 (setq auto-mode-alist (cons '("\\.tar$" . tar-mode) auto-mode-alist))
 
 (defun kae/tar-mode-bindings ()
-  (define-key tar-mode-map "q" '(lambda ()
+  (define-key tar-mode-map "q" #'(lambda ()
                                   (interactive)
                                   (kill-buffer (current-buffer))))
   (define-key tar-mode-map "." 'beginning-of-buffer)
@@ -3610,7 +3137,7 @@ including compressed ones."
   (define-key tar-mode-map "2" 'split-window-vertically)
   (define-key tar-mode-map "5" 'split-window-horizontally)
   (define-key tar-mode-map [mouse-3]
-    '(lambda (click)
+    #'(lambda (click)
        "Select the file clicked on."
        (interactive "@e")
        (mouse-set-point click)
@@ -3622,7 +3149,7 @@ including compressed ones."
 ;;{{{  Archive Mode
 
 (defun kae/archive-mode-bindings ()
-  (define-key archive-mode-map "q" '(lambda ()
+  (define-key archive-mode-map "q" #'(lambda ()
                                       (interactive)
                                       (kill-buffer (current-buffer))))
   (define-key archive-mode-map "." 'beginning-of-buffer)
@@ -3685,7 +3212,7 @@ including compressed ones."
   (local-set-key [mouse-3] 'kae/Man-page-mouse-3-handler))
 
 (add-hook 'Man-mode-hook
-          '(lambda () (kae/Man-mode-bindings)))
+          #'(lambda () (kae/Man-mode-bindings)))
 
 (defun kae/Man-page-mouse-3-handler (click)
   "Read the man page referred to by the text under the mouse."
@@ -3761,7 +3288,7 @@ This is real useful for making DSEE build descriptions comprehensible."
     (iterate-over-lines-in-region
      (point-min)
      (point-max)
-     '(lambda ()
+     #'(lambda ()
 
         ;; Is is appropriate to insert an end-fold mark on a line of its own before this line ?
         ;; i.e. has the current indentation just decreased ?
@@ -3807,8 +3334,8 @@ This is real useful for making DSEE build descriptions comprehensible."
         (insert (concat "\n" (make-string (car indentation-stack) 32) "}}}\n"))))))
 
 (defun insert-folding-cruft-at-eof ()
-  (interactive)
   "Insert Emacs local variables to turn on folding mode."
+  (interactive)
   (goto-char (point-max))
 
   (insert "\n")
@@ -3829,7 +3356,7 @@ This is real useful for making DSEE build descriptions comprehensible."
   '("Un-Zoom subtree" . foldout-exit-fold))
 
 (add-hook 'outline-minor-mode-hook
-          '(lambda ()
+          #'(lambda ()
              (progn
 
                ;; Mouse navigation in a folded outline buffer.
@@ -3838,7 +3365,7 @@ This is real useful for making DSEE build descriptions comprehensible."
 
                ;; Start off with the file folded.
                ;;
-               (hide-sublevels 1))))
+               (outline-hide-sublevels 1))))
 
 (defun kae/mouse19-folding-outline-mouse-3-handler (click)
   "Enter or exit the fold pointed at.
@@ -3883,7 +3410,7 @@ This must be bound to a mouse click."
 
 (defun kae/occur-mode-bindings ()
   (local-set-key [mouse-3]
-                 '(lambda (click)
+                 #'(lambda (click)
                     "Select the occurrence clicked on."
                     (interactive "@e")
                     (mouse-set-point click)
@@ -3891,7 +3418,7 @@ This must be bound to a mouse click."
                     (occur-mode-goto-occurrence))))
 
 (add-hook 'occur-mode-hook
-          '(lambda (kae/occur-mode-bindings) ()))
+          #'(lambda (kae/occur-mode-bindings) ()))
 
 ;;}}}
 ;;{{{  Compilation (and Grep) Mode.
@@ -3901,14 +3428,14 @@ This must be bound to a mouse click."
 ;;
 (defun kae/compilation-mode-bindings ()
   (local-set-key [mouse-3]
-                 '(lambda (click)
+                 #'(lambda (click)
                     "Select the occurrence clicked on."
                     (interactive "@e")
                     (mouse-set-point click)
                     (sit-for 0)
                     (compile-goto-error nil))))
 (add-hook 'compilation-mode-hook
-          '(lambda () (kae/compilation-mode-bindings)))
+          #'(lambda () (kae/compilation-mode-bindings)))
 
 ;;}}}
 
@@ -3968,7 +3495,7 @@ This must be bound to a mouse click."
 ;;{{{  Time-stamping facility.
 
 (autoload 'time-stamp "time-stamp" "Update the time stamp in a buffer." t)
-(add-hook 'write-file-hooks 'time-stamp)
+(add-hook 'write-file-functions 'time-stamp)
 
 ;;}}}
 ;;{{{  Follow Mode
@@ -4016,11 +3543,6 @@ This must be bound to a mouse click."
 (server-start)
 (setq server-window 'pop-to-buffer)
 
-;;}}}
-
-;;{{{ Work stuff
-(if at-site-work
-    (require 'kae-mdrm-ehacks))
 ;;}}}
 
 (message "End of .emacs...")

@@ -5,6 +5,8 @@
   ("--verbose")
   nil)
  (magit-diff
+  ("--stat" "--no-ext-diff"
+   ("--" ".emacs.el"))
   ("--no-ext-diff" "--stat"))
  (magit-dispatch nil)
  (magit-fetch nil)

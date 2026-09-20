@@ -10,5 +10,7 @@ ac-comphist.dat
 ensime/
 var/
 .cache
+eln-cache/
+
 
 
