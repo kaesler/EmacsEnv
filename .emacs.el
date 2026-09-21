@@ -1579,11 +1579,8 @@ for common operations.
 ;; When I invoke Dired, position me at the most-recently edited file
 ;; if it can be determined.
 ;;
-(defadvice dired (after goto-relevant-file activate)
-  "When I invoke Dired, position at the file I was looking at
-when I invoked it, if that makes sense."
-  (kae/dired-advice))
-(defun kae/dired-advice ()
+(advice-add 'dired :after #'kae/dired-advice)
+(defun kae/dired-advice (_dirname &optional _switches)
   (let ((most-recent-buffer (other-buffer (current-buffer) t)))
     (if most-recent-buffer
         (let ((most-recent-file (buffer-file-name most-recent-buffer)))
@@ -1603,27 +1600,27 @@ when I invoked it, if that makes sense."
 ;; When I use "s" to resort the Dired buffer,
 ;; I like to be left at the top again.
 ;;
-;; (define-advice
-;;     dired-sort-toggle-or-edit
-;;     (:after
-;;     (progn
-;;       (goto-char (point-min))
-;;       (dired-goto-next-file))))
-
+(advice-add 'dired-sort-toggle-or-edit
+            :after
+            #'(lambda (&optional _arg)
+                (goto-char (point-min))
+                (dired-goto-next-file)))
 
 ;; If I'm renaming a single file, let me just edit the existing name.
 ;;
-(defadvice dired-do-rename (around rename-by-edit activate)
+(advice-add 'dired-do-rename
+            :around
+            #'kae/dired-rename-file-advice)
 
-  "If I'm renaming a single file, let me just edit the existing name."
-
+(defun kae/dired-rename-file-advice (original-func &rest args)
   ;; Only do this if there's 1 file to be renamed
   ;;
-  (if (eq 1 (length (dired-get-marked-files)))
-      (let* ((current-name (dired-get-filename))
-             (current-basename (file-name-nondirectory current-name)))
-        current-name
-        (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
+  (if (/= 1 (length (dired-get-marked-files)))
+      (apply original-func args)
+    (let* ((current-name (dired-get-filename))
+           (current-basename (file-name-nondirectory current-name)))
+      ;;current-name
+      (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
                                          'read-file-name-internal                   ;; table
                                          default-directory                          ;; predicate
                                          nil                                        ;; require-match
@@ -1644,16 +1641,42 @@ when I invoked it, if that makes sense."
 
           ;; Update the Dired buffer
           ;;
-          (dired-add-file new-name)))
-    ad-do-it))
+          (dired-add-file new-name)))))
 
-;; When I use "s" to resort the Dired buffer,
-;; I like to be left at the top again.
-;;
-(defadvice dired-sort-toggle-or-edit (after goto-top activate)
-  "After resorting the dired buffer, got to the top of it."
-  (goto-char (point-min))
-  (dired-goto-next-file))
+
+;; (defadvice dired-do-rename 'dired-do-rename (around rename-by-edit activate)
+
+;;   "If I'm renaming a single file, let me just edit the existing name."
+
+;;   ;; Only do this if there's 1 file to be renamed
+;;   ;;
+;;   (if (eq 1 (length (dired-get-marked-files)))
+;;       (let* ((current-name (dired-get-filename))
+;;              (current-basename (file-name-nondirectory current-name)))
+;;         current-name
+;;         (let ((new-name (completing-read (format "Rename %s to: " current-basename) ;; prompt
+;;                                          'read-file-name-internal                   ;; table
+;;                                          default-directory                          ;; predicate
+;;                                          nil                                        ;; require-match
+;;                                          current-basename                           ;; initial-input
+;;                                          'file-name-history)))
+;;           (setq new-name (expand-file-name new-name))
+
+;;           ;; If the user supplied a directory name after all,
+;;           ;; compute the target path.
+;;           ;;
+;;           (if (file-directory-p new-name)
+;;               (setq new-name (concat (file-name-as-directory new-name)
+;;                                      current-basename)))
+
+;;           ;; Do the rename operation, updating any Emacs buffer info.
+;;           ;;
+;;           (dired-rename-file current-name new-name nil)
+
+;;           ;; Update the Dired buffer
+;;           ;;
+;;           (dired-add-file new-name)))
+;;     ad-do-it))
 
 ;;}}}
 
