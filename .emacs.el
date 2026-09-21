@@ -3,9 +3,6 @@
 
 ;; Attempt to get 31.1 to work
 (setenv "MACOSX_DEPLOYMENT_TARGET" "27")
-;;(setq native-comp-speed -1)
-;;(setq native-comp-jit-compilation nil)
-;;(setq native-comp-enable-subr-trampolines nil)
 
 (setq user-emacs-directory "~/apps/emacs/")
 (defvar kae/elisp-directory (concat user-emacs-directory "elisp"))
@@ -1422,9 +1419,6 @@ for common operations.
 ;;{{{  Configure MODES and packages.
 
 (require 'use-package)
-;;{{{ Idris Mode
-(require 'idris-mode)
-;;}}}
 ;;{{{ Agda
 
 (load-file (let ((coding-system-for-read 'utf-8))
