@@ -1,5 +1,6 @@
 ;;; -*- lexical-binding: t -*-
 ;;{{{  Set some global variables.  
+
 ;; Attempt to get 31.1 to work
 (setenv "MACOSX_DEPLOYMENT_TARGET" "27")
 ;;(setq native-comp-speed -1)
@@ -1440,6 +1441,7 @@ for common operations.
 ;;{{{ Dired Mode.
 
 ;;{{{ dired-sidebar
+
 (use-package dired-sidebar
   :bind (("C-x C-n" . dired-sidebar-toggle-sidebar))
   :ensure t
@@ -1695,7 +1697,7 @@ when I invoked it, if that makes sense."
   (let ((alternate (kae/dired-find-alternate-buffer))
         (superior (kae/dired-find-superior-buffer))
         (inferior (current-buffer)))
-    (if (boundp 'dired-associated-shell-buffer)
+    (if dired-associated-shell-buffer
         (progn
           (delete-windows-on dired-associated-shell-buffer)
           (kill-buffer dired-associated-shell-buffer)))
