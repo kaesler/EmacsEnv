@@ -179,7 +179,7 @@ then only one line is copied."
     (goto-char bol)
     (insert line "\n")
     (move-to-column col)))
-
+;;}}}
 ;;{{{ Change frame colour
 
 (defun kae/set-frame-colour (colour)
@@ -1418,105 +1418,6 @@ for common operations.
 
 ;;}}}
 
-;;{{{  Win32-specifics
-
-;;{{{ Some Bash support
-
-(defun bash-toggle-slashes ()
-  "Toggle all \\ to / or all / to \\ on the current comint input region."
-  (interactive)
-  (save-excursion
-    (let* (start
-           end
-           (proc (get-buffer-process (current-buffer))) )
-      (end-of-line 1)
-      (setq end (point))
-      (cond ((and proc (processp proc))
-             (setq start (marker-position (process-mark proc))))
-            (t
-             (comint-bol 1)
-             (setq start (point))))
-      (cond ((< end start)
-             (goto-char end)
-             (beginning-of-line 1)
-             (setq start (point))))
-      (goto-char start)
-      (cond ((search-forward "\\" end t)
-             (\\/-region start end))
-            ((search-forward "/" end t)
-             (/\\-region start end))))))
-
-(defun change-character-in-buffer (from to)
-  (interactive "cChange character: \ncTo character: \n")
-  (change-character-in-region from to (point-min) (point-max)))
-
-(defalias '// 'change-character-in-region)
-
-(defun /\\-buffer ()
-  "Change all / to \\ in the buffer."
-  (interactive)
-  (change-character-in-buffer ?/ ?\\))
-
-(defun /\\-region (start end)
-  "Change all / to \\ for the rest of the buffer."
-  (interactive "r")
-  (change-character-in-region ?/ ?\\ start end))
-
-(defalias '/\\ '/\\-region)
-
-(defun \\/-buffer ()
-  "Change all \\ to / in the buffer."
-  (interactive)
-  (change-character-in-buffer ?\\ ?/))
-
-(defun \\/-region (start end)
-  "Change all \\ to / for the region START to END."
-  (interactive "r")
-  (change-character-in-region ?\\ ?/ start end))
-
-(defun /.-region (start end)
-  "Change all / to . for the region START to END."
-  (interactive "r")
-  (change-character-in-region ?/ ?. start end))
-
-(defun \./-region (start end)
-  "Change all . to / for the region START to END."
-  (interactive "r")
-  (change-character-in-region ?. ?/ start end))
-
-(defalias '\\/ '\\/-region)
-(defalias '\./ '\./-region)
-(defalias '/. '/.-region)
-
-(defun ^m ()
-  "Remove all ^M's from the buffer."
-  (interactive)
-  (^m-region (point-min) (point-max)))
-
-(defalias '^M '^m)
-(defalias '^M '6m)
-
-(defun ^m-buffer ()
-  "Remove all ^M's from the buffer."
-  (interactive)
-  (^m-region (point-min) (point-max)))
-
-(defalias '^m '^m-buffer)
-(defalias '^M '^m-buffer)
-
-(defun ^m-region (min max)
-  "Remove all ^M's from the region."
-  (interactive "r")
-  (save-excursion
-    (goto-char max)
-    (while (re-search-backward "\C-m$" min t)
-      (delete-char 1))))
-
-;;}}}
-
-
-;;}}}
-
 ;;{{{  Configure MODES and packages.
 
 (require 'use-package)
@@ -1561,8 +1462,7 @@ for common operations.
 (defun sidebar-toggle ()
   "Toggle both `dired-sidebar' and `ibuffer-sidebar'."
   (interactive)
-  (dired-sidebar-toggle-sidebar)
-  (ibuffer-sidebar-toggle-sidebar))
+  (dired-sidebar-toggle-sidebar))
 
 (defun kae/dired-sidebar-mode-bindings ()
   (define-key dired-sidebar-mode-map "]" 'kae/dired-sidebar-down)
@@ -1667,12 +1567,10 @@ for common operations.
 
 ;;}}}
 
-(eval-after-load "dired" '(kae/dired-mode-bindings))
-
-(add-hook 'dired-mode-hook
-          #'(lambda ()
-             (make-local-variable 'dired-associated-shell-buffer)
-             (setq dired-associated-shell-buffer nil)))
+(defvar-local dired-associated-shell-buffer nil)
+(eval-after-load
+    "dired"
+  '(kae/dired-mode-bindings))
 
 ;;{{{ Advices
 
@@ -1797,7 +1695,7 @@ when I invoked it, if that makes sense."
   (let ((alternate (kae/dired-find-alternate-buffer))
         (superior (kae/dired-find-superior-buffer))
         (inferior (current-buffer)))
-    (if dired-associated-shell-buffer
+    (if (boundp 'dired-associated-shell-buffer)
         (progn
           (delete-windows-on dired-associated-shell-buffer)
           (kill-buffer dired-associated-shell-buffer)))
@@ -2023,6 +1921,7 @@ when I invoked it, if that makes sense."
      (t
       (error "Not a directory")))))
 
+(declare-function dired-sidebar-switch-to-dir "dired-sidebar")
 (defun kae/dired-sidebar-down ()
 
   "Find or create a dired buffer for the directory containing the pointed at
@@ -2432,13 +2331,10 @@ by using nxml's indentation rules."
 ;;}}}
 ;;{{{  IELM
 
-(defun kae/ielm-mode-bindings ()
-  (message "Running kae/ielm-mode-bindings")
-  (define-key ielm-map " " 'self-insert-command))
-;; For some reason, this doesn't work: anymore:
-;;
-(eval-after-load "ielm" '(kae/ielm-mode-bindings))
-(add-hook 'inferior-emacs-lisp-mode-hook 'kae/ielm-mode-bindings)
+(defvar ielm-map)
+(eval-after-load
+  "ielm"
+  '(define-key ielm-map " " 'self-insert-command))
 
 ;;}}}
 
@@ -2693,61 +2589,6 @@ by using nxml's indentation rules."
 ;;
 
 ;;}}}
-;;{{{  Java Support
-
-;; This should come after the customisations for cc-mode.
-
-;; Define indentation style.
-;;
-(defconst atria-java-style-description
-  '(
-    "java" ;; Super-style
-    (c-basic-offset . 4)
-    (c-hanging-braces-alist . (
-                               (block-open. (after))
-                               (brace-list-open . (after))
-                               (class-open . (after))
-                               (defun-open . (after))
-                               (substatement-open . (after))
-                               ))
-    (c-offsets-alist . (
-                        (arglist-intro . +)
-                        (arglist-cont . 0)
-                        (arglist-close . 0)
-                        (case-label . 2)
-                        (func-decl-cont . +)
-                        (inline-open . 0)
-                        (label . 2)
-                        (statement-case-intro . 2)
-                        (substatement-open . 0)
-                        (topmost-intro-cont . 0)
-                        ))))
-(c-add-style "atria-java" atria-java-style-description)
-
-(defun kae/java-mode-hook ()
-
-  (setq show-trailing-whitespace t)
-
-  ;; Choose an indentation style.
-  ;;
-  (c-set-style "atria-java")
-  (setq fill-column 79))
-
-(add-hook 'java-mode-hook 'kae/java-mode-hook)
-
-;; Refine the automatic expansion of control-flow constructs.
-;;
-(defun kae-jde-cflow-expand-inappropriate ()
-  "Function to decide if JDE's control-flow keyword expansion
-should not occur"
-  ;; JDE won't expand cflow keywords in comments or quotes.
-  ;; I also don't want them expanded unless they are at the
-  ;; end of the line (except for whitespace).
-  ;;
-  (or (not (looking-at "[ \\t]*$"))
-      (jde-parse-comment-or-quoted-p)))
-
-;;}}}
 ;;{{{  C outline Minor Mode.
 
 (autoload 'c-outline "c-outline" nil t)
@@ -2788,20 +2629,18 @@ should not occur"
   "Run an inferior Scheme process."
   t)
 
-;; This is necessary because, unfortunately, scheme.el defines run-scheme to autoload
-;; from xscheme.el.
-
-(defun kae/scheme-mode-bindings ()
-  (define-key scheme-mode-map "\n" 'newline-and-indent-if-not-bol)
-  (define-key scheme-mode-map "\r" 'newline-and-indent-if-not-bol))
-(eval-after-load "scheme" '(kae/scheme-mode-bindings))
-
-(add-hook 'scheme-mode-hook
-          #'(lambda ()
-             (setq show-trailing-whitespace t)
-             (autoload 'run-scheme "cmuscheme"
-               "Run an inferior Scheme"
-               t)))
+(defvar scheme-mode-map)
+(eval-after-load
+  "scheme"
+  '(progn
+     (define-key scheme-mode-map "\n" 'newline-and-indent-if-not-bol)
+     (define-key scheme-mode-map "\r" 'newline-and-indent-if-not-bol)
+     (add-hook 'scheme-mode-hook
+               #'(lambda ()
+                   (setq show-trailing-whitespace t)
+                   (autoload 'run-scheme "cmuscheme"
+                     "Run an inferior Scheme"
+                     t)))))
 
 (setq scheme-program-name "scheme48")
 
@@ -3039,77 +2878,6 @@ paragraph."
       (list begin end))))
 
 ;;}}}
-;;{{{  Process Mode.
-
-(autoload 'ps-mode "ps-mode"
-  "Package for manipulating Unix processes."
-  t)
-
-(if (eq system-type 'hpux)
-    (progn
-      (setq ps-mode-program-args-list (list "-f" "-u" (user-real-login-name)))
-      (setq ps-mode-program-args '("ugx"))))
-
-(if (or
-     (eq system-type 'irix)
-     (eq system-type 'usg-unix-v))
-    (progn
-      (setq ps-mode-program-args-list (list "-f" "-u" (user-real-login-name)))))
-
-(if (or (eq system-type 'lignux)
-        (eq system-type 'linux)
-        (eq system-type 'gnu/linux))
-    (progn
-      (setq ps-mode-program-args-list (list "ux"))))
-
-(defun ps ()
-  (interactive)
-  (push-window-config)
-  (ps-mode))
-
-(defun kae/ps-mode-bindings ()
-  ;; Let "g" mean "get or refresh", as it does for
-  ;; Dired Mode, VM Mode, GNUS, et al.
-  ;;
-  (define-key ps-mode-map "g"
-    #'(lambda ()
-       (interactive)
-       (message "Reading process information...")
-       (ps-mode-build-process-list)
-       (message "Reading process information...done")))
-
-  ;; Bind "q" to abandon Process Mode.
-  ;;
-  (define-key ps-mode-map "q" #'(lambda ()
-                                 (interactive)
-                                 (ps-mode-quit)
-                                 (pop-window-config))))
-(add-hook 'ps-mode-hook
-          #'(lambda ()
-
-             ;; Establish my (somewhat) standard set of readonly-buffer bindings.
-             ;;
-             (kae/standard-readonly-buffer-key-bindings)
-
-             ;; And then override a few.
-             ;;
-             (kae/ps-mode-bindings)
-             ))
-
-
-;; Use the new one posted on the Net.
-;; It's nice, but it's Xemacs->emacs19 compat stuff conflicts with VM.
-;;
-;;
-;;(autoload 'ps "view-process-mode"
-;;  "Prints a list with processes in the buffer `View-process-buffer-name'.
-;;     COMMAND-SWITCHES is a string with the command switches (ie: -aux).
-;;     IF the optional argument REMOTE-HOST is given, then the command will
-;;     be executed on the REMOTE-HOST. If an prefix arg is given, then the
-;;     function asks for the name of the remote host."
-;;  t)
-
-;;}}}
 ;;{{{  Calendar, Diary
 
 (setq view-diary-entries-initially t)
@@ -3126,6 +2894,8 @@ including compressed ones."
 
 (setq auto-mode-alist (cons '("\\.tar$" . tar-mode) auto-mode-alist))
 
+(defvar tar-mode-map)
+(declare-function tar-extract "tar-mode")
 (defun kae/tar-mode-bindings ()
   (define-key tar-mode-map "q" #'(lambda ()
                                   (interactive)
@@ -3148,6 +2918,7 @@ including compressed ones."
 ;;}}}
 ;;{{{  Archive Mode
 
+(defvar archive-mode-map)
 (defun kae/archive-mode-bindings ()
   (define-key archive-mode-map "q" #'(lambda ()
                                       (interactive)
@@ -3194,43 +2965,6 @@ including compressed ones."
 ;;{{{  Changelog Mode.
 
 (setq auto-mode-alist (cons '("[cC][hH][aA][nN][gG][eE][lL][oO][gG]$" . change-log-mode) auto-mode-alist))
-
-;;}}}
-;;{{{  Man Page Mode.
-
-;; Get a new frame for each man page.
-;;
-(if window-system
-    (setq Man-notify 'newframe)
-  (setq Man-notify 'aggressive))
-
-;; Allow me to click on a man page reference to read it.
-;;
-(defun kae/Man-mode-bindings ()
-  ;; Point-and-shoot at man page reference.
-  ;;
-  (local-set-key [mouse-3] 'kae/Man-page-mouse-3-handler))
-
-(add-hook 'Man-mode-hook
-          #'(lambda () (kae/Man-mode-bindings)))
-
-(defun kae/Man-page-mouse-3-handler (click)
-  "Read the man page referred to by the text under the mouse."
-  (interactive "@e")
-  (mouse-set-point click)
-  (sit-for 0)
-
-  (let ((man-args (Man-default-man-entry)))
-    (if (string= man-args "")
-        (error "No manual reference found."))
-
-    ;; Recognize the subject(section) syntax.
-    ;;
-    (setq man-args (Man-translate-references man-args))
-
-    (if Man-downcase-section-letters-p
-        (setq man-args (Man-downcase man-args)))
-    (Man-getpage-in-background man-args)))
 
 ;;}}}
 ;;{{{  View Minor Mode
@@ -3418,7 +3152,7 @@ This must be bound to a mouse click."
                     (occur-mode-goto-occurrence))))
 
 (add-hook 'occur-mode-hook
-          #'(lambda (kae/occur-mode-bindings) ()))
+          #'(kae/occur-mode-bindings))
 
 ;;}}}
 ;;{{{  Compilation (and Grep) Mode.
