@@ -5,6 +5,7 @@
   ("--verbose")
   nil)
  (magit-diff
+  ("--stat" "--no-ext-diff")
   ("--stat" "--no-ext-diff"
    ("--" ".emacs.el"))
   ("--no-ext-diff" "--stat"))
