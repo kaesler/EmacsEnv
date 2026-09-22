@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 ;;; crypt++.el -- code for handling all sorts of compressed and encrypted files
 ;;; (may also be installed as crypt.el)
 
@@ -1057,8 +1058,8 @@ Buffer local and set by `crypt-dos-to-unix-region'")
 (put 'crypt-dos-has-ctrl-z 'permanent-local t) ; for v19 Emacs
 (put 'crypt-dos-has-ctrl-z 'preserved t)       ; for kill-fix.el
 
-(defvar crypt-decode-dos-p t "Says whether to decode DOS (\r\n) files.")
-(defvar crypt-decode-mac-p t "Says whether to decode Mac (\r) files.")
+(defvar crypt-decode-dos-p t "Says whether to decode DOS (\\r\\n) files.")
+(defvar crypt-decode-mac-p t "Says whether to decode Mac (\\r) files.")
 
 (defun crypt-build-encoding-alist ()
   ;; Returns the encoding alist

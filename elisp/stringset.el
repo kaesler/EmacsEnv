@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 ;; stringset.el
 ;;
 ;; Lisp code for converting between regions of text and sets of strings,
@@ -15,16 +16,16 @@
     l))
 
 (defun stringset-extract-region (begin end symbol)
-  
+
   "Produce a set of strings from the lines in a region.Bind the set to a symbol."
-  
+
   (interactive "r\nSSymbol: ")
-  
+
   (let ((set-of-strings '()))
     (iterate-over-lines-in-region
      begin
      end
-     '(lambda ()
+     #'(lambda ()
         ;; This should match every line.
         ;; We slice out text excluding leading and trailing white-space.
         ;;
@@ -67,10 +68,10 @@
   (mapconcat 'identity ss "\n"))
 
 (defun stringset-insert (symbol)
-  
+
   (interactive "SStringset name: ")
   (insert (stringset-to-text
-           
+
            ;; This dodge is made necessary by the fact that "sort"
            ;; returns a correctly sorted list, BUT erroneously clobbers
            ;; the original location.

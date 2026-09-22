@@ -1,3 +1,4 @@
+;; -*- lexical-binding: t; -*-
 ;;; greedy-delete.el --- minor mode for a better backspace
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
